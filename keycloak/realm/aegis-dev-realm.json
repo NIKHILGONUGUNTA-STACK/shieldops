@@ -1,0 +1,23 @@
+{
+  "realm": "aegis-dev",
+  "enabled": true,
+  "displayName": "Aegis Development",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "bruteForceProtected": true,
+  "clients": [
+    {
+      "clientId": "aegis-local",
+      "name": "Aegis local development client",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["http://localhost:*/*"],
+      "webOrigins": ["http://localhost:*"]
+    }
+  ]
+}

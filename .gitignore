@@ -1,0 +1,28 @@
+# Local development environment and generated state
+config/dev.env
+.env
+*.local.env
+
+# Docker volumes and local runtime output
+data/
+*.log
+
+# Java / Maven
+target/
+.mvn/timing.properties
+
+# Node.js
+node_modules/
+dist/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# IDE and OS metadata
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,32 @@
+name: Foundation validation
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Validate Maven baseline
+        run: mvn --batch-mode --no-transfer-progress validate
+      - name: Validate JSON and Node baseline
+        run: |
+          python -m json.tool keycloak/realm/aegis-dev-realm.json > /dev/null
+          node --input-type=module -e "JSON.parse(await (await import('node:fs/promises')).readFile('frontend/package.json', 'utf8'))"
+      - name: Validate Docker Compose configuration
+        run: docker compose --env-file config/dev.env.example -f infrastructure/docker/compose.yml config --quiet
