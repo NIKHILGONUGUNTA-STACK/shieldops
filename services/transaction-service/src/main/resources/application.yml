@@ -1,0 +1,30 @@
+server:
+  port: ${SERVER_PORT:8083}
+spring:
+  application:
+    name: transaction-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/aegis}
+    username: ${DB_USERNAME:aegis_owner}
+    password: ${DB_PASSWORD:change-this-local-postgres-password}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+    schemas: transaction_data
+    default-schema: transaction_data
+    create-schemas: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+services:
+  account:
+    base-url: ${ACCOUNT_SERVICE_URL:http://localhost:8082}

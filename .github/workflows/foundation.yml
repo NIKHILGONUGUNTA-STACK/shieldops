@@ -15,15 +15,15 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '25'
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.14'
       - name: Validate Maven baseline
-        run: mvn --batch-mode --no-transfer-progress validate
+        run: mvn --batch-mode --no-transfer-progress test
       - name: Validate JSON and Node baseline
         run: |
           python -m json.tool keycloak/realm/aegis-dev-realm.json > /dev/null

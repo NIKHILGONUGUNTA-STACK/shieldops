@@ -4,7 +4,7 @@
 
 Never commit credentials, tokens, private keys, or local environment files. Copy `config/dev.env.example` to `config/dev.env` and replace the example passwords locally. The real file is ignored by Git.
 
-The Phase 1 stack binds PostgreSQL, Redis, and Keycloak only to `127.0.0.1`. It is for local development, not production deployment.
+The local stack binds PostgreSQL, Redis, Keycloak, and the synthetic business APIs only to `127.0.0.1`. It is for local development, not production deployment.
 
 ## Controlled security work
 

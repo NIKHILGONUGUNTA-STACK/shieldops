@@ -3,9 +3,9 @@
 .PHONY: help setup start stop status logs validate
 
 help:
-	@echo "Aegis Phase 1 development commands"
+	@echo "Aegis local development commands"
 	@echo "  make setup    Create config/dev.env from its example"
-	@echo "  make start    Start PostgreSQL, Redis, and Keycloak"
+	@echo "  make start    Start dependencies and synthetic business services"
 	@echo "  make stop     Stop the development stack"
 	@echo "  make status   Show development stack status"
 	@echo "  make logs     Follow development stack logs"

@@ -1,0 +1,27 @@
+server:
+  port: ${SERVER_PORT:8081}
+spring:
+  application:
+    name: customer-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/aegis}
+    username: ${DB_USERNAME:aegis_owner}
+    password: ${DB_PASSWORD:change-this-local-postgres-password}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+    schemas: customer_data
+    default-schema: customer_data
+    create-schemas: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
