@@ -17,6 +17,16 @@ public class Customer {
     @Column(nullable = false, length = 20) private String status;
     @Column(nullable = false) private LocalDate createdDate;
     protected Customer() {}
+    public Customer(UUID id, String customerNumber, String firstName, String lastName, String email, String countryCode, String status, LocalDate createdDate) {
+        this.id = id;
+        this.customerNumber = customerNumber;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.countryCode = countryCode;
+        this.status = status;
+        this.createdDate = createdDate;
+    }
     public UUID getId() { return id; }
     public String getCustomerNumber() { return customerNumber; }
     public String getFirstName() { return firstName; }

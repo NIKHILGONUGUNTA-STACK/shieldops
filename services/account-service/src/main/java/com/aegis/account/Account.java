@@ -14,6 +14,15 @@ public class Account {
     @Column(nullable=false, length=12) private String status;
     @Column(nullable=false) private Instant openedAt;
     protected Account() {}
+    public Account(UUID id, String accountNumber, UUID customerId, String currency, BigDecimal balance, String status, Instant openedAt) {
+        this.id = id;
+        this.accountNumber = accountNumber;
+        this.customerId = customerId;
+        this.currency = currency;
+        this.balance = balance;
+        this.status = status;
+        this.openedAt = openedAt;
+    }
     public UUID getId(){return id;} public String getAccountNumber(){return accountNumber;} public UUID getCustomerId(){return customerId;}
     public String getCurrency(){return currency;} public BigDecimal getBalance(){return balance;} public String getStatus(){return status;} public Instant getOpenedAt(){return openedAt;}
     void debit(BigDecimal amount){if(!"ACTIVE".equals(status))throw new IllegalStateException("Account is not active");if(balance.compareTo(amount)<0)throw new IllegalArgumentException("Insufficient available balance");balance=balance.subtract(amount);}

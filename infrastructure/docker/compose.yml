@@ -32,6 +32,8 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_AEGIS_DB}
       DB_USERNAME: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
+      AEGIS_INTERNAL_SECRET: ${AEGIS_INTERNAL_SECRET:-aegis-internal-trust-secret-key-32chars!}
+      AEGIS_TRUST_VERIFICATION_ENABLED: "true"
     ports:
       - "127.0.0.1:${CUSTOMER_SERVICE_PORT:-8081}:8081"
     depends_on:
@@ -57,6 +59,8 @@ services:
       DB_USERNAME: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       CUSTOMER_SERVICE_URL: http://customer-service:8081
+      AEGIS_INTERNAL_SECRET: ${AEGIS_INTERNAL_SECRET:-aegis-internal-trust-secret-key-32chars!}
+      AEGIS_TRUST_VERIFICATION_ENABLED: "true"
     ports:
       - "127.0.0.1:${ACCOUNT_SERVICE_PORT:-8082}:8082"
     depends_on:
@@ -84,6 +88,8 @@ services:
       DB_USERNAME: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       ACCOUNT_SERVICE_URL: http://account-service:8082
+      AEGIS_INTERNAL_SECRET: ${AEGIS_INTERNAL_SECRET:-aegis-internal-trust-secret-key-32chars!}
+      AEGIS_TRUST_VERIFICATION_ENABLED: "true"
     ports:
       - "127.0.0.1:${TRANSACTION_SERVICE_PORT:-8083}:8083"
     depends_on:
@@ -93,6 +99,46 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8083/actuator/health/readiness | grep -q 'UP'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: ../..
+      dockerfile: gateway/Dockerfile
+    environment:
+      SERVER_PORT: 8000
+      CUSTOMER_SERVICE_URL: http://customer-service:8081
+      ACCOUNT_SERVICE_URL: http://account-service:8082
+      TRANSACTION_SERVICE_URL: http://transaction-service:8083
+      KEYCLOAK_JWKS_URI: http://keycloak:8080/realms/aegis-dev/protocol/openid-connect/certs
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/aegis-dev
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_AEGIS_DB}
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      AEGIS_INTERNAL_SECRET: ${AEGIS_INTERNAL_SECRET:-aegis-internal-trust-secret-key-32chars!}
+    ports:
+      - "127.0.0.1:${GATEWAY_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      customer-service:
+        condition: service_healthy
+      account-service:
+        condition: service_healthy
+      transaction-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8000/actuator/health/readiness | grep -q 'UP'"]
       interval: 10s
       timeout: 5s
       retries: 12

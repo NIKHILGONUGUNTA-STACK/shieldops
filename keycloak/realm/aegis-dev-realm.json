@@ -7,6 +7,22 @@
   "duplicateEmailsAllowed": false,
   "resetPasswordAllowed": true,
   "bruteForceProtected": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "CUSTOMER",
+        "description": "Banking customer role"
+      },
+      {
+        "name": "SECURITY_ANALYST",
+        "description": "Aegis security analyst role"
+      },
+      {
+        "name": "SECURITY_ADMIN",
+        "description": "Aegis security administrator role"
+      }
+    ]
+  },
   "clients": [
     {
       "clientId": "aegis-local",
@@ -15,9 +31,209 @@
       "publicClient": true,
       "protocol": "openid-connect",
       "standardFlowEnabled": true,
-      "directAccessGrantsEnabled": false,
+      "directAccessGrantsEnabled": true,
       "redirectUris": ["http://localhost:*/*"],
-      "webOrigins": ["http://localhost:*"]
+      "webOrigins": ["http://localhost:*", "*"],
+      "protocolMappers": [
+        {
+          "name": "customer-id-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "customerId",
+            "claim.name": "customerId",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "customer-number-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "customerNumber",
+            "claim.name": "customerNumber",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "audience-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "aegis-api",
+            "id.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "aegis-frontend",
+      "name": "Aegis Frontend Dashboard",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": [
+        "http://localhost:4200/*",
+        "http://127.0.0.1:4200/*",
+        "http://localhost:8000/*"
+      ],
+      "webOrigins": ["http://localhost:4200", "http://127.0.0.1:4200", "*"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "protocolMappers": [
+        {
+          "name": "customer-id-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "customerId",
+            "claim.name": "customerId",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "customer-number-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "customerNumber",
+            "claim.name": "customerNumber",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "audience-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "aegis-api",
+            "id.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "aegis-gateway",
+      "name": "Aegis API Gateway",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "aegis-gateway-secret-dev-only",
+      "bearerOnly": false,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "protocol": "openid-connect",
+      "protocolMappers": [
+        {
+          "name": "audience-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "aegis-api",
+            "id.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "alex.morgan",
+      "email": "alex.morgan@example.test",
+      "firstName": "Alex",
+      "lastName": "Morgan",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Password123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["CUSTOMER"],
+      "attributes": {
+        "customerId": ["10000000-0000-4000-8000-000000000001"],
+        "customerNumber": ["CUST-10001"]
+      }
+    },
+    {
+      "username": "sam.taylor",
+      "email": "sam.taylor@example.test",
+      "firstName": "Sam",
+      "lastName": "Taylor",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Password123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["CUSTOMER"],
+      "attributes": {
+        "customerId": ["10000000-0000-4000-8000-000000000002"],
+        "customerNumber": ["CUST-10002"]
+      }
+    },
+    {
+      "username": "analyst",
+      "email": "analyst@aegis.local",
+      "firstName": "Security",
+      "lastName": "Analyst",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Password123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["SECURITY_ANALYST"]
+    },
+    {
+      "username": "admin",
+      "email": "admin@aegis.local",
+      "firstName": "Security",
+      "lastName": "Admin",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Password123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["SECURITY_ADMIN", "SECURITY_ANALYST"]
     }
   ]
 }

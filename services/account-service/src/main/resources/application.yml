@@ -28,3 +28,10 @@ management:
 services:
   customer:
     base-url: ${CUSTOMER_SERVICE_URL:http://localhost:8081}
+
+aegis:
+  security:
+    internal-secret: ${AEGIS_INTERNAL_SECRET:aegis-internal-trust-secret-key-32chars!}
+    trust-verification:
+      enabled: ${AEGIS_TRUST_VERIFICATION_ENABLED:false}
+
