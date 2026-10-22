@@ -23,12 +23,24 @@ public class CustomerClient {
                     correlationId = UUID.randomUUID().toString();
                 }
                 String userId = MDC.get("userId");
-                String attestation = TrustTokenUtils.buildAttestationHeader(correlationId, userId, internalSecret);
+                String customerId = MDC.get("customerId");
+                String roles = MDC.get("roles");
+                String method = request.getMethod().name();
+                String path = request.getURI().getPath();
+                String attestation = TrustTokenUtils.buildAttestationHeader(
+                    correlationId, userId, customerId, roles, method, path, internalSecret
+                );
 
                 request.getHeaders().set(TrustTokenUtils.CORRELATION_ID_HEADER, correlationId);
                 request.getHeaders().set(TrustTokenUtils.SIGNATURE_HEADER, attestation);
                 if (userId != null && !userId.isBlank()) {
                     request.getHeaders().set(TrustTokenUtils.USER_ID_HEADER, userId);
+                }
+                if (customerId != null && !customerId.isBlank()) {
+                    request.getHeaders().set(TrustTokenUtils.CUSTOMER_ID_HEADER, customerId);
+                }
+                if (roles != null && !roles.isBlank()) {
+                    request.getHeaders().set(TrustTokenUtils.ROLES_HEADER, roles);
                 }
                 return execution.execute(request, body);
             })

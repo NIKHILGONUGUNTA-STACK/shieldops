@@ -23,7 +23,7 @@ class InternalTrustFilterTest {
 
     @Test
     void rejectsDirectRequestWithoutSignatureHeader() throws Exception {
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/accounts/20000000-0000-4000-8000-000000000001");
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/accounts");
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
 
@@ -36,7 +36,7 @@ class InternalTrustFilterTest {
     @Test
     void rejectsRequestWithInvalidSignature() throws Exception {
         String correlationId = UUID.randomUUID().toString();
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/accounts/20000000-0000-4000-8000-000000000001");
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/accounts");
         request.addHeader(TrustTokenUtils.CORRELATION_ID_HEADER, correlationId);
         request.addHeader(TrustTokenUtils.SIGNATURE_HEADER, "t=1700000000;sig=badbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadb");
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -52,11 +52,16 @@ class InternalTrustFilterTest {
     void allowsRequestWithValidSignature() throws Exception {
         String correlationId = UUID.randomUUID().toString();
         String userId = "user-123";
-        String validHeader = TrustTokenUtils.buildAttestationHeader(correlationId, userId, SECRET);
+        String path = "/accounts";
+        String validHeader = TrustTokenUtils.buildAttestationHeader(
+            correlationId, userId, "10000000-0000-4000-8000-000000000001", "CUSTOMER", "GET", path, SECRET
+        );
 
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/accounts/20000000-0000-4000-8000-000000000001");
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", path);
         request.addHeader(TrustTokenUtils.CORRELATION_ID_HEADER, correlationId);
         request.addHeader(TrustTokenUtils.USER_ID_HEADER, userId);
+        request.addHeader(TrustTokenUtils.CUSTOMER_ID_HEADER, "10000000-0000-4000-8000-000000000001");
+        request.addHeader(TrustTokenUtils.ROLES_HEADER, "CUSTOMER");
         request.addHeader(TrustTokenUtils.SIGNATURE_HEADER, validHeader);
 
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -66,6 +71,58 @@ class InternalTrustFilterTest {
 
         assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
         assertThat(response.getHeader(TrustTokenUtils.CORRELATION_ID_HEADER)).isEqualTo(correlationId);
+    }
+
+    @Test
+    void rejectsRequestWhenMethodIsTampered() throws Exception {
+        String correlationId = UUID.randomUUID().toString();
+        String userId = "user-123";
+        String path = "/accounts";
+        // Attestation signed for GET
+        String headerSignedForGet = TrustTokenUtils.buildAttestationHeader(
+            correlationId, userId, "10000000-0000-4000-8000-000000000001", "CUSTOMER", "GET", path, SECRET
+        );
+
+        // Attacker attempts POST with the GET attestation
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", path);
+        request.addHeader(TrustTokenUtils.CORRELATION_ID_HEADER, correlationId);
+        request.addHeader(TrustTokenUtils.USER_ID_HEADER, userId);
+        request.addHeader(TrustTokenUtils.CUSTOMER_ID_HEADER, "10000000-0000-4000-8000-000000000001");
+        request.addHeader(TrustTokenUtils.ROLES_HEADER, "CUSTOMER");
+        request.addHeader(TrustTokenUtils.SIGNATURE_HEADER, headerSignedForGet);
+
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.FORBIDDEN.value());
+        assertThat(response.getContentAsString()).contains("Gateway trust attestation missing or invalid");
+    }
+
+    @Test
+    void rejectsRequestWhenRolesAreTampered() throws Exception {
+        String correlationId = UUID.randomUUID().toString();
+        String userId = "user-123";
+        String path = "/accounts";
+        String header = TrustTokenUtils.buildAttestationHeader(
+            correlationId, userId, "10000000-0000-4000-8000-000000000001", "CUSTOMER", "GET", path, SECRET
+        );
+
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", path);
+        request.addHeader(TrustTokenUtils.CORRELATION_ID_HEADER, correlationId);
+        request.addHeader(TrustTokenUtils.USER_ID_HEADER, userId);
+        request.addHeader(TrustTokenUtils.CUSTOMER_ID_HEADER, "10000000-0000-4000-8000-000000000001");
+        request.addHeader(TrustTokenUtils.ROLES_HEADER, "SECURITY_ADMIN");
+        request.addHeader(TrustTokenUtils.SIGNATURE_HEADER, header);
+
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.FORBIDDEN.value());
+        assertThat(response.getContentAsString()).contains("Gateway trust attestation missing or invalid");
     }
 
     @Test

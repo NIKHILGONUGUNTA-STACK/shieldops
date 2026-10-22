@@ -96,32 +96,6 @@ public class TelemetryFilter extends OncePerRequestFilter {
                 }
             }
 
-            if ("anonymous".equals(authSubject)) {
-                String authHeader = request.getHeader("Authorization");
-                if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                    try {
-                        String tokenStr = authHeader.substring(7).trim();
-                        String[] parts = tokenStr.split("\\.");
-                        if (parts.length >= 2) {
-                            byte[] decoded = Base64.getUrlDecoder().decode(parts[1]);
-                            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-                            com.fasterxml.jackson.databind.JsonNode json = mapper.readTree(decoded);
-                            if (json.has("sub")) {
-                                authSubject = json.get("sub").asText();
-                            }
-                            if (json.has("customerId")) {
-                                customerId = json.get("customerId").asText();
-                            }
-                            if (json.has("realm_access") && json.get("realm_access").has("roles")) {
-                                List<String> roleList = new ArrayList<>();
-                                json.get("realm_access").get("roles").forEach(r -> roleList.add(r.asText()));
-                                authRoles = String.join(",", roleList);
-                            }
-                        }
-                    } catch (Exception ignore) {}
-                }
-            }
-
             String payloadHash = computePayloadHash(request.getContentAsByteArray());
             String userAgent = request.getHeader("User-Agent");
             if (userAgent != null && userAgent.length() > 255) {
@@ -137,6 +111,8 @@ public class TelemetryFilter extends OncePerRequestFilter {
                 anomalyFlags = "SERVER_ERROR";
             }
 
+            String routeTemplate = normalizeRouteTemplate(request.getRequestURI());
+
             ApiEvent event = new ApiEvent(
                 UUID.randomUUID(),
                 correlationId,
@@ -144,7 +120,7 @@ public class TelemetryFilter extends OncePerRequestFilter {
                 sourceIp != null ? sourceIp : "127.0.0.1",
                 request.getMethod(),
                 request.getRequestURI(),
-                request.getRequestURI(),
+                routeTemplate,
                 statusCode,
                 latencyMs,
                 authSubject,
@@ -159,6 +135,15 @@ public class TelemetryFilter extends OncePerRequestFilter {
         } catch (Exception e) {
             log.warn("Failed to record telemetry for request: {}", e.getMessage());
         }
+    }
+
+    private String normalizeRouteTemplate(String uri) {
+        if (uri == null || uri.isBlank()) {
+            return "/";
+        }
+        String normalized = uri.replaceAll("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}", "{id}");
+        normalized = normalized.replaceAll("(ACCT|CUST|SYNTH)-[a-zA-Z0-9_-]+", "{ref}");
+        return normalized;
     }
 
     private void publishToRedisOrDatabase(ApiEvent event) {

@@ -25,6 +25,8 @@ import java.util.regex.Pattern;
 public class InternalTrustFilter extends OncePerRequestFilter {
     public static final String MDC_CORRELATION_ID = "correlationId";
     public static final String MDC_USER_ID = "userId";
+    public static final String MDC_CUSTOMER_ID = "customerId";
+    public static final String MDC_ROLES = "roles";
     private static final Pattern VALID_CORRELATION_ID = Pattern.compile("^[a-zA-Z0-9_-]{1,64}$");
 
     private final String internalSecret;
@@ -57,16 +59,28 @@ public class InternalTrustFilter extends OncePerRequestFilter {
         }
 
         String userId = request.getHeader(TrustTokenUtils.USER_ID_HEADER);
+        String customerId = request.getHeader(TrustTokenUtils.CUSTOMER_ID_HEADER);
+        String roles = request.getHeader(TrustTokenUtils.ROLES_HEADER);
+
         MDC.put(MDC_CORRELATION_ID, correlationId);
         if (userId != null && !userId.isBlank()) {
             MDC.put(MDC_USER_ID, userId);
+        }
+        if (customerId != null && !customerId.isBlank()) {
+            MDC.put(MDC_CUSTOMER_ID, customerId);
+        }
+        if (roles != null && !roles.isBlank()) {
+            MDC.put(MDC_ROLES, roles);
         }
         response.setHeader(TrustTokenUtils.CORRELATION_ID_HEADER, correlationId);
 
         try {
             if (verificationEnabled) {
                 String signatureHeader = request.getHeader(TrustTokenUtils.SIGNATURE_HEADER);
-                boolean valid = TrustTokenUtils.verifyAttestationHeader(signatureHeader, correlationId, userId, internalSecret, 60);
+                String httpMethod = request.getMethod();
+                boolean valid = TrustTokenUtils.verifyAttestationHeader(
+                    signatureHeader, correlationId, userId, customerId, roles, httpMethod, path, internalSecret, 60
+                );
                 if (!valid) {
                     response.setStatus(HttpStatus.FORBIDDEN.value());
                     response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
@@ -85,6 +99,8 @@ public class InternalTrustFilter extends OncePerRequestFilter {
         } finally {
             MDC.remove(MDC_CORRELATION_ID);
             MDC.remove(MDC_USER_ID);
+            MDC.remove(MDC_CUSTOMER_ID);
+            MDC.remove(MDC_ROLES);
         }
     }
 }

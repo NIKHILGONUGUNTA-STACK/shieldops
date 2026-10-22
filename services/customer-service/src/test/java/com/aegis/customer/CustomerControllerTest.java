@@ -1,5 +1,6 @@
 package com.aegis.customer;
 
+import com.aegis.customer.security.TrustTokenUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -66,5 +67,46 @@ class CustomerControllerTest {
                 .andExpect(jsonPath("$.id").value(id.toString()))
                 .andExpect(jsonPath("$.email").value("casey@example.test"))
                 .andExpect(jsonPath("$.countryCode").value("US"));
+    }
+
+    @Test
+    void getCustomerRejectsCrossCustomerAccessWithForbidden() throws Exception {
+        UUID targetId = UUID.randomUUID();
+        UUID otherCustomerId = UUID.randomUUID();
+
+        mockMvc.perform(get("/customers/{id}", targetId)
+                .header(TrustTokenUtils.CUSTOMER_ID_HEADER, otherCustomerId.toString())
+                .header(TrustTokenUtils.ROLES_HEADER, "CUSTOMER"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.detail").value("Access to another customer's resources is forbidden"));
+    }
+
+    @Test
+    void getCustomerAllowsSameCustomerAccess() throws Exception {
+        UUID targetId = UUID.randomUUID();
+        CustomerService.CustomerView view = new CustomerService.CustomerView(
+                targetId, "CUST-SELF", "Self", "User", "ACTIVE", LocalDate.of(2025, 1, 1)
+        );
+        when(customerService.get(targetId)).thenReturn(view);
+
+        mockMvc.perform(get("/customers/{id}", targetId)
+                .header(TrustTokenUtils.CUSTOMER_ID_HEADER, targetId.toString())
+                .header(TrustTokenUtils.ROLES_HEADER, "CUSTOMER"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(targetId.toString()));
+    }
+
+    @Test
+    void getCustomerAllowsSecurityAdminAccessToAnyCustomer() throws Exception {
+        UUID targetId = UUID.randomUUID();
+        CustomerService.CustomerView view = new CustomerService.CustomerView(
+                targetId, "CUST-ADMIN-READ", "Admin", "Read", "ACTIVE", LocalDate.of(2025, 1, 1)
+        );
+        when(customerService.get(targetId)).thenReturn(view);
+
+        mockMvc.perform(get("/customers/{id}", targetId)
+                .header(TrustTokenUtils.ROLES_HEADER, "SECURITY_ADMIN"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(targetId.toString()));
     }
 }

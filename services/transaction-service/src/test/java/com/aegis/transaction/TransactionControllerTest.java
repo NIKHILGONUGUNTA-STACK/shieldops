@@ -1,5 +1,6 @@
 package com.aegis.transaction;
 
+import com.aegis.transaction.security.TrustTokenUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -69,49 +70,48 @@ class TransactionControllerTest {
                         .content(json))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(benId.toString()))
+                .andExpect(jsonPath("$.name").value("New Payee"))
                 .andExpect(jsonPath("$.status").value("PENDING"));
     }
 
     @Test
-    void createBeneficiaryReturnsBadRequestWhenInvalid() throws Exception {
-        // missing name and invalid currency
-        String json = """
-                {
-                  "customerId": "%s",
-                  "name": "",
-                  "destinationAccountReference": "DEST-02",
-                  "currency": "TOOLONG"
-                }
-                """.formatted(UUID.randomUUID());
+    void getBeneficiaryReturnsBeneficiaryWhenFound() throws Exception {
+        UUID benId = UUID.randomUUID();
+        UUID customerId = UUID.randomUUID();
+        TransactionController.BeneficiaryView view = new TransactionController.BeneficiaryView(
+                benId, customerId, "Payee Single", "DEST-03", "USD", "VERIFIED", Instant.now()
+        );
+        when(transactionService.getBeneficiaryView(benId)).thenReturn(view);
 
-        mockMvc.perform(post("/beneficiaries")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.errors").exists());
+        mockMvc.perform(get("/beneficiaries/{id}", benId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(benId.toString()))
+                .andExpect(jsonPath("$.name").value("Payee Single"));
     }
 
     @Test
-    void verifyBeneficiaryReturnsOk() throws Exception {
+    void verifyBeneficiaryReturnsVerified() throws Exception {
         UUID benId = UUID.randomUUID();
+        UUID customerId = UUID.randomUUID();
         TransactionController.BeneficiaryView view = new TransactionController.BeneficiaryView(
-                benId, UUID.randomUUID(), "Payee", "DEST-01", "USD", "VERIFIED", Instant.now()
+                benId, customerId, "Payee Verify", "DEST-04", "USD", "VERIFIED", Instant.now()
         );
+        when(transactionService.getBeneficiaryView(benId)).thenReturn(view);
         when(transactionService.verifyBeneficiary(benId)).thenReturn(view);
 
         mockMvc.perform(post("/beneficiaries/{id}/verify", benId))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(benId.toString()))
                 .andExpect(jsonPath("$.status").value("VERIFIED"));
     }
 
     @Test
-    void transferReturnsCreatedWhenValid() throws Exception {
+    void transferReturnsCreatedWhenSuccessful() throws Exception {
+        UUID txId = UUID.randomUUID();
         UUID customerId = UUID.randomUUID();
         UUID sourceAccountId = UUID.randomUUID();
         UUID beneficiaryId = UUID.randomUUID();
-        UUID txId = UUID.randomUUID();
-        String ref = "transfer-mockmvc-01";
+        String ref = "transfer-ref-001";
 
         TransactionController.TransactionView view = new TransactionController.TransactionView(
                 txId, ref, customerId, sourceAccountId, beneficiaryId,
@@ -158,5 +158,45 @@ class TransactionControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.errors").exists());
+    }
+
+    @Test
+    void transferRejectsCrossCustomerTransfer() throws Exception {
+        UUID attackerCustomerId = UUID.randomUUID();
+        UUID victimCustomerId = UUID.randomUUID();
+        UUID sourceAccountId = UUID.randomUUID();
+        UUID beneficiaryId = UUID.randomUUID();
+
+        String json = """
+                {
+                  "customerId": "%s",
+                  "sourceAccountId": "%s",
+                  "beneficiaryId": "%s",
+                  "amount": 100.0000,
+                  "currency": "USD",
+                  "reference": "attack-transfer-01"
+                }
+                """.formatted(victimCustomerId, sourceAccountId, beneficiaryId);
+
+        mockMvc.perform(post("/transfers")
+                        .header(TrustTokenUtils.CUSTOMER_ID_HEADER, attackerCustomerId.toString())
+                        .header(TrustTokenUtils.ROLES_HEADER, "CUSTOMER")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.detail").value("Operation on another customer's resource is forbidden"));
+    }
+
+    @Test
+    void listBeneficiariesRejectsCrossCustomerQuery() throws Exception {
+        UUID callerCustomerId = UUID.randomUUID();
+        UUID victimCustomerId = UUID.randomUUID();
+
+        mockMvc.perform(get("/beneficiaries")
+                        .param("customerId", victimCustomerId.toString())
+                        .header(TrustTokenUtils.CUSTOMER_ID_HEADER, callerCustomerId.toString())
+                        .header(TrustTokenUtils.ROLES_HEADER, "CUSTOMER"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.detail").value("Access to another customer's resources is forbidden"));
     }
 }

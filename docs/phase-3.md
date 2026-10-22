@@ -90,10 +90,11 @@ flowchart TB
    - Services communicate strictly over the internal Docker network `aegis-net`.
    - Only Gateway (`8000`), Keycloak (`8080`, `9000`), and PostgreSQL (`5433` for dev tools) expose loopback ports.
 2. **Cryptographic Gateway Attestation Header:**
-   - Every request forwarded by the Gateway includes `X-Aegis-Internal-Token`.
+   - Every request forwarded by the Gateway includes `X-Aegis-Internal-Token`, `X-Aegis-Internal-Timestamp`, `X-Aegis-User-Id`, `X-Aegis-Customer-Id`, and `X-Aegis-User-Roles`.
+   - The token is an HMAC-SHA256 signature binding `timestamp:correlationId:userId:customerId:roles:httpMethod:canonicalPath`.
    - Downstream services inspect this header via a lightweight servlet filter (`InternalTrustFilter`).
    - Requests arriving without a valid HMAC signature matching the shared internal secret are rejected with `403 Forbidden`.
-   - Prevents bypass attacks even if an attacker gains network presence within the host or container environment.
+   - Prevents bypass attacks, route hijacking, and parameter tampering even if an attacker gains network presence within the host or container environment.
 
 ---
 
@@ -105,7 +106,7 @@ flowchart TB
   ```text
   %d{ISO8601} [%thread] %-5level [trace=%X{correlationId}] %logger{36} - %msg%n
   ```
-- **Inter-Service Propagation:** Outgoing `RestClient` beans in `AccountClient` and `CustomerClient` automatically forward `X-Correlation-Id` across service hops.
+- **Inter-Service Propagation:** Outgoing `RestClient` beans in `AccountClient` and `CustomerClient` automatically forward `X-Correlation-Id` and re-sign `X-Aegis-Internal-Token` with outbound method and path across service hops.
 
 ---
 
@@ -178,5 +179,7 @@ CREATE INDEX api_events_customer_idx ON security_data.api_events(customer_id);
 - [x] `X-Correlation-Id` is present in all logs, inter-service calls, and client responses.
 - [x] API events are buffered in Redis Stream `aegis:stream:api-events` and batch persisted in PostgreSQL `security_data.api_events`.
 - [x] Sensitive financial data and credentials are completely absent from stored telemetry (payload hashed via SHA-256).
-- [x] Automated integration tests cover authentication, routing, bypass protection, and telemetry (68 passing automated tests platform-wide).
+- [x] Strict Broken Object-Level Authorization (BOLA / IDOR) defenses enforced across all services.
+- [x] Automated integration tests cover authentication, routing, bypass protection, BOLA defense, and telemetry (89 passing automated tests platform-wide; verified in [docs/phase-3-verification.md](file:///c:/Users/nikhi/aegis/docs/phase-3-verification.md)).
+
 

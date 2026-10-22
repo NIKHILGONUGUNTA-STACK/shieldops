@@ -48,11 +48,13 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/customers/**", "/api/v1/customers/**").authenticated()
-                .requestMatchers("/accounts/**", "/api/v1/accounts/**").authenticated()
-                .requestMatchers("/beneficiaries/**", "/api/v1/beneficiaries/**").authenticated()
-                .requestMatchers("/transactions/**", "/api/v1/transactions/**").authenticated()
-                .requestMatchers("/transfers/**", "/api/v1/transfers/**").authenticated()
+                .requestMatchers("/transfers/**", "/api/v1/transfers/**").hasRole("CUSTOMER")
+                .requestMatchers(
+                    "/customers/**", "/api/v1/customers/**",
+                    "/accounts/**", "/api/v1/accounts/**",
+                    "/beneficiaries/**", "/api/v1/beneficiaries/**",
+                    "/transactions/**", "/api/v1/transactions/**"
+                ).hasAnyRole("CUSTOMER", "SECURITY_ANALYST", "SECURITY_ADMIN")
                 .requestMatchers("/security/**", "/api/v1/security/**").hasAnyRole("SECURITY_ANALYST", "SECURITY_ADMIN")
                 .anyRequest().authenticated()
             )

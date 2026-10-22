@@ -16,13 +16,33 @@ public final class TrustTokenUtils {
 
     private TrustTokenUtils() {}
 
-    public static String buildAttestationHeader(String correlationId, String userId, String secret) {
+    public static String buildAttestationHeader(
+            String correlationId,
+            String userId,
+            String customerId,
+            String roles,
+            String httpMethod,
+            String requestPath,
+            String secret) {
         String timestamp = String.valueOf(Instant.now().getEpochSecond());
-        String signature = computeSignature(timestamp, correlationId, userId, secret);
+        String signature = computeSignature(timestamp, correlationId, userId, customerId, roles, httpMethod, requestPath, secret);
         return "t=" + timestamp + ";sig=" + signature;
     }
 
-    public static boolean verifyAttestationHeader(String headerValue, String correlationId, String userId, String secret, long maxDriftSeconds) {
+    public static String buildAttestationHeader(String correlationId, String userId, String secret) {
+        return buildAttestationHeader(correlationId, userId, null, null, "GET", "/", secret);
+    }
+
+    public static boolean verifyAttestationHeader(
+            String headerValue,
+            String correlationId,
+            String userId,
+            String customerId,
+            String roles,
+            String httpMethod,
+            String requestPath,
+            String secret,
+            long maxDriftSeconds) {
         if (headerValue == null || headerValue.isBlank() || secret == null || secret.isBlank()) {
             return false;
         }
@@ -50,7 +70,7 @@ public final class TrustTokenUtils {
                 return false;
             }
 
-            String expectedSignature = computeSignature(timestamp, correlationId, userId, secret);
+            String expectedSignature = computeSignature(timestamp, correlationId, userId, customerId, roles, httpMethod, requestPath, secret);
             return MessageDigest.isEqual(
                 signature.getBytes(StandardCharsets.UTF_8),
                 expectedSignature.getBytes(StandardCharsets.UTF_8)
@@ -60,16 +80,55 @@ public final class TrustTokenUtils {
         }
     }
 
-    public static String computeSignature(String timestamp, String correlationId, String userId, String secret) {
+    public static boolean verifyAttestationHeader(String headerValue, String correlationId, String userId, String secret, long maxDriftSeconds) {
+        return verifyAttestationHeader(headerValue, correlationId, userId, null, null, "GET", "/", secret, maxDriftSeconds);
+    }
+
+    public static String computeSignature(
+            String timestamp,
+            String correlationId,
+            String userId,
+            String customerId,
+            String roles,
+            String httpMethod,
+            String requestPath,
+            String secret) {
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
             SecretKeySpec keySpec = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
             mac.init(keySpec);
-            String payload = timestamp + ":" + (correlationId != null ? correlationId : "") + ":" + (userId != null ? userId : "");
+            String payload = timestamp + ":"
+                + (correlationId != null ? correlationId.trim() : "") + ":"
+                + (userId != null ? userId.trim() : "") + ":"
+                + (customerId != null ? customerId.trim() : "") + ":"
+                + (roles != null ? roles.trim() : "") + ":"
+                + (httpMethod != null ? httpMethod.trim().toUpperCase() : "") + ":"
+                + canonicalizePath(requestPath);
             byte[] hmac = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(hmac);
         } catch (Exception e) {
             throw new IllegalStateException("Failed to compute HMAC-SHA256", e);
         }
+    }
+
+    public static String computeSignature(String timestamp, String correlationId, String userId, String secret) {
+        return computeSignature(timestamp, correlationId, userId, null, null, "GET", "/", secret);
+    }
+
+    public static String canonicalizePath(String path) {
+        if (path == null) {
+            return "/";
+        }
+        String p = path.trim();
+        if (p.startsWith("/api/v1/")) {
+            p = p.substring(7);
+        }
+        if (!p.startsWith("/")) {
+            p = "/" + p;
+        }
+        if (p.length() > 1 && p.endsWith("/")) {
+            p = p.substring(0, p.length() - 1);
+        }
+        return p;
     }
 }

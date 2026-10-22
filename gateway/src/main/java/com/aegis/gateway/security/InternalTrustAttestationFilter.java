@@ -14,7 +14,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -31,46 +32,28 @@ public class InternalTrustAttestationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         String correlationId = request.getHeader(TrustTokenUtils.CORRELATION_ID_HEADER);
         String userId = "anonymous";
-        String customerId = null;
+        String customerId = "";
         String rolesStr = "";
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getPrincipal() instanceof Jwt jwt) {
-            userId = jwt.getSubject();
-            customerId = jwt.getClaimAsString("customerId");
+            userId = jwt.getSubject() != null ? jwt.getSubject() : "authenticated";
+            String cid = jwt.getClaimAsString("customerId");
+            if (cid != null && !cid.isBlank()) {
+                customerId = cid;
+            }
             Map<String, Object> realmAccess = jwt.getClaim("realm_access");
             if (realmAccess != null && realmAccess.get("roles") instanceof Collection<?> roles) {
                 rolesStr = roles.stream().map(Object::toString).collect(Collectors.joining(","));
             }
         }
 
-        if ("anonymous".equals(userId)) {
-            String authHeader = request.getHeader("Authorization");
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                try {
-                    String tokenStr = authHeader.substring(7).trim();
-                    String[] parts = tokenStr.split("\\.");
-                    if (parts.length >= 2) {
-                        byte[] decoded = Base64.getUrlDecoder().decode(parts[1]);
-                        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-                        com.fasterxml.jackson.databind.JsonNode json = mapper.readTree(decoded);
-                        if (json.has("sub")) {
-                            userId = json.get("sub").asText();
-                        }
-                        if (json.has("customerId")) {
-                            customerId = json.get("customerId").asText();
-                        }
-                        if (json.has("realm_access") && json.get("realm_access").has("roles")) {
-                            List<String> roleList = new ArrayList<>();
-                            json.get("realm_access").get("roles").forEach(r -> roleList.add(r.asText()));
-                            rolesStr = String.join(",", roleList);
-                        }
-                    }
-                } catch (Exception ignore) {}
-            }
-        }
+        String httpMethod = request.getMethod();
+        String requestPath = request.getRequestURI();
 
-        String attestation = TrustTokenUtils.buildAttestationHeader(correlationId, userId, internalSecret);
+        String attestation = TrustTokenUtils.buildAttestationHeader(
+            correlationId, userId, customerId, rolesStr, httpMethod, requestPath, internalSecret
+        );
 
         HeaderMapRequestWrapper wrapper;
         if (request instanceof HeaderMapRequestWrapper hmrw) {
@@ -80,13 +63,9 @@ public class InternalTrustAttestationFilter extends OncePerRequestFilter {
         }
 
         wrapper.setHeader(TrustTokenUtils.SIGNATURE_HEADER, attestation);
-        wrapper.setHeader(TrustTokenUtils.USER_ID_HEADER, userId != null ? userId : "anonymous");
-        if (customerId != null && !customerId.isBlank()) {
-            wrapper.setHeader(TrustTokenUtils.CUSTOMER_ID_HEADER, customerId);
-        }
-        if (!rolesStr.isBlank()) {
-            wrapper.setHeader(TrustTokenUtils.ROLES_HEADER, rolesStr);
-        }
+        wrapper.setHeader(TrustTokenUtils.USER_ID_HEADER, userId);
+        wrapper.setHeader(TrustTokenUtils.CUSTOMER_ID_HEADER, customerId);
+        wrapper.setHeader(TrustTokenUtils.ROLES_HEADER, rolesStr);
 
         filterChain.doFilter(wrapper, response);
     }

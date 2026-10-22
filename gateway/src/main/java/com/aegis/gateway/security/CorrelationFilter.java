@@ -32,7 +32,6 @@ public class CorrelationFilter extends OncePerRequestFilter {
         }
 
         MDC.put(MDC_KEY, correlationId);
-        response.setHeader(CORRELATION_ID_HEADER, correlationId);
 
         HeaderMapRequestWrapper requestWrapper = new HeaderMapRequestWrapper(request);
         requestWrapper.setHeader(CORRELATION_ID_HEADER, correlationId);
@@ -40,6 +39,7 @@ public class CorrelationFilter extends OncePerRequestFilter {
         try {
             filterChain.doFilter(requestWrapper, response);
         } finally {
+            response.setHeader(CORRELATION_ID_HEADER, correlationId);
             MDC.remove(MDC_KEY);
         }
     }

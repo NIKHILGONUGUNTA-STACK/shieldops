@@ -25,6 +25,89 @@ class TrustTokenUtilsTest {
     }
 
     @Test
+    void generatesAndVerifiesFullAttestationHeader() {
+        String correlationId = UUID.randomUUID().toString();
+        String userId = "user-abc-123";
+        String customerId = "10000000-0000-4000-8000-000000000001";
+        String roles = "CUSTOMER";
+
+        String header = TrustTokenUtils.buildAttestationHeader(
+            correlationId, userId, customerId, roles, "POST", "/api/v1/transfers", SECRET
+        );
+
+        boolean verified = TrustTokenUtils.verifyAttestationHeader(
+            header, correlationId, userId, customerId, roles, "POST", "/transfers", SECRET, 60
+        );
+        assertThat(verified).isTrue();
+    }
+
+    @Test
+    void rejectsAttestationWithMismatchedHttpMethod() {
+        String correlationId = UUID.randomUUID().toString();
+        String userId = "user-abc-123";
+        String customerId = "10000000-0000-4000-8000-000000000001";
+        String roles = "CUSTOMER";
+
+        String header = TrustTokenUtils.buildAttestationHeader(
+            correlationId, userId, customerId, roles, "GET", "/api/v1/transfers", SECRET
+        );
+
+        boolean verified = TrustTokenUtils.verifyAttestationHeader(
+            header, correlationId, userId, customerId, roles, "POST", "/transfers", SECRET, 60
+        );
+        assertThat(verified).isFalse();
+    }
+
+    @Test
+    void rejectsAttestationWithMismatchedPath() {
+        String correlationId = UUID.randomUUID().toString();
+        String userId = "user-abc-123";
+        String customerId = "10000000-0000-4000-8000-000000000001";
+        String roles = "CUSTOMER";
+
+        String header = TrustTokenUtils.buildAttestationHeader(
+            correlationId, userId, customerId, roles, "GET", "/api/v1/customers/1", SECRET
+        );
+
+        boolean verified = TrustTokenUtils.verifyAttestationHeader(
+            header, correlationId, userId, customerId, roles, "GET", "/accounts/2/debits", SECRET, 60
+        );
+        assertThat(verified).isFalse();
+    }
+
+    @Test
+    void rejectsAttestationWithMismatchedCustomerId() {
+        String correlationId = UUID.randomUUID().toString();
+        String userId = "user-abc-123";
+        String roles = "CUSTOMER";
+
+        String header = TrustTokenUtils.buildAttestationHeader(
+            correlationId, userId, "10000000-0000-4000-8000-000000000001", roles, "GET", "/customers/1", SECRET
+        );
+
+        boolean verified = TrustTokenUtils.verifyAttestationHeader(
+            header, correlationId, userId, "10000000-0000-4000-8000-000000000002", roles, "GET", "/customers/1", SECRET, 60
+        );
+        assertThat(verified).isFalse();
+    }
+
+    @Test
+    void rejectsAttestationWithMismatchedRoles() {
+        String correlationId = UUID.randomUUID().toString();
+        String userId = "user-abc-123";
+        String customerId = "10000000-0000-4000-8000-000000000001";
+
+        String header = TrustTokenUtils.buildAttestationHeader(
+            correlationId, userId, customerId, "CUSTOMER", "GET", "/customers/1", SECRET
+        );
+
+        boolean verified = TrustTokenUtils.verifyAttestationHeader(
+            header, correlationId, userId, customerId, "SECURITY_ADMIN", "GET", "/customers/1", SECRET, 60
+        );
+        assertThat(verified).isFalse();
+    }
+
+    @Test
     void rejectsAttestationWithMismatchedCorrelationId() {
         String correlationId = UUID.randomUUID().toString();
         String userId = "user-abc-123";
@@ -55,6 +138,18 @@ class TrustTokenUtilsTest {
         String expiredHeader = "t=" + oldTimestamp + ";sig=" + sig;
 
         boolean verified = TrustTokenUtils.verifyAttestationHeader(expiredHeader, correlationId, userId, SECRET, 60);
+        assertThat(verified).isFalse();
+    }
+
+    @Test
+    void rejectsFarFutureTimestampAttestation() {
+        String correlationId = UUID.randomUUID().toString();
+        String userId = "user-abc-123";
+        long futureTimestamp = Instant.now().getEpochSecond() + 300; // 5 minutes in future
+        String sig = TrustTokenUtils.computeSignature(String.valueOf(futureTimestamp), correlationId, userId, SECRET);
+        String futureHeader = "t=" + futureTimestamp + ";sig=" + sig;
+
+        boolean verified = TrustTokenUtils.verifyAttestationHeader(futureHeader, correlationId, userId, SECRET, 60);
         assertThat(verified).isFalse();
     }
 

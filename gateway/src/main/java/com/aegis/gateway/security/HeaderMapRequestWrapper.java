@@ -14,6 +14,10 @@ public class HeaderMapRequestWrapper extends HttpServletRequestWrapper {
         if (headerNames != null) {
             while (headerNames.hasMoreElements()) {
                 String name = headerNames.nextElement();
+                // Strip all inbound X-Aegis-* headers from external callers for defense-in-depth
+                if (name.toLowerCase(Locale.ROOT).startsWith("x-aegis-")) {
+                    continue;
+                }
                 Enumeration<String> values = request.getHeaders(name);
                 List<String> list = new ArrayList<>();
                 while (values.hasMoreElements()) {
@@ -32,6 +36,10 @@ public class HeaderMapRequestWrapper extends HttpServletRequestWrapper {
         List<String> list = new ArrayList<>();
         list.add(value);
         customHeaders.put(name, list);
+    }
+
+    public void removeHeader(String name) {
+        customHeaders.remove(name);
     }
 
     @Override
