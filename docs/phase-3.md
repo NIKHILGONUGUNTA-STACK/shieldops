@@ -117,32 +117,56 @@ flowchart TB
 - **Masking:** Account references are masked (e.g. `ACCT-****0001`).
 - **Body Hashing:** Request bodies are NOT stored verbatim. Instead, a SHA-256 digest (`request_payload_hash`) and content length are recorded to enable duplicate and tamper detection without storing sensitive financial payload data.
 
-### Telemetry Event Schema (`security_data.api_events`)
+### Active Telemetry Event Schema (`security_data.api_events`)
+The active database schema is managed via Flyway migration `gateway/src/main/resources/db/migration/V1__security_schema.sql`:
+
 ```sql
 CREATE SCHEMA IF NOT EXISTS security_data;
 
 CREATE TABLE security_data.api_events (
-    event_id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY,
     correlation_id VARCHAR(64) NOT NULL,
-    timestamp TIMESTAMPTZ NOT NULL,
-    client_ip VARCHAR(45) NOT NULL,
+    timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+    source_ip VARCHAR(45) NOT NULL,
     http_method VARCHAR(10) NOT NULL,
-    route_template VARCHAR(120) NOT NULL,
-    request_uri VARCHAR(255) NOT NULL,
-    status_code INTEGER NOT NULL,
+    request_path VARCHAR(512) NOT NULL,
+    route_id VARCHAR(64),
+    status_code INT NOT NULL,
     latency_ms BIGINT NOT NULL,
-    user_id VARCHAR(80),
-    customer_id UUID,
-    user_roles VARCHAR(120),
-    user_agent VARCHAR(255),
-    request_payload_hash CHAR(64),
-    response_size_bytes BIGINT
+    auth_subject VARCHAR(128),
+    auth_roles VARCHAR(256),
+    customer_id VARCHAR(64),
+    user_agent VARCHAR(256),
+    payload_hash CHAR(64),
+    anomaly_flags VARCHAR(128) NOT NULL DEFAULT 'NONE'
 );
 
-CREATE INDEX api_events_correlation_idx ON security_data.api_events(correlation_id);
-CREATE INDEX api_events_timestamp_idx ON security_data.api_events(timestamp DESC);
-CREATE INDEX api_events_customer_idx ON security_data.api_events(customer_id);
+CREATE INDEX IF NOT EXISTS api_events_correlation_idx ON security_data.api_events(correlation_id);
+CREATE INDEX IF NOT EXISTS api_events_timestamp_idx ON security_data.api_events(timestamp DESC);
+CREATE INDEX IF NOT EXISTS api_events_subject_idx ON security_data.api_events(auth_subject);
+CREATE INDEX IF NOT EXISTS api_events_customer_idx ON security_data.api_events(customer_id);
 ```
+
+### Schema & API Response Mapping Details
+| Database Column | Java / DTO Property | API Response Field | Description |
+| :--- | :--- | :--- | :--- |
+| `id UUID` | `UUID id` | `id` | Unique UUID identifier for the telemetry event. |
+| `correlation_id VARCHAR(64)` | `String correlationId` | `correlationId` | Distributed trace correlation identifier (`X-Correlation-Id`). |
+| `timestamp TIMESTAMPTZ` | `Instant timestamp` | `timestamp` | ISO-8601 UTC event generation instant. |
+| `source_ip VARCHAR(45)` | `String sourceIp` | `sourceIp` | IPv4/IPv6 client IP (extracted from `X-Forwarded-For` or remote address). |
+| `http_method VARCHAR(10)` | `String httpMethod` | `httpMethod` | HTTP verb (`GET`, `POST`, etc.). |
+| `request_path VARCHAR(512)` | `String requestPath` | `requestPath` | Normalized request URI path (without query strings). |
+| `route_id VARCHAR(64)` | `String routeId` | `routeId` | Normalized parameterized route template (e.g. `/api/v1/customers/{id}`). |
+| `status_code INT` | `int statusCode` | `statusCode` | HTTP response status integer code. |
+| `latency_ms BIGINT` | `long latencyMs` | `latencyMs` | Gateway round-trip execution latency in milliseconds. |
+| `auth_subject VARCHAR(128)` | `String authSubject` | `authSubject` | JWT `sub` principal name, or `'anonymous'` for unauthenticated calls. |
+| `auth_roles VARCHAR(256)` | `String authRoles` | `authRoles` | Comma-separated realm roles extracted from verified token claims. |
+| `customer_id VARCHAR(64)` | `String customerId` | `customerId` | String customer identifier when bound to caller principal; empty string otherwise. |
+| `user_agent VARCHAR(256)` | `String userAgent` | `userAgent` | Client User-Agent header (truncated to $\le 256$ characters). |
+| `payload_hash CHAR(64)` | `String payloadHash` | `payloadHash` | SHA-256 hexadecimal digest of request body (never cleartext payload). |
+| `anomaly_flags VARCHAR(128)` | `String anomalyFlags` | `anomalyFlags` | Classification flags (`NONE`, `UNAUTHENTICATED_ACCESS`, `FORBIDDEN_ATTEMPT`). |
+
+*Note on Schema Differences:* Earlier planning drafts proposed `response_size_bytes` and column names such as `client_ip`, `route_template`, and `user_id`. The active production migration strictly uses `source_ip`, `route_id`, and `auth_subject`. `response_size_bytes` is not persisted to avoid unnecessary buffering overhead on high-throughput gateway streaming.
 
 ### High-Throughput Ingestion Approach
 - **Buffering:** Gateway pushes events to Redis Stream `aegis:stream:api-events` using non-blocking asynchronous calls ($< 1$ ms latency impact on client requests).

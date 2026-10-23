@@ -34,6 +34,7 @@ public class TelemetryFilter extends OncePerRequestFilter {
     private final StringRedisTemplate redisTemplate;
     private final ApiEventRepository repository;
     private final String streamKey;
+    private io.micrometer.core.instrument.MeterRegistry meterRegistry;
 
     public TelemetryFilter(
             StringRedisTemplate redisTemplate,
@@ -44,11 +45,16 @@ public class TelemetryFilter extends OncePerRequestFilter {
         this.streamKey = streamKey;
     }
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setMeterRegistry(io.micrometer.core.instrument.MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String path = request.getRequestURI();
-        if (path.startsWith("/actuator/health")) {
+        if (path.startsWith("/actuator")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -166,12 +172,21 @@ public class TelemetryFilter extends OncePerRequestFilter {
 
         try {
             redisTemplate.opsForStream().add(Record.of(fields).withStreamKey(streamKey));
+            if (meterRegistry != null) {
+                meterRegistry.counter("aegis.telemetry.events", "route", event.routeId(), "status", String.valueOf(event.statusCode())).increment();
+            }
         } catch (Exception redisException) {
             log.debug("Redis stream append failed, falling back to direct DB persist: {}", redisException.getMessage());
             try {
                 repository.save(event);
+                if (meterRegistry != null) {
+                    meterRegistry.counter("aegis.telemetry.events", "route", event.routeId(), "status", String.valueOf(event.statusCode())).increment();
+                }
             } catch (Exception dbException) {
                 log.error("Direct telemetry database persist also failed: {}", dbException.getMessage());
+                if (meterRegistry != null) {
+                    meterRegistry.counter("aegis.telemetry.failures", "reason", "db_error").increment();
+                }
             }
         }
     }

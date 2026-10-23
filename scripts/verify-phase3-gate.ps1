@@ -86,10 +86,11 @@ try {
     Record-Test "Customer Role Restriction on Security Endpoints" ($_.Exception.Response.StatusCode.value__ -eq 403) "Rejected with HTTP 403 Forbidden"
 }
 
-# Analyst accessing Security Events -> 200/Passes Security
+# Analyst accessing Security Events -> 200 OK with real persisted event structure
 try {
-    $secRes = Invoke-RestMethod -Uri 'http://127.0.0.1:8000/actuator/health' -Headers $analystHeaders
-    Record-Test "Analyst Role Access Verification" ($secRes.status -eq "UP") "Analyst authenticated and authorized"
+    $secRes = Invoke-RestMethod -Uri 'http://127.0.0.1:8000/api/v1/security/events?size=10' -Headers $analystHeaders -UseBasicParsing
+    $hasValidStructure = ($secRes.content -ne $null -and $secRes.page -ne $null -and $secRes.size -ne $null -and $secRes.totalElements -ge 0)
+    Record-Test "Analyst Role Access Verification" $hasValidStructure "Analyst retrieved real telemetry events: $($secRes.totalElements) total events (page size: $($secRes.size))"
 } catch {
     Record-Test "Analyst Role Access Verification" $false "Failed with $($_.Exception.Message)"
 }
@@ -218,29 +219,59 @@ if ($ben) {
 }
 
 # --- 7. CONCURRENCY & LATENCY BENCHMARK (STAGE 7) ---
-Write-Host "`n--- 7. CONCURRENCY & PERFORMANCE BENCHMARK (50 REQUESTS) ---" -ForegroundColor Yellow
+Write-Host "`n--- 7. CONCURRENCY & PERFORMANCE BENCHMARK (50 REQUESTS, CONCURRENCY = 10) ---" -ForegroundColor Yellow
 
-$latencies = [System.Collections.Generic.List[double]]::new()
-$errors = 0
+Add-Type -AssemblyName System.Net.Http
+$benchHandler = New-Object System.Net.Http.HttpClientHandler
+$benchClient = New-Object System.Net.Http.HttpClient($benchHandler)
+$benchClient.DefaultRequestHeaders.Authorization = New-Object System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", $alexToken)
+$targetUrl = 'http://127.0.0.1:8000/api/v1/customers/10000000-0000-4000-8000-000000000001'
 
-for ($i = 0; $i -lt 50; $i++) {
-    $sw = [System.Diagnostics.Stopwatch]::StartNew()
-    try {
-        $r = Invoke-RestMethod -Uri 'http://127.0.0.1:8000/api/v1/customers/10000000-0000-4000-8000-000000000001' -Headers $alexHeaders
-        $sw.Stop()
-        $latencies.Add($sw.Elapsed.TotalMilliseconds)
-    } catch {
-        $sw.Stop()
-        $errors++
-    }
+# Warm-up (10 requests)
+for ($w = 0; $w -lt 10; $w++) {
+    $req = New-Object System.Net.Http.HttpRequestMessage([System.Net.Http.HttpMethod]::Get, $targetUrl)
+    $null = $benchClient.SendAsync($req).Result.Content.ReadAsStringAsync().Result
 }
 
-$sorted = $latencies | Sort-Object
-$p50 = $sorted[[Math]::Floor($sorted.Count * 0.50)]
-$p95 = $sorted[[Math]::Floor($sorted.Count * 0.95)]
-$p99 = $sorted[[Math]::Floor($sorted.Count * 0.99)]
+# 50 requests across 5 batches of 10 concurrent requests
+$benchLatencies = [System.Collections.Concurrent.ConcurrentBag[double]]::new()
+$benchErrors = 0
+$totalBench = 50
+$concurrencyLevel = 10
+$benchSw = [System.Diagnostics.Stopwatch]::StartNew()
 
-Record-Test "Concurrency & Latency Benchmark" ($errors -eq 0) "50 requests: 0 errors (0.0%). Median (p50): $([Math]::Round($p50, 1))ms, p95: $([Math]::Round($p95, 1))ms, p99: $([Math]::Round($p99, 1))ms"
+for ($b = 0; $b -lt 5; $b++) {
+    $batchTasks = [System.Collections.Generic.List[System.Threading.Tasks.Task[System.Net.Http.HttpResponseMessage]]]::new()
+    $batchSw = [System.Collections.Generic.List[System.Diagnostics.Stopwatch]]::new()
+    for ($i = 0; $i -lt $concurrencyLevel; $i++) {
+        $req = New-Object System.Net.Http.HttpRequestMessage([System.Net.Http.HttpMethod]::Get, $targetUrl)
+        $req.Headers.Add("X-Correlation-Id", "bench-$([System.Guid]::NewGuid().ToString().Substring(0,8))")
+        $sw = [System.Diagnostics.Stopwatch]::StartNew()
+        $batchSw.Add($sw)
+        $batchTasks.Add($benchClient.SendAsync($req))
+    }
+    [System.Threading.Tasks.Task]::WaitAll($batchTasks.ToArray())
+    for ($i = 0; $i -lt $concurrencyLevel; $i++) {
+        $batchSw[$i].Stop()
+        $benchLatencies.Add($batchSw[$i].Elapsed.TotalMilliseconds)
+        $t = $batchTasks[$i]
+        if ($t.IsFaulted -or [int]$t.Result.StatusCode -ne 200) {
+            $benchErrors++
+        } else {
+            $null = $t.Result.Content.ReadAsStringAsync().Result
+        }
+    }
+}
+$benchSw.Stop()
+$benchClient.Dispose()
+
+$sortedLatencies = $benchLatencies | Sort-Object
+$p50 = $sortedLatencies[[Math]::Floor($sortedLatencies.Count * 0.50)]
+$p95 = $sortedLatencies[[Math]::Floor($sortedLatencies.Count * 0.95)]
+$p99 = $sortedLatencies[[Math]::Floor($sortedLatencies.Count * 0.99)]
+$rps = [Math]::Round(($totalBench / $benchSw.Elapsed.TotalSeconds), 1)
+
+Record-Test "Concurrency & Latency Benchmark" ($benchErrors -eq 0) "50 requests (c=$concurrencyLevel): 0 errors (0.0%). Duration: $([Math]::Round($benchSw.Elapsed.TotalMilliseconds, 1))ms, Throughput: $rps RPS. Median (p50): $([Math]::Round($p50, 1))ms, p95: $([Math]::Round($p95, 1))ms, p99: $([Math]::Round($p99, 1))ms"
 
 Write-Host "`n=================================================================" -ForegroundColor Cyan
 $passCount = ($results.Values | Where-Object { $_.Status -eq "PASS" }).Count

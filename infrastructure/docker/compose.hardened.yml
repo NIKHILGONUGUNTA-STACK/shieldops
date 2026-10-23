@@ -1,0 +1,19 @@
+# Hardened Deployment Override for Aegis Platform
+# Usage:
+#   docker compose --env-file config/dev.env -f infrastructure/docker/compose.yml -f infrastructure/docker/compose.hardened.yml up -d
+#
+# Network Boundary Isolation:
+#   Removes published host ports for customer-service (8081), account-service (8082),
+#   and transaction-service (8083). All internal microservices communicate strictly
+#   across the private Docker bridge network. Only the API Gateway (port 8000),
+#   Keycloak (8080/9000), Prometheus (9090), and Grafana (3000) remain accessible.
+
+services:
+  customer-service:
+    ports: !reset []
+
+  account-service:
+    ports: !reset []
+
+  transaction-service:
+    ports: !reset []

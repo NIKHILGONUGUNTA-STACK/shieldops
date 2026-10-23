@@ -41,6 +41,12 @@ class SecurityRoutingTest {
     }
 
     @Test
+    void actuatorPrometheusIsPubliclyAccessible() throws Exception {
+        mockMvc.perform(get("/actuator/prometheus"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
     void protectedEndpointWithoutTokenReturnsUnauthorizedProblemDetail() throws Exception {
         mockMvc.perform(get("/customers/10000000-0000-4000-8000-000000000001"))
             .andExpect(status().isUnauthorized())

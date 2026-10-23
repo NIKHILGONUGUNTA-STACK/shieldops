@@ -32,3 +32,20 @@ aegis:
     redis-stream: test:stream:api-events
     drain-interval-ms: 60000
     batch-size: 10
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+      probes:
+        enabled: true
+    prometheus:
+      access: unrestricted
+  prometheus:
+    metrics:
+      export:
+        enabled: true

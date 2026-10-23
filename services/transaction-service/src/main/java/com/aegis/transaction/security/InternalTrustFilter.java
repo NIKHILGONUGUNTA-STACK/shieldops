@@ -32,6 +32,7 @@ public class InternalTrustFilter extends OncePerRequestFilter {
     private final String internalSecret;
     private final boolean verificationEnabled;
     private final ObjectMapper objectMapper;
+    private io.micrometer.core.instrument.MeterRegistry meterRegistry;
 
     public InternalTrustFilter(
             @Value("${aegis.security.internal-secret:aegis-internal-trust-secret-key-32chars!}") String internalSecret,
@@ -40,6 +41,11 @@ public class InternalTrustFilter extends OncePerRequestFilter {
         this.internalSecret = internalSecret;
         this.verificationEnabled = verificationEnabled;
         this.objectMapper = objectMapper;
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setMeterRegistry(io.micrometer.core.instrument.MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
     }
 
     @Override
@@ -82,6 +88,10 @@ public class InternalTrustFilter extends OncePerRequestFilter {
                     signatureHeader, correlationId, userId, customerId, roles, httpMethod, path, internalSecret, 60
                 );
                 if (!valid) {
+                    if (meterRegistry != null) {
+                        String reason = (signatureHeader == null || signatureHeader.isBlank()) ? "missing_token" : "invalid_signature";
+                        meterRegistry.counter("aegis.trust.rejections", "reason", reason).increment();
+                    }
                     response.setStatus(HttpStatus.FORBIDDEN.value());
                     response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
                     ProblemDetail problem = ProblemDetail.forStatusAndDetail(
