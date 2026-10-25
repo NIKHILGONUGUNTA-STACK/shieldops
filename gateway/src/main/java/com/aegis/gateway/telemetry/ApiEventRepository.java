@@ -27,12 +27,14 @@ public class ApiEventRepository {
                     id, correlation_id, timestamp, source_ip, http_method,
                     request_path, route_id, status_code, latency_ms,
                     auth_subject, auth_roles, customer_id, user_agent,
-                    payload_hash, anomaly_flags
+                    payload_hash, anomaly_flags,
+                    resource_type, resource_id, error_code, response_size_bytes, record_count
                 ) VALUES (
                     :id, :correlationId, :timestamp, :sourceIp, :httpMethod,
                     :requestPath, :routeId, :statusCode, :latencyMs,
                     :authSubject, :authRoles, :customerId, :userAgent,
-                    :payloadHash, :anomalyFlags
+                    :payloadHash, :anomalyFlags,
+                    :resourceType, :resourceId, :errorCode, :responseSizeBytes, :recordCount
                 )
                 """)
                 .param("id", e.id())
@@ -50,6 +52,11 @@ public class ApiEventRepository {
                 .param("userAgent", e.userAgent())
                 .param("payloadHash", e.payloadHash())
                 .param("anomalyFlags", e.anomalyFlags())
+                .param("resourceType", e.resourceType())
+                .param("resourceId", e.resourceId())
+                .param("errorCode", e.errorCode())
+                .param("responseSizeBytes", e.responseSizeBytes())
+                .param("recordCount", e.recordCount())
                 .update();
         } catch (DuplicateKeyException dke) {
             log.debug("Event {} already persisted (duplicate key ignored)", e.id());

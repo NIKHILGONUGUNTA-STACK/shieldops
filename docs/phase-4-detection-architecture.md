@@ -1,10 +1,10 @@
 # Aegis Phase 4 — Contextual API Threat Detection Architecture & Design Specification
 
-**Document Version:** 1.0.0  
-**Status:** DRAFT / PROPOSED (Design Increment 4.1)  
-**Date:** October 23, 2026  
+**Document Version:** 1.1.0  
+**Status:** ACTIVE / IMPLEMENTING (Phase 4.2 Verified: RULE-BOLA-01 End-to-End)  
+**Date:** October 25, 2026  
 **Auditor / Architect:** Antigravity Advanced Agentic Coding  
-**Baseline Git Commit:** `1cd56382ef396d0975a663796368728e2c471255`  
+**Baseline Git Commit:** `60b0759f2c694ca6940a026e6e22fa67f139d10e`  
 **Repository:** `NIKHILGONUGUNTA-STACK/shieldops`
 
 ---
@@ -503,23 +503,24 @@ gantt
     title Aegis Phase 4 Implementation Roadmap
     dateFormat  YYYY-MM-DD
     section Phase 4.1
-    Architecture & Design Spec (Current)    :done, 2026-10-23, 2026-10-23
+    Architecture & Design Spec              :done, 2026-10-23, 2026-10-23
     section Phase 4.2
-    Flyway Schema Migration (V2)             :active, 2026-10-24, 2026-10-25
-    Redis Sliding-Window State Machine      :2026-10-25, 2026-10-27
+    Flyway Schema Migration (V2)             :done, 2026-10-24, 2026-10-25
+    Redis Sliding-Window State Machine      :done, 2026-10-25, 2026-10-25
+    RULE-BOLA-01 End-to-End Implementation   :done, 2026-10-25, 2026-10-25
     section Phase 4.3
-    Deterministic Rule Implementations (R1-R6):2026-10-27, 2026-10-30
-    Contextual Incident Manager             :2026-10-30, 2026-11-02
+    Deterministic Rule Implementations (R2-R6):2026-10-26, 2026-10-28
+    Contextual Incident Manager             :2026-10-28, 2026-10-30
     section Phase 4.4
-    Policy Decision Engine (Advisory)       :2026-11-02, 2026-11-04
-    Incident & Evidence Query APIs          :2026-11-04, 2026-11-06
+    Policy Decision Engine (Advisory)       :2026-10-30, 2026-11-01
+    Incident & Evidence Query APIs          :2026-11-01, 2026-11-03
     section Phase 4.5
-    Ground-Truth Evaluation Benchmark       :2026-11-06, 2026-11-09
+    Ground-Truth Evaluation Benchmark       :2026-11-03, 2026-11-05
 ```
 
-- **Phase 4.1 (Current):** Detection Architecture, Rule Taxonomy, and Data Contracts.
-- **Phase 4.2:** Ingestion enrichment, query parameter capture, and Redis sliding-window state store.
-- **Phase 4.3:** Implementation of candidate rules `RULE-AUTH-01` through `RULE-PROBE-01` and incident repository.
+- **Phase 4.1 (Complete):** Detection Architecture, Rule Taxonomy, and Data Contracts.
+- **Phase 4.2 (Complete):** Flyway V2 migration, Redis sliding window (`RedisDetectionStateStore`), dual-group stream consumption, and `RULE-BOLA-01` verified end-to-end (100% precision/recall, 0 false positives).
+- **Phase 4.3:** Implementation of remaining candidate rules (`RULE-AUTH-01`, `RULE-DATA-01`, `RULE-RATE-01`, `RULE-INJ-01`, `RULE-PROBE-01`).
 - **Phase 4.4:** Policy evaluation service and Incident Query REST APIs for dashboard integration.
 - **Phase 4.5:** Labelled benchmark execution, precision/recall verification, and documentation sign-off.
 

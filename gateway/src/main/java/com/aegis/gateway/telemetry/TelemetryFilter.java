@@ -18,18 +18,25 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingRequestWrapper;
+import org.springframework.web.util.ContentCachingResponseWrapper;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 50)
 public class TelemetryFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(TelemetryFilter.class);
+
+    private static final Pattern CUST_PATH_PATTERN = Pattern.compile("^/(api/v1/)?customers/([0-9a-fA-F-]+)(/profile)?");
+    private static final Pattern ACCT_PATH_PATTERN = Pattern.compile("^/(api/v1/)?accounts/([0-9a-fA-F-]+|ACCT-[a-zA-Z0-9_-]+)(/balance)?");
+    private static final Pattern TX_PATH_PATTERN = Pattern.compile("^/(api/v1/)?transfers/([0-9a-fA-F-]+)");
 
     private final StringRedisTemplate redisTemplate;
     private final ApiEventRepository repository;
@@ -61,17 +68,23 @@ public class TelemetryFilter extends OncePerRequestFilter {
 
         long startTime = System.currentTimeMillis();
         ContentCachingRequestWrapper cachingRequest = new ContentCachingRequestWrapper(request);
+        ContentCachingResponseWrapper cachingResponse = new ContentCachingResponseWrapper(response);
 
         try {
-            filterChain.doFilter(cachingRequest, response);
+            filterChain.doFilter(cachingRequest, cachingResponse);
         } finally {
             long latencyMs = System.currentTimeMillis() - startTime;
-            int statusCode = response.getStatus();
-            recordTelemetry(cachingRequest, response, latencyMs, statusCode);
+            int statusCode = cachingResponse.getStatus();
+            recordTelemetry(cachingRequest, cachingResponse, latencyMs, statusCode);
+            cachingResponse.copyBodyToResponse();
         }
     }
 
-    private void recordTelemetry(ContentCachingRequestWrapper request, HttpServletResponse response, long latencyMs, int statusCode) {
+    private void recordTelemetry(
+            ContentCachingRequestWrapper request,
+            ContentCachingResponseWrapper response,
+            long latencyMs,
+            int statusCode) {
         try {
             String correlationId = request.getHeader(CorrelationFilter.CORRELATION_ID_HEADER);
             if (correlationId == null || correlationId.isBlank()) {
@@ -102,6 +115,35 @@ public class TelemetryFilter extends OncePerRequestFilter {
                 }
             }
 
+            // Fallback: If SecurityContext was cleared on filter exit, parse Authorization Bearer header
+            if (customerId.isBlank() || "anonymous".equals(authSubject)) {
+                String authHeader = request.getHeader("Authorization");
+                if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                    try {
+                        String token = authHeader.substring(7).trim();
+                        String[] parts = token.split("\\.");
+                        if (parts.length >= 2) {
+                            byte[] decoded = Base64.getUrlDecoder().decode(parts[1]);
+                            com.fasterxml.jackson.databind.JsonNode root = new com.fasterxml.jackson.databind.ObjectMapper().readTree(decoded);
+                            if (root.has("sub") && "anonymous".equals(authSubject)) {
+                                authSubject = root.get("sub").asText();
+                            }
+                            if (root.has("customerId") && customerId.isBlank()) {
+                                customerId = root.get("customerId").asText();
+                            }
+                            if (root.has("realm_access") && authRoles.isBlank()) {
+                                com.fasterxml.jackson.databind.JsonNode rolesNode = root.get("realm_access").get("roles");
+                                if (rolesNode != null && rolesNode.isArray()) {
+                                    List<String> roles = new ArrayList<>();
+                                    rolesNode.forEach(r -> roles.add(r.asText()));
+                                    authRoles = String.join(",", roles);
+                                }
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+
             String payloadHash = computePayloadHash(request.getContentAsByteArray());
             String userAgent = request.getHeader("User-Agent");
             if (userAgent != null && userAgent.length() > 255) {
@@ -117,7 +159,80 @@ public class TelemetryFilter extends OncePerRequestFilter {
                 anomalyFlags = "SERVER_ERROR";
             }
 
-            String routeTemplate = normalizeRouteTemplate(request.getRequestURI());
+            String uri = request.getRequestURI();
+            String routeTemplate = normalizeRouteTemplate(uri);
+
+            // Resource context extraction
+            String resourceType = null;
+            String resourceId = null;
+
+            Matcher custMatcher = CUST_PATH_PATTERN.matcher(uri);
+            if (custMatcher.find()) {
+                resourceType = custMatcher.group(3) != null ? "CUSTOMER_PROFILE" : "CUSTOMER";
+                resourceId = custMatcher.group(2);
+            } else {
+                Matcher acctMatcher = ACCT_PATH_PATTERN.matcher(uri);
+                if (acctMatcher.find()) {
+                    resourceType = acctMatcher.group(3) != null ? "ACCOUNT_BALANCE" : "ACCOUNT";
+                    resourceId = acctMatcher.group(2);
+                } else if (uri.contains("/accounts")) {
+                    resourceType = "ACCOUNT_LIST";
+                    String qCustId = request.getParameter("customerId");
+                    if (qCustId != null && !qCustId.isBlank()) {
+                        resourceId = qCustId.trim();
+                    }
+                } else if (uri.contains("/transfers")) {
+                    Matcher txMatcher = TX_PATH_PATTERN.matcher(uri);
+                    if (txMatcher.find()) {
+                        resourceType = "TRANSFER";
+                        resourceId = txMatcher.group(2);
+                    } else {
+                        resourceType = "TRANSFER_EXECUTION";
+                    }
+                } else if (uri.contains("/beneficiaries")) {
+                    resourceType = "BENEFICIARY";
+                }
+            }
+
+            // Structured error classification
+            String errorCode = null;
+            byte[] respBytes = response.getContentAsByteArray();
+            long responseSizeBytes = respBytes != null ? respBytes.length : 0L;
+
+            if (statusCode == 403) {
+                String respBody = respBytes != null ? new String(respBytes, StandardCharsets.UTF_8) : "";
+                if (respBody.contains("Access to another customer") ||
+                    (resourceId != null && !customerId.isBlank() && !customerId.equalsIgnoreCase(resourceId) &&
+                     ("CUSTOMER".equals(resourceType) || "CUSTOMER_PROFILE".equals(resourceType) || "ACCOUNT_LIST".equals(resourceType)))) {
+                    errorCode = "BOLA_VIOLATION";
+                } else if (uri.contains("/security/")) {
+                    errorCode = "INSUFFICIENT_ROLE";
+                } else {
+                    errorCode = "FORBIDDEN";
+                }
+            } else if (statusCode == 401) {
+                errorCode = "UNAUTHENTICATED";
+            } else if (statusCode == 404) {
+                errorCode = "NOT_FOUND";
+            } else if (statusCode >= 500) {
+                errorCode = "INTERNAL_ERROR";
+            }
+
+            int recordCount = 0;
+            if (statusCode == 200 && responseSizeBytes > 2 && respBytes != null) {
+                if (respBytes[0] == '[' && respBytes[respBytes.length - 1] == ']') {
+                    int commas = 0;
+                    int depth = 0;
+                    for (byte b : respBytes) {
+                        if (b == '{') depth++;
+                        else if (b == '}') depth--;
+                        else if (b == ',' && depth == 0) commas++;
+                    }
+                    recordCount = (respBytes.length > 2) ? (commas + 1) : 0;
+                } else {
+                    recordCount = 1;
+                }
+            }
 
             ApiEvent event = new ApiEvent(
                 UUID.randomUUID(),
@@ -134,7 +249,12 @@ public class TelemetryFilter extends OncePerRequestFilter {
                 customerId,
                 userAgent != null ? userAgent : "",
                 payloadHash,
-                anomalyFlags
+                anomalyFlags,
+                resourceType,
+                resourceId,
+                errorCode,
+                responseSizeBytes,
+                recordCount
             );
 
             publishToRedisOrDatabase(event);
@@ -169,6 +289,11 @@ public class TelemetryFilter extends OncePerRequestFilter {
         fields.put("userAgent", event.userAgent() != null ? event.userAgent() : "");
         fields.put("payloadHash", event.payloadHash() != null ? event.payloadHash() : "");
         fields.put("anomalyFlags", event.anomalyFlags() != null ? event.anomalyFlags() : "NONE");
+        fields.put("resourceType", event.resourceType() != null ? event.resourceType() : "");
+        fields.put("resourceId", event.resourceId() != null ? event.resourceId() : "");
+        fields.put("errorCode", event.errorCode() != null ? event.errorCode() : "");
+        fields.put("responseSizeBytes", String.valueOf(event.responseSizeBytes()));
+        fields.put("recordCount", String.valueOf(event.recordCount()));
 
         try {
             redisTemplate.opsForStream().add(Record.of(fields).withStreamKey(streamKey));
