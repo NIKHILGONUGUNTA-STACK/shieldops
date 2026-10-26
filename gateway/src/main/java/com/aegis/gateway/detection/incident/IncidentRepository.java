@@ -11,6 +11,8 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -37,23 +39,26 @@ public class IncidentRepository {
             """;
         return jdbcClient.sql(sql)
             .param("fingerprint", fingerprint)
-            .query((rs, rowNum) -> new SecurityIncident(
-                (UUID) rs.getObject("id"),
-                rs.getString("incident_fingerprint"),
-                rs.getString("rule_id"),
-                rs.getString("rule_version"),
-                rs.getString("threat_category"),
-                rs.getString("severity"),
-                IncidentStatus.fromString(rs.getString("status")),
-                rs.getString("target_entity_type"),
-                rs.getString("target_entity_value"),
-                rs.getTimestamp("first_detected_at").toInstant(),
-                rs.getTimestamp("last_event_at").toInstant(),
-                rs.getInt("event_count"),
-                rs.getString("summary"),
-                rs.getTimestamp("created_at").toInstant(),
-                rs.getTimestamp("updated_at").toInstant()
-            )).optional();
+            .query((rs, rowNum) -> mapRowToIncident(rs)).optional();
+    }
+
+    public Optional<SecurityIncident> findActiveByTarget(String entityType, String entityValue) {
+        String sql = """
+            SELECT id, incident_fingerprint, rule_id, rule_version, threat_category,
+                   severity, status, target_entity_type, target_entity_value,
+                   first_detected_at, last_event_at, event_count, summary,
+                   created_at, updated_at
+            FROM security_data.incidents
+            WHERE target_entity_type = :entityType
+              AND target_entity_value = :entityValue
+              AND status IN ('OPEN', 'INVESTIGATING', 'CONTAINED')
+            ORDER BY created_at DESC
+            LIMIT 1
+            """;
+        return jdbcClient.sql(sql)
+            .param("entityType", entityType)
+            .param("entityValue", entityValue)
+            .query((rs, rowNum) -> mapRowToIncident(rs)).optional();
     }
 
     @Transactional
@@ -94,17 +99,21 @@ public class IncidentRepository {
     public void updateIncident(SecurityIncident inc) {
         String sql = """
             UPDATE security_data.incidents
-            SET severity = :severity,
+            SET threat_category = :threatCategory,
+                severity = :severity,
                 last_event_at = :lastEventAt,
                 event_count = :eventCount,
+                summary = :summary,
                 updated_at = :updatedAt
             WHERE id = :id
             """;
         jdbcClient.sql(sql)
             .param("id", inc.id())
+            .param("threatCategory", inc.threatCategory())
             .param("severity", inc.severity())
             .param("lastEventAt", Timestamp.from(inc.lastEventAt()))
             .param("eventCount", inc.eventCount())
+            .param("summary", inc.summary())
             .param("updatedAt", Timestamp.from(inc.updatedAt()))
             .update();
     }
@@ -204,22 +213,73 @@ public class IncidentRepository {
 
     public List<SecurityIncident> findAllIncidents() {
         return jdbcClient.sql("SELECT * FROM security_data.incidents ORDER BY created_at DESC")
-            .query((rs, rowNum) -> new SecurityIncident(
-                (UUID) rs.getObject("id"),
-                rs.getString("incident_fingerprint"),
-                rs.getString("rule_id"),
-                rs.getString("rule_version"),
-                rs.getString("threat_category"),
-                rs.getString("severity"),
-                IncidentStatus.fromString(rs.getString("status")),
-                rs.getString("target_entity_type"),
-                rs.getString("target_entity_value"),
-                rs.getTimestamp("first_detected_at").toInstant(),
-                rs.getTimestamp("last_event_at").toInstant(),
-                rs.getInt("event_count"),
-                rs.getString("summary"),
-                rs.getTimestamp("created_at").toInstant(),
-                rs.getTimestamp("updated_at").toInstant()
-            )).list();
+            .query((rs, rowNum) -> mapRowToIncident(rs)).list();
+    }
+
+    public List<DetectionEvidence> findEvidenceByIncidentId(UUID incidentId) {
+        String sql = """
+            SELECT id, incident_id, rule_id, rule_version, evaluated_at,
+                   confidence_score, severity, trigger_condition, observed_count,
+                   window_seconds, distinct_resources, evidence_details,
+                   contributing_event_ids, created_at
+            FROM security_data.detection_evidence
+            WHERE incident_id = :incidentId
+            ORDER BY evaluated_at ASC
+            """;
+        return jdbcClient.sql(sql)
+            .param("incidentId", incidentId)
+            .query((rs, rowNum) -> mapRowToEvidence(rs)).list();
+    }
+
+    private SecurityIncident mapRowToIncident(ResultSet rs) throws SQLException {
+        return new SecurityIncident(
+            (UUID) rs.getObject("id"),
+            rs.getString("incident_fingerprint"),
+            rs.getString("rule_id"),
+            rs.getString("rule_version"),
+            rs.getString("threat_category"),
+            rs.getString("severity"),
+            IncidentStatus.fromString(rs.getString("status")),
+            rs.getString("target_entity_type"),
+            rs.getString("target_entity_value"),
+            rs.getTimestamp("first_detected_at").toInstant(),
+            rs.getTimestamp("last_event_at").toInstant(),
+            rs.getInt("event_count"),
+            rs.getString("summary"),
+            rs.getTimestamp("created_at").toInstant(),
+            rs.getTimestamp("updated_at").toInstant()
+        );
+    }
+
+    private DetectionEvidence mapRowToEvidence(ResultSet rs) throws SQLException {
+        String eventIdsRaw = rs.getString("contributing_event_ids");
+        List<UUID> eventIds = new ArrayList<>();
+        if (eventIdsRaw != null && !eventIdsRaw.isBlank()) {
+            for (String s : eventIdsRaw.split(",")) {
+                String trimmed = s.trim();
+                if (!trimmed.isEmpty()) {
+                    try {
+                        eventIds.add(UUID.fromString(trimmed));
+                    } catch (IllegalArgumentException ignored) {}
+                }
+            }
+        }
+
+        return new DetectionEvidence(
+            (UUID) rs.getObject("id"),
+            (UUID) rs.getObject("incident_id"),
+            rs.getString("rule_id"),
+            rs.getString("rule_version"),
+            rs.getTimestamp("evaluated_at").toInstant(),
+            rs.getDouble("confidence_score"),
+            rs.getString("severity"),
+            rs.getString("trigger_condition"),
+            rs.getInt("observed_count"),
+            rs.getInt("window_seconds"),
+            rs.getInt("distinct_resources"),
+            rs.getString("evidence_details"),
+            eventIds,
+            rs.getTimestamp("created_at").toInstant()
+        );
     }
 }

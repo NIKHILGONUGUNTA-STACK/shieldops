@@ -8,11 +8,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Range;
 import org.springframework.data.redis.connection.stream.*;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
@@ -30,11 +32,14 @@ public class DetectionStreamConsumer {
     private final String consumerName;
     private final int batchSize;
     private final boolean enabled;
+    private final long minIdleMs;
+    private final long maxDeliveries;
 
     private MeterRegistry meterRegistry;
     private boolean groupInitialized = false;
     private int pollCycle = 0;
 
+    @Autowired
     public DetectionStreamConsumer(
             StringRedisTemplate redisTemplate,
             ThreatDetectionEngine detectionEngine,
@@ -42,7 +47,9 @@ public class DetectionStreamConsumer {
             @Value("${aegis.detection.consumer.group:" + DEFAULT_GROUP_NAME + "}") String groupName,
             @Value("${aegis.detection.consumer.name:" + DEFAULT_CONSUMER_NAME + "}") String consumerName,
             @Value("${aegis.detection.consumer.batch-size:50}") int batchSize,
-            @Value("${aegis.detection.consumer.enabled:true}") boolean enabled) {
+            @Value("${aegis.detection.consumer.enabled:true}") boolean enabled,
+            @Value("${aegis.detection.consumer.min-idle-ms:5000}") long minIdleMs,
+            @Value("${aegis.detection.consumer.max-deliveries:5}") long maxDeliveries) {
         this.redisTemplate = redisTemplate;
         this.detectionEngine = detectionEngine;
         this.streamKey = streamKey;
@@ -50,6 +57,19 @@ public class DetectionStreamConsumer {
         this.consumerName = consumerName;
         this.batchSize = batchSize;
         this.enabled = enabled;
+        this.minIdleMs = minIdleMs;
+        this.maxDeliveries = maxDeliveries;
+    }
+
+    public DetectionStreamConsumer(
+            StringRedisTemplate redisTemplate,
+            ThreatDetectionEngine detectionEngine,
+            String streamKey,
+            String groupName,
+            String consumerName,
+            int batchSize,
+            boolean enabled) {
+        this(redisTemplate, detectionEngine, streamKey, groupName, consumerName, batchSize, enabled, 5000L, 5L);
     }
 
     @Autowired(required = false)
@@ -68,10 +88,12 @@ public class DetectionStreamConsumer {
             redisTemplate.opsForStream().createGroup(streamKey, ReadOffset.from("0"), groupName);
             groupInitialized = true;
             log.info("Created Redis Stream Consumer Group {} for stream {}", groupName, streamKey);
+            recoverPendingMessages();
         } catch (Exception e) {
             if (isBusyGroupException(e)) {
                 groupInitialized = true;
                 log.info("Consumer Group {} already exists for stream {}", groupName, streamKey);
+                recoverPendingMessages();
             } else {
                 log.warn("Could not initialize consumer group yet: {}", e.getMessage(), e);
             }
@@ -129,9 +151,9 @@ public class DetectionStreamConsumer {
         }
     }
 
-    private void recoverPendingMessages() {
+    public void recoverPendingMessages() {
+        // 1. Recover unacknowledged messages assigned to this consumer starting from offset 0
         try {
-            // Read unacknowledged messages assigned to this consumer starting from offset 0
             List<MapRecord<String, Object, Object>> pending = redisTemplate.opsForStream().read(
                 Consumer.from(groupName, consumerName),
                 StreamReadOptions.empty().count(batchSize),
@@ -139,11 +161,64 @@ public class DetectionStreamConsumer {
             );
 
             if (pending != null && !pending.isEmpty()) {
-                log.info("Recovering {} pending unacknowledged telemetry records", pending.size());
+                log.info("Recovering {} pending unacknowledged telemetry records assigned to {}", pending.size(), consumerName);
                 processBatch(pending);
             }
         } catch (Exception e) {
-            log.debug("Pending message recovery skipped: {}", e.getMessage());
+            log.debug("Pending message recovery for {} skipped: {}", consumerName, e.getMessage());
+        }
+
+        // 2. Inspect PEL across the consumer group and claim stranded messages from crashed/other consumers
+        try {
+            PendingMessages pendingMessages = redisTemplate.opsForStream().pending(
+                streamKey,
+                groupName,
+                Range.unbounded(),
+                batchSize
+            );
+
+            if (pendingMessages != null && !pendingMessages.isEmpty()) {
+                Duration minIdleDuration = Duration.ofMillis(minIdleMs);
+                List<RecordId> idsToClaim = new ArrayList<>();
+
+                for (PendingMessage pm : pendingMessages) {
+                    // Poison-pill protection: if message has been retried too many times, acknowledge and drop to avoid freezing PEL
+                    if (pm.getTotalDeliveryCount() > maxDeliveries) {
+                        log.warn("Poison pill detected in PEL for message {} (deliveries: {} > {}), acknowledging to prevent stream freeze",
+                            pm.getId(), pm.getTotalDeliveryCount(), maxDeliveries);
+                        redisTemplate.opsForStream().acknowledge(streamKey, groupName, pm.getId());
+                        if (meterRegistry != null) {
+                            meterRegistry.counter("aegis.detection.consumer.errors", "stage", "pel_poison_pill").increment();
+                        }
+                        continue;
+                    }
+
+                    // Claim idle messages from other consumers or abandoned replicas
+                    if (!consumerName.equals(pm.getConsumerName()) &&
+                        pm.getElapsedTimeSinceLastDelivery().compareTo(minIdleDuration) >= 0) {
+                        idsToClaim.add(pm.getId());
+                    }
+                }
+
+                if (!idsToClaim.isEmpty()) {
+                    log.info("Claiming {} stranded pending records from dead/other consumers in group {}",
+                        idsToClaim.size(), groupName);
+                    List<MapRecord<String, Object, Object>> claimed = redisTemplate.opsForStream().claim(
+                        streamKey,
+                        groupName,
+                        consumerName,
+                        minIdleDuration,
+                        idsToClaim.toArray(new RecordId[0])
+                    );
+
+                    if (claimed != null && !claimed.isEmpty()) {
+                        log.info("Successfully claimed and processing {} stranded records", claimed.size());
+                        processBatch(claimed);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Cross-consumer pending message claim skipped: {}", e.getMessage());
         }
     }
 

@@ -12,6 +12,7 @@ import org.springframework.data.redis.connection.stream.*;
 import org.springframework.data.redis.core.StreamOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
@@ -89,7 +90,13 @@ class DetectionStreamConsumerTest {
         when(streamOps.read(
             any(Consumer.class),
             any(StreamReadOptions.class),
-            any(StreamOffset.class)
+            eq(StreamOffset.create(streamKey, ReadOffset.from("0")))
+        )).thenReturn(Collections.emptyList());
+
+        when(streamOps.read(
+            any(Consumer.class),
+            any(StreamReadOptions.class),
+            eq(StreamOffset.create(streamKey, ReadOffset.lastConsumed()))
         )).thenReturn(List.of(record));
 
         consumer.pollAndProcess();
@@ -124,7 +131,13 @@ class DetectionStreamConsumerTest {
         when(streamOps.read(
             any(Consumer.class),
             any(StreamReadOptions.class),
-            any(StreamOffset.class)
+            eq(StreamOffset.create(streamKey, ReadOffset.from("0")))
+        )).thenReturn(Collections.emptyList());
+
+        when(streamOps.read(
+            any(Consumer.class),
+            any(StreamReadOptions.class),
+            eq(StreamOffset.create(streamKey, ReadOffset.lastConsumed()))
         )).thenReturn(List.of(badRecord));
 
         consumer.pollAndProcess();
@@ -133,6 +146,124 @@ class DetectionStreamConsumerTest {
         verify(streamOps).acknowledge(eq(streamKey), eq(groupName), eq(poisonId));
         // Verify poison pill counter incremented
         assertThat(meterRegistry.counter("aegis.detection.consumer.errors", "stage", "poison_pill").count())
+            .isEqualTo(1.0);
+    }
+
+    @Test
+    @DisplayName("Should recover unacknowledged pending messages upon worker restart")
+    @SuppressWarnings("unchecked")
+    void testRecoverPendingMessagesOnStartup() {
+        RecordId pendingRecordId = RecordId.of("1700000000002-0");
+        UUID eventId = UUID.randomUUID();
+        Map<String, String> fields = new HashMap<>();
+        fields.put("id", eventId.toString());
+        fields.put("statusCode", "403");
+        fields.put("customerId", "cust-recovered-1");
+        fields.put("resourceId", "cust-victim-2");
+
+        MapRecord<String, Object, Object> pendingRecord = MapRecord.create(
+            streamKey,
+            (Map<Object, Object>) (Map<?, ?>) fields
+        ).withId(pendingRecordId);
+
+        // Return pending record for offset "0", empty for lastConsumed
+        when(streamOps.read(
+            any(Consumer.class),
+            any(StreamReadOptions.class),
+            eq(StreamOffset.create(streamKey, ReadOffset.from("0")))
+        )).thenReturn(List.of(pendingRecord));
+
+        when(streamOps.read(
+            any(Consumer.class),
+            any(StreamReadOptions.class),
+            eq(StreamOffset.create(streamKey, ReadOffset.lastConsumed()))
+        )).thenReturn(Collections.emptyList());
+
+        consumer.pollAndProcess();
+
+        // Verify pending message was processed by detection engine
+        verify(detectionEngine).processEvent(argThat(ev -> ev.id().equals(eventId)));
+        // Verify pending record was acknowledged
+        verify(streamOps).acknowledge(eq(streamKey), eq(groupName), eq(pendingRecordId));
+    }
+
+    @Test
+    @DisplayName("Should claim stranded pending messages from another dead consumer via XCLAIM")
+    @SuppressWarnings("unchecked")
+    void testClaimStrandedPendingMessagesFromDeadConsumer() {
+        RecordId strandedId = RecordId.of("1700000000003-0");
+        UUID eventId = UUID.randomUUID();
+        Map<String, String> fields = new HashMap<>();
+        fields.put("id", eventId.toString());
+        fields.put("statusCode", "403");
+        fields.put("customerId", "cust-recovered-2");
+        fields.put("resourceId", "cust-victim-3");
+
+        MapRecord<String, Object, Object> claimedRecord = MapRecord.create(
+            streamKey,
+            (Map<Object, Object>) (Map<?, ?>) fields
+        ).withId(strandedId);
+
+        // Pending message assigned to dead worker-crashed-1, idle for 10 seconds
+        org.springframework.data.redis.connection.stream.PendingMessage pm = new org.springframework.data.redis.connection.stream.PendingMessage(
+            strandedId,
+            Consumer.from(groupName, "worker-crashed-1"),
+            Duration.ofSeconds(10),
+            1L
+        );
+        org.springframework.data.redis.connection.stream.PendingMessages pms = new org.springframework.data.redis.connection.stream.PendingMessages(
+            groupName,
+            List.of(pm)
+        );
+
+        when(streamOps.read(any(Consumer.class), any(StreamReadOptions.class), eq(StreamOffset.create(streamKey, ReadOffset.from("0")))))
+            .thenReturn(Collections.emptyList());
+        when(streamOps.read(any(Consumer.class), any(StreamReadOptions.class), eq(StreamOffset.create(streamKey, ReadOffset.lastConsumed()))))
+            .thenReturn(Collections.emptyList());
+
+        when(streamOps.pending(eq(streamKey), eq(groupName), any(org.springframework.data.domain.Range.class), anyLong()))
+            .thenReturn(pms);
+
+        when(streamOps.claim(eq(streamKey), eq(groupName), eq(consumerName), any(Duration.class), eq(strandedId)))
+            .thenReturn(List.of(claimedRecord));
+
+        consumer.pollAndProcess();
+
+        // Verify claimed record was processed and acknowledged
+        verify(detectionEngine).processEvent(argThat(ev -> ev.id().equals(eventId)));
+        verify(streamOps).acknowledge(eq(streamKey), eq(groupName), eq(strandedId));
+    }
+
+    @Test
+    @DisplayName("Should acknowledge and drop poison pills exceeding max delivery count in PEL")
+    void testPoisonPillInPelIsAcknowledgedAndDropped() {
+        RecordId poisonPelId = RecordId.of("1700000000004-0");
+
+        // Pending message with delivery count = 6 (> maxDeliveries 5)
+        org.springframework.data.redis.connection.stream.PendingMessage pm = new org.springframework.data.redis.connection.stream.PendingMessage(
+            poisonPelId,
+            Consumer.from(groupName, "worker-dead-1"),
+            Duration.ofSeconds(60),
+            6L // Exceeds maxDeliveries (5)
+        );
+        org.springframework.data.redis.connection.stream.PendingMessages pms = new org.springframework.data.redis.connection.stream.PendingMessages(
+            groupName,
+            List.of(pm)
+        );
+
+        when(streamOps.read(any(Consumer.class), any(StreamReadOptions.class), eq(StreamOffset.create(streamKey, ReadOffset.from("0")))))
+            .thenReturn(Collections.emptyList());
+        when(streamOps.read(any(Consumer.class), any(StreamReadOptions.class), eq(StreamOffset.create(streamKey, ReadOffset.lastConsumed()))))
+            .thenReturn(Collections.emptyList());
+
+        when(streamOps.pending(eq(streamKey), eq(groupName), any(org.springframework.data.domain.Range.class), anyLong()))
+            .thenReturn(pms);
+
+        consumer.pollAndProcess();
+
+        // Verify poison pill was acknowledged to unblock the PEL without processing
+        verify(streamOps).acknowledge(eq(streamKey), eq(groupName), eq(poisonPelId));
+        assertThat(meterRegistry.counter("aegis.detection.consumer.errors", "stage", "pel_poison_pill").count())
             .isEqualTo(1.0);
     }
 }

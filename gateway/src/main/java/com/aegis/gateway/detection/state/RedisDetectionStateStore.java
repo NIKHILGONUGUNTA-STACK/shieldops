@@ -18,8 +18,8 @@ public class RedisDetectionStateStore implements DetectionStateStore {
     private static final String KEY_PREFIX = "aegis:state:bola:";
 
     private final StringRedisTemplate redisTemplate;
-    // Resilient in-memory fallback for local tests and Redis outages
-    private final Map<String, List<BolaAttemptRecord>> memoryFallback = new ConcurrentHashMap<>();
+    // Resilient in-memory fallback for local tests and Redis outages with bounded, event-deduplicating maps
+    private final Map<String, Map<UUID, BolaAttemptRecord>> memoryFallback = new ConcurrentHashMap<>();
 
     public RedisDetectionStateStore(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
@@ -27,7 +27,7 @@ public class RedisDetectionStateStore implements DetectionStateStore {
 
     @Override
     public void recordBolaAttempt(String customerId, UUID eventId, String resourceId, Instant timestamp) {
-        if (customerId == null || customerId.isBlank()) return;
+        if (customerId == null || customerId.isBlank() || eventId == null) return;
 
         String key = KEY_PREFIX + customerId.trim();
         String member = eventId.toString() + ":" + (resourceId != null ? resourceId.trim() : "UNKNOWN");
@@ -39,8 +39,13 @@ public class RedisDetectionStateStore implements DetectionStateStore {
             redisTemplate.expire(key, java.time.Duration.ofHours(1));
         } catch (Exception e) {
             log.debug("Redis state store unavailable, using memory fallback: {}", e.getMessage());
-            memoryFallback.computeIfAbsent(customerId.trim(), k -> new CopyOnWriteArrayList<>())
-                .add(new BolaAttemptRecord(eventId, resourceId, timestamp));
+            Map<UUID, BolaAttemptRecord> customerAttempts = memoryFallback.computeIfAbsent(customerId.trim(), k -> new ConcurrentHashMap<>());
+            customerAttempts.put(eventId, new BolaAttemptRecord(eventId, resourceId != null ? resourceId.trim() : "UNKNOWN", timestamp));
+            // Prune memoryFallback if size exceeds threshold to prevent memory growth
+            if (customerAttempts.size() > 500) {
+                Instant cutoff = Instant.now().minusSeconds(3600);
+                customerAttempts.values().removeIf(r -> r.timestamp().isBefore(cutoff));
+            }
         }
     }
 
@@ -82,10 +87,13 @@ public class RedisDetectionStateStore implements DetectionStateStore {
             return results;
         } catch (Exception e) {
             log.debug("Redis state query failed, querying memory fallback: {}", e.getMessage());
-            List<BolaAttemptRecord> inMem = memoryFallback.getOrDefault(customerId.trim(), Collections.emptyList());
-            return inMem.stream()
-                .filter(r -> !r.timestamp().isBefore(since))
-                .toList();
+            Map<UUID, BolaAttemptRecord> customerAttempts = memoryFallback.get(customerId.trim());
+            if (customerAttempts == null || customerAttempts.isEmpty()) {
+                return Collections.emptyList();
+            }
+            // Prune older than since
+            customerAttempts.values().removeIf(r -> r.timestamp().isBefore(since));
+            return new ArrayList<>(customerAttempts.values());
         }
     }
 

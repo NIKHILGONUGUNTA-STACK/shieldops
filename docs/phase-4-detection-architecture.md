@@ -1,10 +1,10 @@
 # Aegis Phase 4 — Contextual API Threat Detection Architecture & Design Specification
 
-**Document Version:** 1.1.0  
-**Status:** ACTIVE / IMPLEMENTING (Phase 4.2 Verified: RULE-BOLA-01 End-to-End)  
-**Date:** October 25, 2026  
+**Document Version:** 1.2.0  
+**Status:** ACTIVE / IMPLEMENTING (Phase 4.3 Verified: Contextual Event Correlation)  
+**Date:** October 26, 2026  
 **Auditor / Architect:** Antigravity Advanced Agentic Coding  
-**Baseline Git Commit:** `60b0759f2c694ca6940a026e6e22fa67f139d10e`  
+**Baseline Git Commit:** `b97f7b4`  
 **Repository:** `NIKHILGONUGUNTA-STACK/shieldops`
 
 ---
@@ -509,20 +509,24 @@ gantt
     Redis Sliding-Window State Machine      :done, 2026-10-25, 2026-10-25
     RULE-BOLA-01 End-to-End Implementation   :done, 2026-10-25, 2026-10-25
     section Phase 4.3
-    Deterministic Rule Implementations (R2-R6):2026-10-26, 2026-10-28
-    Contextual Incident Manager             :2026-10-28, 2026-10-30
+    Contextual Correlation Layer            :done, 2026-10-26, 2026-10-26
+    Bayesian Confidence & Anti-Affinity     :done, 2026-10-26, 2026-10-26
     section Phase 4.4
-    Policy Decision Engine (Advisory)       :2026-10-30, 2026-11-01
-    Incident & Evidence Query APIs          :2026-11-01, 2026-11-03
+    Deterministic Rule Implementations (R2-R6):2026-10-27, 2026-10-29
+    Multi-Rule Cross-Vector Correlation     :2026-10-29, 2026-10-31
     section Phase 4.5
-    Ground-Truth Evaluation Benchmark       :2026-11-03, 2026-11-05
+    Policy Decision Engine (Advisory)       :2026-10-31, 2026-11-02
+    Incident & Evidence Query APIs          :2026-11-02, 2026-11-04
+    section Phase 4.6
+    Ground-Truth Evaluation Benchmark       :2026-11-04, 2026-11-06
 ```
 
 - **Phase 4.1 (Complete):** Detection Architecture, Rule Taxonomy, and Data Contracts.
-- **Phase 4.2 (Complete):** Flyway V2 migration, Redis sliding window (`RedisDetectionStateStore`), dual-group stream consumption, and `RULE-BOLA-01` verified end-to-end (100% precision/recall, 0 false positives).
-- **Phase 4.3:** Implementation of remaining candidate rules (`RULE-AUTH-01`, `RULE-DATA-01`, `RULE-RATE-01`, `RULE-INJ-01`, `RULE-PROBE-01`).
-- **Phase 4.4:** Policy evaluation service and Incident Query REST APIs for dashboard integration.
-- **Phase 4.5:** Labelled benchmark execution, precision/recall verification, and documentation sign-off.
+- **Phase 4.2 (Complete):** Flyway V2 migration, Redis sliding window (`RedisDetectionStateStore`), dual-group stream consumption, and `RULE-BOLA-01` verified end-to-end.
+- **Phase 4.3 (Complete):** Contextual Correlation Layer (`ContextualCorrelationEngine`, `BolaCampaignCorrelator`), Bayesian confidence combination, multi-resource campaign escalation (`CRITICAL BOLA_CAMPAIGN`), anti-affinity shared IP defense, and 128 platform tests passing.
+- **Phase 4.4:** Implementation of remaining candidate rules (`RULE-AUTH-01`, `RULE-DATA-01`, `RULE-RATE-01`, `RULE-INJ-01`, `RULE-PROBE-01`) and cross-rule correlation.
+- **Phase 4.5:** Policy evaluation service and Incident Query REST APIs for dashboard integration.
+- **Phase 4.6:** Labelled benchmark execution, precision/recall verification, and documentation sign-off.
 
 ---
 

@@ -89,14 +89,20 @@ public class RuleBola01 implements DetectionRule {
         Instant windowStart = eventTime.minusSeconds(windowSeconds);
         List<BolaAttemptRecord> attempts = stateStore.getRecentBolaAttempts(customerId, windowStart);
 
-        int observedCount = attempts.size();
+        Set<UUID> distinctEventIds = new LinkedHashSet<>();
         Set<String> distinctResources = new HashSet<>();
-        List<UUID> eventIds = new ArrayList<>();
 
         for (BolaAttemptRecord rec : attempts) {
-            distinctResources.add(rec.resourceId());
-            eventIds.add(rec.eventId());
+            if (rec.eventId() != null) {
+                distinctEventIds.add(rec.eventId());
+            }
+            if (rec.resourceId() != null && !rec.resourceId().isBlank()) {
+                distinctResources.add(rec.resourceId());
+            }
         }
+
+        int observedCount = distinctEventIds.size();
+        List<UUID> eventIds = new ArrayList<>(distinctEventIds);
 
         // 6. Check threshold criteria
         // Primary BOLA pattern: >= threshold attempts and >= minDistinctResources distinct targeted entities
