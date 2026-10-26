@@ -1,6 +1,6 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 4.4 Complete (Multi-Vector Threat Detection & Cross-Rule Correlation)
+## Current Milestone: Phase 5.1 Complete (Security Operations API Audit & Design)
 
 **Last Updated:** 2026-10-26  
 **Active Git Branch:** `main`  
@@ -74,4 +74,5 @@ All 9 platform services running and healthy via Docker Compose (`infrastructure/
 5. **Phase 4.2 (Completed):** First deterministic detection rule `RULE-BOLA-01` implemented end-to-end with Flyway V2, Redis sliding window, dual-group stream consumption, 17 unit/component tests, and live verification gate passing with 100% precision/recall.
 6. **Phase 4.3 (Completed):** Contextual Correlation layer implemented on top of `RULE-BOLA-01`, featuring Bayesian confidence combination, multi-resource campaign escalation (`CRITICAL BOLA_CAMPAIGN`), anti-affinity shared IP defense, 128 passing platform tests, and live evaluation benchmark.
 7. **Phase 4.4 (Completed):** Multi-Vector Detection and Cross-Rule Correlation (`RULE-AUTH-01`, `RULE-DATA-01`, `RULE-RATE-01`, `RULE-PROBE-01`, `RULE-INJ-01`), `MultiVectorCampaignCorrelator`, 192 platform tests, and expanded 14-scenario evaluation benchmark in `docs/phase-4-multivector-detection.md`.
-8. **Phase 5 (Next Increment):** Security Operations Dashboard & Analyst Console.
+8. **Phase 5.1 (Completed):** Security Operations API Audit, Gap Analysis, and REST Contract Specification in `docs/phase-5-api-design.md`.
+9. **Phase 5.2 (Next Increment):** Security Operations Backend REST Endpoints & Flyway V3 Indexes.
