@@ -4,6 +4,7 @@ import com.aegis.gateway.detection.model.BolaAttemptRecord;
 import com.aegis.gateway.detection.model.DetectionEvidence;
 import com.aegis.gateway.detection.model.RuleEvaluationResult;
 import com.aegis.gateway.detection.state.DetectionStateStore;
+import com.aegis.gateway.detection.state.InMemoryDetectionStateStore;
 import com.aegis.gateway.telemetry.ApiEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -258,28 +259,5 @@ class RuleBola01Test {
             0,
             0
         );
-    }
-
-    static class InMemoryDetectionStateStore implements DetectionStateStore {
-        private final Map<String, List<BolaAttemptRecord>> store = new ConcurrentHashMap<>();
-
-        @Override
-        public void recordBolaAttempt(String customerId, UUID eventId, String resourceId, Instant timestamp) {
-            store.computeIfAbsent(customerId, k -> new CopyOnWriteArrayList<>())
-                .add(new BolaAttemptRecord(eventId, resourceId, timestamp));
-        }
-
-        @Override
-        public List<BolaAttemptRecord> getRecentBolaAttempts(String customerId, Instant since) {
-            List<BolaAttemptRecord> records = store.getOrDefault(customerId, Collections.emptyList());
-            return records.stream()
-                .filter(r -> !r.timestamp().isBefore(since))
-                .toList();
-        }
-
-        @Override
-        public void clear(String customerId) {
-            store.remove(customerId);
-        }
     }
 }

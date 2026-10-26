@@ -10,7 +10,7 @@ Write-Host "=================================================================" -
 # 1. Clean slate for ground-truth measurement
 Write-Host "`n[Step 1] Preparing clean database state for ground-truth measurement..." -ForegroundColor Yellow
 docker exec aegis-postgres-1 psql -U aegis_owner -d aegis -c "TRUNCATE security_data.detection_evidence, security_data.incident_status_history, security_data.policy_decisions, security_data.incidents, security_data.api_events CASCADE;" | Out-Null
-docker exec aegis-redis-1 redis-cli DEL "aegis:state:bola:10000000-0000-4000-8000-000000000001" | Out-Null
+docker exec aegis-redis-1 redis-cli eval "for _,k in ipairs(redis.call('keys','aegis:state:*')) do redis.call('del',k) end" 0 | Out-Null
 
 # 2. Acquire JWT for customer alex.morgan
 Write-Host "`n[Step 2] Acquiring JWT from Keycloak for alex.morgan..." -ForegroundColor Yellow

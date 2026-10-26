@@ -2,6 +2,7 @@ package com.aegis.gateway.detection.incident;
 
 import com.aegis.gateway.detection.correlation.BolaCampaignCorrelator;
 import com.aegis.gateway.detection.correlation.ContextualCorrelationEngine;
+import com.aegis.gateway.detection.correlation.MultiVectorCampaignCorrelator;
 import com.aegis.gateway.detection.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +28,7 @@ public class IncidentService {
     }
 
     public IncidentService(IncidentRepository repository) {
-        this(repository, new ContextualCorrelationEngine(List.of(new BolaCampaignCorrelator()), repository, null));
+        this(repository, new ContextualCorrelationEngine(List.of(new BolaCampaignCorrelator(), new MultiVectorCampaignCorrelator()), repository, null));
     }
 
     @Transactional

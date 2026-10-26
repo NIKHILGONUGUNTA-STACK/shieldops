@@ -290,4 +290,86 @@ class ContextualCorrelationEngineTest {
         verify(repository, never()).updateIncident(any());
         verify(repository, never()).saveStatusHistory(any());
     }
+
+    @Test
+    @DisplayName("Should assign correct threat categories and advisory policy rules for diverse detection rules")
+    void testCreateNewIncidentForDifferentRuleTypes() {
+        // Test RULE-AUTH-01
+        DetectionEvidence authEv = new DetectionEvidence(
+            UUID.randomUUID(), null, "RULE-AUTH-01", "1.0.0", Instant.now(),
+            0.85, "MEDIUM", "observed >= 5", 5, 120, 1, "{}", List.of(UUID.randomUUID()), Instant.now()
+        );
+        RuleEvaluationResult authRes = RuleEvaluationResult.triggered(
+            "RULE-AUTH-01", "1.0.0", "IP", "192.168.1.50", authEv, "Auth brute force"
+        );
+        SecurityIncident authInc = engine.correlateAndProcess(authRes);
+        assertThat(authInc.threatCategory()).isEqualTo("CREDENTIAL_ACCESS");
+
+        // Test RULE-DATA-01
+        DetectionEvidence dataEv = new DetectionEvidence(
+            UUID.randomUUID(), null, "RULE-DATA-01", "1.0.0", Instant.now(),
+            0.85, "MEDIUM", "records >= 40", 4, 120, 4, "{}", List.of(UUID.randomUUID()), Instant.now()
+        );
+        RuleEvaluationResult dataRes = RuleEvaluationResult.triggered(
+            "RULE-DATA-01", "1.0.0", "CUSTOMER", "cust-data", dataEv, "Excessive data access"
+        );
+        SecurityIncident dataInc = engine.correlateAndProcess(dataRes);
+        assertThat(dataInc.threatCategory()).isEqualTo("EXCESSIVE_DATA_ACCESS");
+
+        // Test RULE-INJ-01
+        DetectionEvidence injEv = new DetectionEvidence(
+            UUID.randomUUID(), null, "RULE-INJ-01", "1.0.0", Instant.now(),
+            0.90, "HIGH", "SQL injection pattern", 1, 180, 1, "{}", List.of(UUID.randomUUID()), Instant.now()
+        );
+        RuleEvaluationResult injRes = RuleEvaluationResult.triggered(
+            "RULE-INJ-01", "1.0.0", "CUSTOMER", "cust-inj", injEv, "SQL injection"
+        );
+        SecurityIncident injInc = engine.correlateAndProcess(injRes);
+        assertThat(injInc.threatCategory()).isEqualTo("INJECTION_ATTACK");
+    }
+
+    @Test
+    @DisplayName("Should correlate cross-rule sequence into MULTI_VECTOR_CAMPAIGN via MultiVectorCampaignCorrelator")
+    void testCrossRuleCorrelationViaEngine() {
+        ContextualCorrelationEngine multiEngine = new ContextualCorrelationEngine(
+            List.of(new BolaCampaignCorrelator(), new MultiVectorCampaignCorrelator()),
+            repository,
+            meterRegistry
+        );
+
+        UUID activeId = UUID.randomUUID();
+        Instant now = Instant.now();
+        String customerId = "cust-mv-flow";
+
+        SecurityIncident activeIncident = new SecurityIncident(
+            activeId, "fp-flow", "RULE-PROBE-01", "1.0.0", "RECON_PROBE", "MEDIUM",
+            IncidentStatus.OPEN, "CUSTOMER", customerId, now.minusSeconds(100), now, 4,
+            "Initial probe", now.minusSeconds(100), now
+        );
+
+        DetectionEvidence pastEv = new DetectionEvidence(
+            UUID.randomUUID(), activeId, "RULE-PROBE-01", "1.0.0", now.minusSeconds(50),
+            0.85, "MEDIUM", "probe trigger", 4, 180, 4, "{}", List.of(UUID.randomUUID()), now.minusSeconds(50)
+        );
+
+        when(repository.findActiveByTarget("CUSTOMER", customerId)).thenReturn(Optional.of(activeIncident));
+        when(repository.findEvidenceByIncidentId(activeId)).thenReturn(List.of(pastEv));
+
+        // Incoming RULE-BOLA-01 evidence for the same customer
+        DetectionEvidence bolaEv = new DetectionEvidence(
+            UUID.randomUUID(), null, "RULE-BOLA-01", "1.0.0", now,
+            0.95, "HIGH", "BOLA trigger", 3, 300, 3, "{}", List.of(UUID.randomUUID()), now
+        );
+
+        RuleEvaluationResult bolaRes = RuleEvaluationResult.triggered(
+            "RULE-BOLA-01", "1.0.0", "CUSTOMER", customerId, bolaEv, "BOLA attack"
+        );
+
+        SecurityIncident updated = multiEngine.correlateAndProcess(bolaRes);
+
+        assertThat(updated).isNotNull();
+        assertThat(updated.threatCategory()).isEqualTo("MULTI_VECTOR_CAMPAIGN");
+        assertThat(updated.severity()).isEqualTo("HIGH");
+        verify(repository).updateIncident(any());
+    }
 }

@@ -37,6 +37,9 @@ public class TelemetryFilter extends OncePerRequestFilter {
     private static final Pattern CUST_PATH_PATTERN = Pattern.compile("^/(api/v1/)?customers/([0-9a-fA-F-]+)(/profile)?");
     private static final Pattern ACCT_PATH_PATTERN = Pattern.compile("^/(api/v1/)?accounts/([0-9a-fA-F-]+|ACCT-[a-zA-Z0-9_-]+)(/balance)?");
     private static final Pattern TX_PATH_PATTERN = Pattern.compile("^/(api/v1/)?transfers/([0-9a-fA-F-]+)");
+    private static final Pattern INJECTION_CHECK_PATTERN = Pattern.compile(
+        "(?i)(\\b(UNION(\\s+ALL)?\\s+SELECT|SELECT\\s+.+\\s+FROM|INSERT\\s+INTO|DROP\\s+(TABLE|DATABASE)|WAITFOR\\s+DELAY|SLEEP\\(\\d+\\))\\b|'\\s+OR\\s+('1'='1|1=1)|--|\\.\\./|\\.\\.\\\\|%2e%2e|(;|\\|)\\s*(cat|ls|id|whoami|sh|bash)\\b|<\\s*script\\b|javascript\\s*:|onload\\s*=|onerror\\s*=)"
+    );
 
     private final StringRedisTemplate redisTemplate;
     private final ApiEventRepository repository;
@@ -150,16 +153,45 @@ public class TelemetryFilter extends OncePerRequestFilter {
                 userAgent = userAgent.substring(0, 255);
             }
 
+            String uri = request.getRequestURI();
+            String queryString = request.getQueryString();
+            boolean hasInjectionPattern = false;
+            if (queryString != null && !queryString.isBlank()) {
+                String decodedQuery = "";
+                try {
+                    decodedQuery = java.net.URLDecoder.decode(queryString, StandardCharsets.UTF_8);
+                } catch (Exception ignored) {
+                    decodedQuery = queryString;
+                }
+                if (INJECTION_CHECK_PATTERN.matcher(decodedQuery).find()) {
+                    hasInjectionPattern = true;
+                }
+            }
+            if (!hasInjectionPattern && uri != null) {
+                String decodedUri = uri;
+                try {
+                    decodedUri = java.net.URLDecoder.decode(uri, StandardCharsets.UTF_8);
+                } catch (Exception ignored) {
+                    decodedUri = uri;
+                }
+                if (INJECTION_CHECK_PATTERN.matcher(decodedUri).find() || INJECTION_CHECK_PATTERN.matcher(uri).find()) {
+                    hasInjectionPattern = true;
+                }
+            }
+
             String anomalyFlags = "NONE";
-            if (statusCode == 401) {
+            if (hasInjectionPattern) {
+                anomalyFlags = "INJECTION_INDICATOR";
+            } else if (statusCode == 401) {
                 anomalyFlags = "UNAUTHENTICATED_ACCESS";
             } else if (statusCode == 403) {
                 anomalyFlags = "FORBIDDEN_ATTEMPT";
+            } else if (statusCode == 400) {
+                anomalyFlags = "VALIDATION_ERROR";
             } else if (statusCode >= 500) {
                 anomalyFlags = "SERVER_ERROR";
             }
 
-            String uri = request.getRequestURI();
             String routeTemplate = normalizeRouteTemplate(uri);
 
             // Resource context extraction
@@ -199,7 +231,9 @@ public class TelemetryFilter extends OncePerRequestFilter {
             byte[] respBytes = response.getContentAsByteArray();
             long responseSizeBytes = respBytes != null ? respBytes.length : 0L;
 
-            if (statusCode == 403) {
+            if (hasInjectionPattern) {
+                errorCode = "INJECTION_DETECTED";
+            } else if (statusCode == 403) {
                 String respBody = respBytes != null ? new String(respBytes, StandardCharsets.UTF_8) : "";
                 if (respBody.contains("Access to another customer") ||
                     (resourceId != null && !customerId.isBlank() && !customerId.equalsIgnoreCase(resourceId) &&
@@ -212,6 +246,8 @@ public class TelemetryFilter extends OncePerRequestFilter {
                 }
             } else if (statusCode == 401) {
                 errorCode = "UNAUTHENTICATED";
+            } else if (statusCode == 400) {
+                errorCode = "VALIDATION_ERROR";
             } else if (statusCode == 404) {
                 errorCode = "NOT_FOUND";
             } else if (statusCode >= 500) {
