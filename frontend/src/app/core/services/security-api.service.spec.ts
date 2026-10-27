@@ -111,8 +111,8 @@ describe('SecurityApiService', () => {
         req.url === `${environment.apiBaseUrl}/api/v1/security/incidents` &&
         req.params.get('status') === 'OPEN' &&
         req.params.get('severity') === 'CRITICAL' &&
-        req.params.get('sortField') === 'created_at' &&
-        req.params.get('sortDirection') === 'desc'
+        req.params.get('sortBy') === 'created_at' &&
+        req.params.get('sortDirection') === 'DESC'
       );
       expect(req.request.method).toBe('GET');
       req.flush({ incidents: [], page: 0, size: 20, totalElements: 0, totalPages: 0, first: true, last: true });

@@ -1,6 +1,6 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 5.3 Complete (Angular SOC Dashboard Foundation)
+## Current Milestone: Phase 5.4 Complete (Incident Triage, Investigation and API Event Explorer)
 
 **Last Updated:** 2026-10-27
 **Active Git Branch:** `main`
@@ -27,7 +27,7 @@
 ### 1.2 Frontend SOC Dashboard (Angular 18 / TypeScript / Node 22)
 - **Framework & Tooling:** Angular 18.2.21 / Node.js 22.20.0 / npm 10.9.3
 - **Test Runner:** Karma 6.4 / Jasmine 5.2 / ChromeHeadless
-- **Production Build:** `dist/aegis-frontend` (325.9 kB initial bundle, 91.5 kB transfer, 0 warnings)
+- **Production Build:** `dist/aegis-frontend` (329.6 kB initial bundle, 91.16 kB transfer, 0 warnings, 0 errors)
 
 | Test Suite | Spec File | Tests Run | Failures | Status |
 | :--- | :--- | :---: | :---: | :--- |
@@ -36,8 +36,11 @@
 | **Auth Service** | `auth.service.spec.ts` | 3 | 0 | **SUCCESS** |
 | **Auth Guard** | `auth.guard.spec.ts` | 3 | 0 | **SUCCESS** |
 | **Overview Component** | `overview.component.spec.ts` | 3 | 0 | **SUCCESS** |
-| **Badge Components** | (Included in shell tests) | 1 | 0 | **SUCCESS** |
-| **Total Frontend Tests** | — | **19** | **0** | **BUILD SUCCESS** |
+| **Badge Components** | `badge.component.spec.ts` | 1 | 0 | **SUCCESS** |
+| **Incidents Queue** | `incidents-list.component.spec.ts` | 5 | 0 | **SUCCESS** |
+| **Incident Detail** | `incident-detail.component.spec.ts` | 6 | 0 | **SUCCESS** |
+| **Event Explorer** | `events.component.spec.ts` | 6 | 0 | **SUCCESS** |
+| **Total Frontend Tests** | — | **36** | **0** | **BUILD SUCCESS** |
 
 ---
 
@@ -95,7 +98,45 @@ All 9 platform services running and healthy via Docker Compose (`infrastructure/
 
 ---
 
-## 4. Multi-Phase Progression Path
+## 4. Phase 5.4 Deliverables Checklist (Incident Triage, Investigation & Event Explorer)
+
+- [x] **Incident Triage Queue (`/incidents`):**
+  - Connected to live `GET /api/v1/security/incidents`.
+  - Server-side pagination (`page`, `size`) and column sorting (`sortBy`, `sortDirection`).
+  - Multi-attribute filters: status (`OPEN`, `INVESTIGATING`, `CONTAINED`, `RESOLVED`, `FALSE_POSITIVE`), severity (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`, `INFO`), and threat category (`BOLA`, `BFLA`, `INJECTION`, `RATE_LIMIT_ABUSE`, `RECONNAISSANCE`, `DATA_EXFILTRATION`, `MULTI_VECTOR_CAMPAIGN`).
+  - Bi-directional URL query parameter synchronization (`?status=...&severity=...&page=...`).
+  - Resilient states: loading indicators, empty states, and RFC 7807 error alert panels with retry capability.
+  - Accessible, compact SOC table with row navigation to `/incidents/:id`.
+  - Zero hardcoded incident records.
+- [x] **Forensic Incident Investigation Workspace (`/incidents/:id`):**
+  - Concurrently queries `GET /api/v1/security/incidents/{id}`, `/evidence`, `/history`, and `/policy-decisions`.
+  - Identity banner: incident ID, title, status, severity badge, threat category, timestamps.
+  - Empirical Bayesian heuristic confidence score bar with explicit non-probabilistic documentation.
+  - Contributing evidence list with detector rule IDs and contributing event chips navigating to `/events?correlationId=...`.
+  - Chronological audit lifecycle timeline with timestamps, authenticated actors, previous status, target status, and analyst transition rationales.
+  - Advisory policy decisions displaying non-blocking `LOG_ALERT` rationales.
+  - Resilient error handling for missing incidents (HTTP 404) and partial API failures.
+- [x] **Analyst Status Transition Modal (`PATCH /api/v1/security/incidents/{id}/status`):**
+  - Authoritative backend state machine target status selection.
+  - Terminal status reopen protection: reopening `RESOLVED` or `FALSE_POSITIVE` requires `ROLE_SECURITY_ADMIN`. UI checks `auth.isSecurityAdmin()` and disables unauthorized reopen attempts.
+  - Mandatory 5–512 character reason validation matching backend rules.
+  - Interactive confirmation dialog, pending states, error/conflict handling (HTTP 409), and automatic detail/audit refresh on success.
+  - Strict preservation of advisory invariant (no automatic blocking, throttling, or credential revocation).
+- [x] **API Event Explorer (`/events`):**
+  - Connected to live `GET /api/v1/security/events` and `GET /api/v1/security/events/{id}`.
+  - Server-side filtering by HTTP status, HTTP method, customer ID, source IP, anomaly indicators, and correlation ID.
+  - Server-side pagination with page size controls.
+  - Slide-in event inspection drawer for inspecting headers, request URI, client IP, anomaly flags, and correlation metadata.
+  - Direct contextual navigation between events and incident queue. Zero fabricated links.
+- [x] **Automated Test Suites & Production Build:**
+  - 36 automated unit tests passing across all components, guards, and services (`TOTAL: 36 SUCCESS`).
+  - Production build completed with 0 errors and 0 warnings (raw bundle 329.6 kB, gzipped 91.16 kB).
+  - 150 backend platform tests passing (`mvn test`).
+  - 28/28 live verification gate passing (`verify-phase5-api.ps1`).
+
+---
+
+## 5. Multi-Phase Progression Path
 
 1. **Phase 2 (Completed):** FinTech foundation with 45 automated tests, service-layer orchestration, RFC 7807 error handling, and verified runtime idempotency.
 2. **Phase 3 (Completed):** Established security path (API Gateway routing, Keycloak OIDC/JWT perimeter enforcement, gateway bypass defense, request correlation, and privacy-conscious telemetry capture).
@@ -107,4 +148,4 @@ All 9 platform services running and healthy via Docker Compose (`infrastructure/
 8. **Phase 5.1 (Completed):** Security Operations API Audit, Gap Analysis, and REST Contract Specification in `docs/phase-5-api-design.md`.
 9. **Phase 5.2 (Completed):** Security Operations Backend REST Endpoints, Flyway V3 Indexes, 150 automated platform tests, and 28/28 live verification gate.
 10. **Phase 5.3 (Completed):** Angular 18 SOC Dashboard Foundation, Keycloak PKCE Authentication, Design System Tokens, Typed API Service Layer, and Live Overview Dashboard.
-11. **Phase 5.4 (Next Increment):** Interactive Incident Triage Queue, Forensics Timeline Modal, Status Transition Workflows, and End-to-End Verification Gate.
+11. **Phase 5.4 (Completed):** Interactive Incident Triage Queue, Forensic Investigation Workspace, Analyst Status Transitions, API Event Explorer, 36 unit tests, and production build verification.

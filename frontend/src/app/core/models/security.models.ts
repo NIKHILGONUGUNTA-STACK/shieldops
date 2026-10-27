@@ -156,8 +156,11 @@ export interface IncidentFilterParams {
   status?: IncidentStatus;
   severity?: IncidentSeverity;
   threatCategory?: string;
+  sortBy?: string;
   sortField?: string;
   sortDirection?: 'asc' | 'desc';
+  from?: string;
+  to?: string;
 }
 
 export interface EventFilterParams {

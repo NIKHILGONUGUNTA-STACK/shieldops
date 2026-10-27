@@ -81,8 +81,11 @@ export class SecurityApiService {
       if (filterParams.status) params = params.set('status', filterParams.status);
       if (filterParams.severity) params = params.set('severity', filterParams.severity);
       if (filterParams.threatCategory) params = params.set('threatCategory', filterParams.threatCategory);
-      if (filterParams.sortField) params = params.set('sortField', filterParams.sortField);
-      if (filterParams.sortDirection) params = params.set('sortDirection', filterParams.sortDirection);
+      const sort = filterParams.sortBy || filterParams.sortField;
+      if (sort) params = params.set('sortBy', sort);
+      if (filterParams.sortDirection) params = params.set('sortDirection', filterParams.sortDirection.toUpperCase());
+      if (filterParams.from) params = params.set('from', filterParams.from);
+      if (filterParams.to) params = params.set('to', filterParams.to);
     }
 
     return this.http.get<IncidentPageResponse>(`${this.baseUrl}/api/v1/security/incidents`, { params })
