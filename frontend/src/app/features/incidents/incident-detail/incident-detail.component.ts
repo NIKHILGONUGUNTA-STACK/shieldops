@@ -45,10 +45,12 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
 
         <div class="soc-controls" *ngIf="incident() as inc">
           <button (click)="openStatusModal()" class="btn btn-primary">
-            <span>⚡</span> Transition Status
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            Transition Status
           </button>
           <button (click)="refresh()" class="btn btn-secondary btn-sm" [disabled]="loading()">
-            <span>↻</span> Refresh
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            Refresh
           </button>
         </div>
       </div>
@@ -59,7 +61,9 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
       <!-- Error State (e.g. 404 Not Found) -->
       <div *ngIf="error()" class="error-panel soc-card">
         <div class="error-header">
-          <span class="error-icon">⚠️</span>
+          <span class="error-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF4D5A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </span>
           <span class="error-title">{{ error()?.title || 'Incident Investigation Error' }}</span>
         </div>
         <p class="error-detail">{{ error()?.detail || 'Incident could not be found or access is unauthorized.' }}</p>
@@ -187,7 +191,9 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
               </div>
 
               <div class="advisory-notice">
-                <span class="notice-bullet">ℹ</span>
+                <span class="notice-bullet">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4A6CFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                </span>
                 <span>
                   <strong>Advisory Invariant:</strong> Aegis functions strictly in advisory alert mode.
                   Automatic blocking, IP blacklisting, or credential invalidation are intentionally bypassed to preserve customer availability.
@@ -245,7 +251,9 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
         <div class="modal-dialog soc-card">
           <div class="modal-header">
             <h3 class="modal-title">Transition Incident Status</h3>
-            <button (click)="closeStatusModal()" class="modal-close" [disabled]="transitioning()">✕</button>
+            <button (click)="closeStatusModal()" class="modal-close" [disabled]="transitioning()" aria-label="Close">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
 
           <div class="modal-body">
@@ -256,7 +264,9 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
 
             <!-- Terminal Reopening Warning -->
             <div *ngIf="isTerminalStatus() && !auth.isSecurityAdmin()" class="alert-box warning">
-              <span>⚠️</span>
+              <span class="alert-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF7A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              </span>
               <div>
                 <strong>Restricted Action:</strong> Reopening a terminal incident (RESOLVED or FALSE_POSITIVE) requires
                 <span class="mono">SECURITY_ADMIN</span> authorization.
@@ -297,7 +307,9 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
 
             <!-- Modal Error Display -->
             <div *ngIf="modalError()" class="alert-box error mt-3">
-              <span>⚠️</span>
+              <span class="alert-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF4D5A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </span>
               <div>{{ modalError() }}</div>
             </div>
           </div>

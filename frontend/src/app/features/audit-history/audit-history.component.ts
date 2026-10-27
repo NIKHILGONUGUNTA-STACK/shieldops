@@ -23,21 +23,26 @@ import { catchError } from 'rxjs/operators';
 
         <div class="header-stat-pills">
           <div class="soc-stat-pill">
-            <div class="soc-stat-icon teal">📜</div>
+            <div class="soc-stat-icon teal">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            </div>
             <div class="soc-stat-content">
               <span class="soc-stat-val">{{ historyRecords.length }}</span>
               <span class="soc-stat-sub">Audit Events</span>
             </div>
           </div>
           <button (click)="loadAuditHistory()" class="btn btn-secondary btn-sm" [disabled]="loading">
-            {{ loading ? 'Refreshing...' : '↻ Refresh' }}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            {{ loading ? 'Refreshing...' : 'Refresh' }}
           </button>
         </div>
       </div>
 
       <!-- Error State -->
       <div *ngIf="error" class="error-banner" role="alert">
-        <span class="error-icon">⚠️</span>
+        <span class="error-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF4D5A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </span>
         <div>
           <div class="error-title">{{ error.title }}</div>
           <div class="error-detail">{{ error.detail }}</div>
@@ -53,7 +58,9 @@ import { catchError } from 'rxjs/operators';
 
       <!-- Empty State -->
       <div *ngIf="!loading && !error && historyRecords.length === 0" class="empty-state">
-        <div class="empty-icon">🛡️</div>
+        <div class="empty-icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#6E7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
         <h3>No Audit Records Found</h3>
         <p>No analyst status transitions have been logged for current incidents.</p>
       </div>

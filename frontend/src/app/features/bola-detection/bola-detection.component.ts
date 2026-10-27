@@ -22,14 +22,20 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
 
         <div class="header-stat-pills">
           <div class="soc-stat-pill">
-            <div class="soc-stat-icon teal">🛡️</div>
+            <div class="soc-stat-icon teal">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <polyline points="9 12 11 14 15 10"></polyline>
+              </svg>
+            </div>
             <div class="soc-stat-content">
               <span class="soc-stat-val">{{ incidents.length }}</span>
               <span class="soc-stat-sub">BOLA Incidents</span>
             </div>
           </div>
           <button (click)="loadBolaIncidents()" class="btn btn-secondary btn-sm" [disabled]="loading">
-            {{ loading ? 'Refreshing...' : '↻ Refresh' }}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            {{ loading ? 'Refreshing...' : 'Refresh' }}
           </button>
         </div>
       </div>
@@ -38,7 +44,12 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
       <div class="mechanisms-grid">
         <div class="mech-card">
           <div class="mech-header">
-            <span class="mech-icon">⏱️</span>
+            <span class="mech-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </span>
             <h3>Redis Sliding Window</h3>
           </div>
           <p class="mech-desc">
@@ -50,7 +61,13 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
 
         <div class="mech-card">
           <div class="mech-header">
-            <span class="mech-icon">🌐</span>
+            <span class="mech-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg>
+            </span>
             <h3>Anti-Affinity Cross-Tenant Defense</h3>
           </div>
           <p class="mech-desc">
@@ -62,7 +79,13 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
 
         <div class="mech-card">
           <div class="mech-header">
-            <span class="mech-icon">📊</span>
+            <span class="mech-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
+            </span>
             <h3>Dual-Group Stream Consumption</h3>
           </div>
           <p class="mech-desc">
@@ -76,7 +99,13 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
       <!-- Authorization Outcome Interpretation Notice -->
       <div class="bola-interpretation-banner">
         <div class="interpretation-header">
-          <span class="interpretation-icon">⚖️</span>
+          <span class="interpretation-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+          </span>
           <strong>Authorization Outcome & Breach Distinction</strong>
         </div>
         <p class="interpretation-desc">
@@ -91,7 +120,13 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
         <h2 class="section-heading">BOLA Detection Incidents Queue</h2>
 
         <div *ngIf="error" class="error-banner" role="alert">
-          <span class="error-icon">⚠️</span>
+          <span class="error-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </span>
           <div>
             <div class="error-title">{{ error.title }}</div>
             <div class="error-detail">{{ error.detail }}</div>
@@ -105,7 +140,12 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
         </div>
 
         <div *ngIf="!loading && !error && incidents.length === 0" class="empty-state">
-          <div class="empty-icon">🛡️</div>
+          <div class="empty-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+          </div>
           <h3>Zero BOLA Incidents</h3>
           <p>No Broken Object Level Authorization violations detected in current operations.</p>
         </div>

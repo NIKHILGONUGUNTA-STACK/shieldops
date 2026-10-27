@@ -23,21 +23,26 @@ import { catchError } from 'rxjs/operators';
 
         <div class="header-stat-pills">
           <div class="soc-stat-pill">
-            <div class="soc-stat-icon teal">🔬</div>
+            <div class="soc-stat-icon teal">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg>
+            </div>
             <div class="soc-stat-content">
               <span class="soc-stat-val">{{ evidenceList.length }}</span>
               <span class="soc-stat-sub">Persisted Evidence Items</span>
             </div>
           </div>
           <button (click)="loadAllEvidence()" class="btn btn-secondary btn-sm" [disabled]="loading">
-            {{ loading ? 'Refreshing...' : '↻ Refresh' }}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            {{ loading ? 'Refreshing...' : 'Refresh' }}
           </button>
         </div>
       </div>
 
       <!-- Heuristic Confidence Notice -->
       <div class="heuristic-notice">
-        <span class="notice-icon">ℹ️</span>
+        <span class="notice-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A6CFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        </span>
         <div>
           <strong>Empirical Heuristic Metric:</strong> Confidence scores are derived from empirical Bayesian rule combination
           and sliding-window resource counts. They do not represent calibrated frequentist or statistical probabilities.
@@ -46,7 +51,9 @@ import { catchError } from 'rxjs/operators';
 
       <!-- Error State -->
       <div *ngIf="error" class="error-banner" role="alert">
-        <span class="error-icon">⚠️</span>
+        <span class="error-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF4D5A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </span>
         <div>
           <div class="error-title">{{ error.title }}</div>
           <div class="error-detail">{{ error.detail }}</div>
@@ -62,7 +69,9 @@ import { catchError } from 'rxjs/operators';
 
       <!-- Empty State -->
       <div *ngIf="!loading && !error && evidenceList.length === 0" class="empty-state">
-        <div class="empty-icon">🛡️</div>
+        <div class="empty-icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#6E7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
         <h3>No Evidence Records Found</h3>
         <p>No detection evidence has been persisted for current security incidents.</p>
       </div>

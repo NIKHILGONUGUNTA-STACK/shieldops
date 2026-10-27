@@ -22,7 +22,9 @@ import { environment } from '../../../environments/environment';
         <!-- Security Invariant Card -->
         <div class="settings-card">
           <div class="card-header">
-            <span class="header-icon">🛡️</span>
+            <span class="header-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF7A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </span>
             <h3>Security Enforcement Invariant</h3>
           </div>
           <p class="card-desc">
@@ -53,7 +55,9 @@ import { environment } from '../../../environments/environment';
         <!-- Identity Provider & Keycloak Card -->
         <div class="settings-card">
           <div class="card-header">
-            <span class="header-icon">🔑</span>
+            <span class="header-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7B61FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+            </span>
             <h3>Identity & Access Management</h3>
           </div>
           <p class="card-desc">
@@ -89,7 +93,9 @@ import { environment } from '../../../environments/environment';
         <!-- Gateway Telemetry Card -->
         <div class="settings-card">
           <div class="card-header">
-            <span class="header-icon">⚡</span>
+            <span class="header-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C48A45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </span>
             <h3>Gateway Telemetry & Privacy</h3>
           </div>
           <p class="card-desc">
@@ -127,7 +133,9 @@ import { environment } from '../../../environments/environment';
         <!-- Database & Persistence Card -->
         <div class="settings-card">
           <div class="card-header">
-            <span class="header-icon">🐘</span>
+            <span class="header-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4A6CFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            </span>
             <h3>Data Persistence Tier</h3>
           </div>
           <p class="card-desc">

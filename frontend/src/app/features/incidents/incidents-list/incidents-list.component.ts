@@ -40,7 +40,8 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 
         <div class="soc-controls">
           <button (click)="refresh()" class="btn btn-secondary btn-sm" [disabled]="loading()">
-            <span>↻</span> Refresh Queue
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            Refresh Queue
           </button>
         </div>
       </div>
@@ -151,7 +152,9 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
       <!-- Error State -->
       <div *ngIf="error()" class="error-panel soc-card">
         <div class="error-header">
-          <span class="error-icon">⚠️</span>
+          <span class="error-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF4D5A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </span>
           <span class="error-title">Failed to load Incident Queue</span>
         </div>
         <p class="error-detail">{{ error()?.detail || 'An unexpected error occurred while communicating with the server.' }}</p>

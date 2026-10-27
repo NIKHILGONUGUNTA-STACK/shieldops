@@ -30,7 +30,8 @@ interface HealthTier {
         <div class="header-stat-pills">
           <div class="soc-stat-pill">
             <div class="soc-stat-icon" [ngClass]="overallStatus === 'UP' ? 'teal' : 'amber'">
-              {{ overallStatus === 'UP' ? '✓' : '!' }}
+              <svg *ngIf="overallStatus === 'UP'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <svg *ngIf="overallStatus !== 'UP'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             </div>
             <div class="soc-stat-content">
               <span class="soc-stat-val">{{ overallStatus }}</span>
@@ -38,7 +39,8 @@ interface HealthTier {
             </div>
           </div>
           <button (click)="checkHealth()" class="btn btn-secondary btn-sm" [disabled]="loading">
-            {{ loading ? 'Checking...' : '↻ Refresh' }}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            {{ loading ? 'Checking...' : 'Refresh' }}
           </button>
         </div>
       </div>
@@ -48,7 +50,12 @@ interface HealthTier {
         <div *ngFor="let tier of tiers" class="tier-card" [class.healthy]="tier.status === 'UP'">
           <div class="tier-card-header">
             <div class="tier-info">
-              <span class="tier-icon">{{ tier.icon }}</span>
+              <span class="tier-icon">
+                <svg *ngIf="tier.icon === 'shield'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF7A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <svg *ngIf="tier.icon === 'zap'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C48A45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <svg *ngIf="tier.icon === 'database'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4A6CFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                <svg *ngIf="tier.icon === 'key'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7B61FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+              </span>
               <div>
                 <h3 class="tier-name">{{ tier.name }}</h3>
                 <span class="tier-service mono text-muted">{{ tier.service }}</span>
@@ -264,7 +271,7 @@ export class SystemHealthComponent implements OnInit {
       status: 'CHECKING',
       endpoint: 'http://127.0.0.1:8000/actuator/health',
       details: 'Gateway router, Keycloak JWT perimeter enforcement, and threat detection correlation engines.',
-      icon: '🛡️'
+      icon: 'shield'
     },
     {
       id: 'redis',
@@ -273,7 +280,7 @@ export class SystemHealthComponent implements OnInit {
       status: 'CHECKING',
       endpoint: '127.0.0.1:6379 (Stream: aegis:stream:api-events)',
       details: 'Dual-group consumer stream ingestion and rolling window state store for BOLA and rate anomaly rules.',
-      icon: '⚡'
+      icon: 'zap'
     },
     {
       id: 'postgres',
@@ -282,7 +289,7 @@ export class SystemHealthComponent implements OnInit {
       status: 'CHECKING',
       endpoint: '127.0.0.1:5433 (Schema: security_data)',
       details: 'Persisted telemetry records, security incidents, evidence graphs, and status history logs.',
-      icon: '🐘'
+      icon: 'database'
     },
     {
       id: 'keycloak',
@@ -291,7 +298,7 @@ export class SystemHealthComponent implements OnInit {
       status: 'CHECKING',
       endpoint: 'http://127.0.0.1:8080/realms/aegis-dev',
       details: 'Authorization Code Flow with PKCE S256, role-based access control (SECURITY_ANALYST, SECURITY_ADMIN).',
-      icon: '🔑'
+      icon: 'key'
     }
   ];
 

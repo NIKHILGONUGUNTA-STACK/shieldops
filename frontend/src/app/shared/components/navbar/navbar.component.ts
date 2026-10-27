@@ -25,7 +25,12 @@ import { LayoutService } from '../../../core/services/layout.service';
         </button>
 
         <a routerLink="/overview" class="brand-link" title="Aegis Security Operations Center">
-          <span class="brand-shield">🛡️</span>
+          <span class="brand-shield">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+          </span>
           <span class="brand-name">AEGIS <span class="brand-accent">SOC</span></span>
         </a>
 
