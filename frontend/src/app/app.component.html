@@ -1,0 +1,11 @@
+<div class="soc-shell">
+  <app-navbar></app-navbar>
+
+  <div class="soc-body" [class.no-sidebar]="isLoginRoute">
+    <app-sidebar *ngIf="!isLoginRoute"></app-sidebar>
+
+    <main class="soc-viewport">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

@@ -1,0 +1,324 @@
+/* ==========================================================================
+   Aegis SOC Design System & Reusable Design Tokens
+   Theme: Restrained Dark Navy & Slate with Tactical Teal Accents
+   ========================================================================== */
+
+:root {
+  /* Surfaces & Backgrounds */
+  --bg-canvas: #090d16;
+  --bg-surface: #0f172a;
+  --bg-card: #141e33;
+  --bg-card-hover: #1a2742;
+  --bg-header: #0b1120;
+  --bg-sidebar: #0b1120;
+  --bg-input: #0a0f1d;
+  --bg-subtle: #1e293b;
+
+  /* Borders */
+  --border-subtle: #1e293b;
+  --border-default: #26354a;
+  --border-focus: #14b8a6;
+  --border-card: rgba(255, 255, 255, 0.06);
+
+  /* Typography Colors */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-inverse: #090d16;
+
+  /* Accent: Tactical Teal */
+  --accent-teal: #14b8a6;
+  --accent-teal-hover: #0d9488;
+  --accent-teal-subtle: rgba(20, 184, 166, 0.12);
+  --accent-teal-border: rgba(20, 184, 166, 0.35);
+
+  /* Severity States */
+  --sev-critical: #ef4444;
+  --sev-critical-bg: rgba(239, 68, 68, 0.14);
+  --sev-critical-border: rgba(239, 68, 68, 0.35);
+
+  --sev-high: #f97316;
+  --sev-high-bg: rgba(249, 115, 22, 0.14);
+  --sev-high-border: rgba(249, 115, 22, 0.35);
+
+  --sev-medium: #eab308;
+  --sev-medium-bg: rgba(234, 179, 8, 0.14);
+  --sev-medium-border: rgba(234, 179, 8, 0.35);
+
+  --sev-low: #38bdf8;
+  --sev-low-bg: rgba(56, 189, 248, 0.14);
+  --sev-low-border: rgba(56, 189, 248, 0.35);
+
+  --sev-info: #94a3b8;
+  --sev-info-bg: rgba(148, 163, 184, 0.14);
+  --sev-info-border: rgba(148, 163, 184, 0.35);
+
+  /* Status States */
+  --status-open: #f59e0b;
+  --status-open-bg: rgba(245, 158, 11, 0.14);
+
+  --status-investigating: #38bdf8;
+  --status-investigating-bg: rgba(56, 189, 248, 0.14);
+
+  --status-contained: #a855f7;
+  --status-contained-bg: rgba(168, 85, 247, 0.14);
+
+  --status-resolved: #10b981;
+  --status-resolved-bg: rgba(16, 185, 129, 0.14);
+
+  --status-false-positive: #64748b;
+  --status-false-positive-bg: rgba(100, 116, 139, 0.14);
+
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Roboto Mono', monospace;
+
+  /* Spacing Tokens */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Elevation & Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
+/* Base Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dense Professional SOC Utilities */
+.mono {
+  font-family: var(--font-mono);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-teal {
+  color: var(--accent-teal);
+}
+
+/* Card Surfaces */
+.soc-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+}
+
+.soc-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.soc-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  text-decoration: none;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
+.btn-primary {
+  background: var(--accent-teal);
+  color: var(--text-inverse);
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background: var(--accent-teal-hover);
+}
+
+.btn-secondary {
+  background: var(--bg-surface);
+  border-color: var(--border-default);
+  color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-subtle);
+  border-color: var(--accent-teal);
+}
+
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+/* Form Controls */
+.form-select, .form-input {
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  transition: border-color 0.15s ease-in-out;
+}
+
+.form-select:focus, .form-input:focus {
+  outline: none;
+  border-color: var(--accent-teal);
+}
+
+/* Dense Data Tables */
+.soc-table-container {
+  overflow-x: auto;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+}
+
+.soc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.soc-table th {
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-default);
+  white-space: nowrap;
+}
+
+.soc-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.soc-table tbody tr:hover {
+  background: var(--bg-card-hover);
+}
+
+/* Severity & Status Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badge-critical {
+  color: var(--sev-critical);
+  background: var(--sev-critical-bg);
+  border: 1px solid var(--sev-critical-border);
+}
+
+.badge-high {
+  color: var(--sev-high);
+  background: var(--sev-high-bg);
+  border: 1px solid var(--sev-high-border);
+}
+
+.badge-medium {
+  color: var(--sev-medium);
+  background: var(--sev-medium-bg);
+  border: 1px solid var(--sev-medium-border);
+}
+
+.badge-low {
+  color: var(--sev-low);
+  background: var(--sev-low-bg);
+  border: 1px solid var(--sev-low-border);
+}
+
+.badge-info {
+  color: var(--sev-info);
+  background: var(--sev-info-bg);
+  border: 1px solid var(--sev-info-border);
+}
+
+.badge-open {
+  color: var(--status-open);
+  background: var(--status-open-bg);
+}
+
+.badge-investigating {
+  color: var(--status-investigating);
+  background: var(--status-investigating-bg);
+}
+
+.badge-contained {
+  color: var(--status-contained);
+  background: var(--status-contained-bg);
+}
+
+.badge-resolved {
+  color: var(--status-resolved);
+  background: var(--status-resolved-bg);
+}
+
+.badge-false-positive {
+  color: var(--status-false-positive);
+  background: var(--status-false-positive-bg);
+}

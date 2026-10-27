@@ -1,6 +1,6 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 5.2 Complete (Security Operations Backend APIs)
+## Current Milestone: Phase 5.3 Complete (Angular SOC Dashboard Foundation)
 
 **Last Updated:** 2026-10-27
 **Active Git Branch:** `main`
@@ -11,9 +11,9 @@
 
 ## 1. Automated Build & Test Status
 
+### 1.1 Backend Platform Services (Maven / Java 25)
 - **Build Tool:** Apache Maven 3.9.16 / Java 25.0.1 LTS
 - **Overall Status:** **SUCCESS**
-- **Test Execution Summary:**
 
 | Service Module | Tests Run | Failures | Errors | Skipped | Status |
 | :--- | :---: | :---: | :---: | :---: | :--- |
@@ -22,7 +22,22 @@
 | `account-service` | 26 | 0 | 0 | 0 | **SUCCESS** |
 | `transaction-service` | 28 | 0 | 0 | 0 | **SUCCESS** |
 | `gateway` | 79 | 0 | 0 | 0 | **SUCCESS** |
-| **Total Platform Tests** | **150** | **0** | **0** | **0** | **BUILD SUCCESS** |
+| **Total Backend Platform Tests** | **150** | **0** | **0** | **0** | **BUILD SUCCESS** |
+
+### 1.2 Frontend SOC Dashboard (Angular 18 / TypeScript / Node 22)
+- **Framework & Tooling:** Angular 18.2.21 / Node.js 22.20.0 / npm 10.9.3
+- **Test Runner:** Karma 6.4 / Jasmine 5.2 / ChromeHeadless
+- **Production Build:** `dist/aegis-frontend` (325.9 kB initial bundle, 91.5 kB transfer, 0 warnings)
+
+| Test Suite | Spec File | Tests Run | Failures | Status |
+| :--- | :--- | :---: | :---: | :--- |
+| **App Shell** | `app.component.spec.ts` | 2 | 0 | **SUCCESS** |
+| **Security API Service** | `security-api.service.spec.ts` | 7 | 0 | **SUCCESS** |
+| **Auth Service** | `auth.service.spec.ts` | 3 | 0 | **SUCCESS** |
+| **Auth Guard** | `auth.guard.spec.ts` | 3 | 0 | **SUCCESS** |
+| **Overview Component** | `overview.component.spec.ts` | 3 | 0 | **SUCCESS** |
+| **Badge Components** | (Included in shell tests) | 1 | 0 | **SUCCESS** |
+| **Total Frontend Tests** | — | **19** | **0** | **BUILD SUCCESS** |
 
 ---
 
@@ -44,33 +59,39 @@ All 9 platform services running and healthy via Docker Compose (`infrastructure/
 
 ---
 
-## 3. Phase 5.2 Deliverables Checklist (Security Operations Backend APIs)
+## 3. Phase 5.3 Deliverables Checklist (Angular SOC Dashboard Foundation)
 
-- [x] **Flyway Migration V3 (`V3__soc_dashboard_indexes.sql`):** 8 schema-qualified performance indexes accelerating incident queries, event searches, and overview time-bucket aggregations on PostgreSQL 17.
-- [x] **Enhanced Event Search & Detail APIs:**
-  - `GET /api/v1/security/events`: Multi-parameter filters (`statusCode`, `httpMethod`, `customerId`, `sourceIp`, `anomalyFlags`, `resourceType`, `correlationId`, `from`, `to`), bounded pagination (max 100), ISO-8601 UTC date validation.
-  - `GET /api/v1/security/events/{id}`: Single event lookup with RFC 7807 404 handling.
-- [x] **Incident Investigation APIs:**
-  - `GET /api/v1/security/incidents`: Paginated, sorted, and filtered by status/severity/category.
-  - `GET /api/v1/security/incidents/{id}`: Single incident retrieval with verified 404 for missing IDs.
-  - `GET /api/v1/security/incidents/{id}/evidence`: Associated correlation evidence with trigger conditions and contributing event IDs.
-  - `GET /api/v1/security/incidents/{id}/history`: Full audit trail of status lifecycle changes.
-- [x] **Incident Lifecycle & Status Management (`PATCH /api/v1/security/incidents/{id}/status`):**
-  - Finite state machine transition enforcement (`OPEN`, `INVESTIGATING`, `CONTAINED`, `RESOLVED`, `FALSE_POSITIVE`).
-  - Mandatory audit reason validation (5–512 characters).
-  - Authenticated JWT actor attribution (`changedBy` extracted securely from `SecurityContextHolder`).
-  - Transactional persistence into `security_data.incident_status_history`.
-  - Terminal status reopen defense: only `ROLE_SECURITY_ADMIN` may reopen `RESOLVED` or `FALSE_POSITIVE` incidents; `ROLE_SECURITY_ANALYST` receives 403 Forbidden.
-- [x] **Security Overview Metrics (`GET /api/v1/security/overview?windowHours=24`):**
-  - Database-aggregated metrics (total events, anomalies, open incidents, distributions by severity and category, recent incidents, top rules, hourly time-series trend).
-  - Window validation ($1 \le \text{windowHours} \le 168$).
-- [x] **Advisory Policy Decisions Endpoints:**
-  - `GET /api/v1/security/incidents/{id}/policy-decisions` & `GET /api/v1/security/policy-decisions`.
-  - Invariant maintained: strictly advisory response mode (`LOG_ALERT`), zero disruptive client blocking.
-- [x] **Unit, Integration, and Live Verification Gates:**
-  - 28 new tests in `gateway` (7 event search, 9 incident controller, 8 lifecycle, 4 overview). Total 150/150 passing platform tests.
-  - Live verification script `scripts/verify-phase5-api.ps1`: **28 / 28 passing tests** against real Keycloak and PostgreSQL.
-  - Regression verified: Phase 3 gate (20/20), Phase 4.2 gate (100%), Phase 4.3 gate (100%), Phase 4.4 gate (100%).
+- [x] **Angular 18 Project Foundation:**
+  - Modern standalone component architecture with Angular Router and HttpClient.
+  - Strict typing, reactive signals, and Node `>=22 <23` engine compatibility in `frontend/package.json`.
+- [x] **Cyber SOC Design System & Reusable Design Tokens (`src/styles.css`):**
+  - Dark navy / slate surfaces (`#090d16`, `#0f172a`, `#141e33`), tactical teal accents (`#14b8a6`), semantic severity tokens (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`, `INFO`), and status chips (`OPEN`, `INVESTIGATING`, `CONTAINED`, `RESOLVED`, `FALSE_POSITIVE`).
+  - Dense monospace telemetry data tables and accessible focus states.
+- [x] **Responsive Shell & Navigation:**
+  - Top `NavbarComponent` with brand shield, engine status (`ADVISORY MODE`), active user role badge (`ANALYST` / `SEC-ADMIN`), and session logout.
+  - Left `SidebarComponent` with Command & Control navigation, correlation engine status indicators (`RULE-BOLA-01` to `RULE-INJ-01`), and PostgreSQL V3 health pill.
+- [x] **Keycloak OIDC Authentication with PKCE (S256):**
+  - Integrated `keycloak-js` utilizing Authorization Code Flow with PKCE (`S256`) against realm `aegis-dev` and public client `aegis-frontend`. Zero client secrets embedded in browser.
+  - Functional `authGuard` enforcing authentication and role requirements (`SECURITY_ANALYST` / `SECURITY_ADMIN`).
+  - Functional `authInterceptor` securely injecting Bearer tokens into `/api/v1/security/**` requests without token leakage.
+  - Local test role simulator on `/login` supporting headless verification.
+- [x] **Typed API Integration Layer (`SecurityApiService`):**
+  - Strongly typed models matching all 10 Phase 5.2 backend DTO contracts.
+  - Full RFC 7807 `ProblemDetail` error handling and configurable base URL (`environment.ts`).
+- [x] **Live API-Backed Situational Awareness Dashboard (`OverviewComponent`):**
+  - Connected to live `GET /api/v1/security/overview?windowHours={windowHours}`.
+  - Dense KPI strip: Evaluated Events, Flagged Anomalies, Open Incidents, and Anomaly Ratio.
+  - Severity breakdown bar visualization and Threat Category distribution chips.
+  - Top Correlation Rules trigger summary and recent incidents table with links to incident detail.
+  - Configurable time window selector (6h, 12h, 24h, 48h, 72h, 168h) with auto-reload.
+  - Visible loading, empty, and RFC 7807 error panels. Zero fabricated metrics.
+- [x] **Route Placeholders:**
+  - Route shells for `/events`, `/incidents`, and `/incidents/:id`.
+- [x] **Verification & Regression Checks:**
+  - 19 frontend unit tests passing in ChromeHeadless (`TOTAL: 19 SUCCESS`).
+  - Production build successful with zero warnings (`dist/aegis-frontend`).
+  - 150 backend platform tests passing (`mvn test`).
+  - Phase 5.2 live verification gate passing (28 / 28 tests).
 
 ---
 
@@ -85,4 +106,5 @@ All 9 platform services running and healthy via Docker Compose (`infrastructure/
 7. **Phase 4.4 (Completed):** Multi-Vector Detection and Cross-Rule Correlation (`RULE-AUTH-01`, `RULE-DATA-01`, `RULE-RATE-01`, `RULE-PROBE-01`, `RULE-INJ-01`), `MultiVectorCampaignCorrelator`, 192 platform tests, and expanded 14-scenario evaluation benchmark in `docs/phase-4-multivector-detection.md`.
 8. **Phase 5.1 (Completed):** Security Operations API Audit, Gap Analysis, and REST Contract Specification in `docs/phase-5-api-design.md`.
 9. **Phase 5.2 (Completed):** Security Operations Backend REST Endpoints, Flyway V3 Indexes, 150 automated platform tests, and 28/28 live verification gate.
-10. **Phase 5.3 (Next Increment):** Angular SOC UI Scaffolding & Dashboard Views.
+10. **Phase 5.3 (Completed):** Angular 18 SOC Dashboard Foundation, Keycloak PKCE Authentication, Design System Tokens, Typed API Service Layer, and Live Overview Dashboard.
+11. **Phase 5.4 (Next Increment):** Interactive Incident Triage Queue, Forensics Timeline Modal, Status Transition Workflows, and End-to-End Verification Gate.
