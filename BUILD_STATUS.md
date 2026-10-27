@@ -1,9 +1,9 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 5.1 Complete (Security Operations API Audit & Design)
+## Current Milestone: Phase 5.2 Complete (Security Operations Backend APIs)
 
-**Last Updated:** 2026-10-26  
-**Active Git Branch:** `main`  
+**Last Updated:** 2026-10-27
+**Active Git Branch:** `main`
 **Git Working Tree:** Clean (Ready for Review)
 **Remote Upstream:** `origin/main` (`https://github.com/NIKHILGONUGUNTA-STACK/shieldops.git`)
 
@@ -21,8 +21,8 @@
 | `customer-service` | 17 | 0 | 0 | 0 | **SUCCESS** |
 | `account-service` | 26 | 0 | 0 | 0 | **SUCCESS** |
 | `transaction-service` | 28 | 0 | 0 | 0 | **SUCCESS** |
-| `gateway` | 121 | 0 | 0 | 0 | **SUCCESS** |
-| **Total Platform Tests** | **192** | **0** | **0** | **0** | **BUILD SUCCESS** |
+| `gateway` | 79 | 0 | 0 | 0 | **SUCCESS** |
+| **Total Platform Tests** | **150** | **0** | **0** | **0** | **BUILD SUCCESS** |
 
 ---
 
@@ -32,8 +32,8 @@ All 9 platform services running and healthy via Docker Compose (`infrastructure/
 
 | Container Name | Service | Local Port | Health Check | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| `aegis-gateway-1` | Gateway + Threat Detection & Correlation Engine | `127.0.0.1:8000` | `/actuator/health/readiness` | **Healthy** |
-| `aegis-postgres-1` | PostgreSQL 17 (Flyway V2) | `127.0.0.1:5433->5432` | `pg_isready` | **Healthy** |
+| `aegis-gateway-1` | Gateway + Threat Detection & SOC Backend APIs | `127.0.0.1:8000` | `/actuator/health/readiness` | **Healthy** |
+| `aegis-postgres-1` | PostgreSQL 17 (Flyway V3) | `127.0.0.1:5433->5432` | `pg_isready` | **Healthy** |
 | `aegis-redis-1` | Redis 7 (Stream + Sliding Window) | `127.0.0.1:6379->6379` | `redis-cli ping` | **Healthy** |
 | `aegis-keycloak-1` | Keycloak 26 | `127.0.0.1:8080`, `9000` | Port 9000 probe | **Healthy** |
 | `aegis-customer-service-1` | Customer API | `127.0.0.1:8081` | `/actuator/health/readiness` | **Healthy** |
@@ -44,24 +44,33 @@ All 9 platform services running and healthy via Docker Compose (`infrastructure/
 
 ---
 
----
+## 3. Phase 5.2 Deliverables Checklist (Security Operations Backend APIs)
 
-## 3. Phase 4.4 Deliverables Checklist (Multi-Vector Threat Detection & Cross-Rule Correlation)
-
-- [x] **Five Additional Deterministic Rules:**
-  - `RULE-AUTH-01` (v1.0.0): Repeated unauthenticated access attempts ($\ge 5$ 401s in 120s), IP/Subject targeting, spray route awareness.
-  - `RULE-DATA-01` (v1.0.0): Excessive data access ($\ge 5$ records or $\ge 50\text{ KB}$ across resource endpoints in 180s).
-  - `RULE-RATE-01` (v1.0.0): Request activity bursting ($\ge 20$ requests in 60s window).
-  - `RULE-PROBE-01` (v1.0.0): Suspicious route probing and validation failures ($\ge 4$ failures across $\ge 2$ distinct paths in 180s), with benign identical retry loop suppression.
-  - `RULE-INJ-01` (v1.0.0): Tightly scoped injection indicators (SQLi, path traversal, command injection, XSS) with URL decoding and benign keyword preservation (`union`).
-- [x] **Cross-Rule Campaign Correlator (`MultiVectorCampaignCorrelator.java`):** Correlates multi-vector attack progressions (Recon Probe $\to$ BOLA $\to$ Data Exfiltration) into unified `COMPLEX_INTRUSION` and `MULTI_VECTOR_CAMPAIGN` incidents.
-- [x] **Bayesian Confidence Formulation:** Mathematical evidence combination ($C_{\text{combined}} = 1 - \prod(1 - C_i)$, capped at 0.99), documented as empirical heuristic confidence.
-- [x] **Multi-Tenant Isolation & Anti-Affinity:** Prevents merging distinct customer accounts solely because they originate from a shared corporate IP.
-- [x] **Idempotency & Duplicate Delivery Defense:** Prevents re-delivered Redis stream records from inflating counts or triggering duplicate alerts.
-- [x] **Closed Incident Protection:** Explicitly prevents `RESOLVED` or `FALSE_POSITIVE` incidents from silently absorbing new campaigns.
-- [x] **Evaluation Benchmark Suite (`scripts/verify-phase4-multivector.ps1`):** 14 labelled units (9 benign sessions, 5 attack vectors) reporting 100% precision, 100% recall, 0 false positives, 1.000 F1 score, and 1,010 ms latency.
-- [x] **Strictly Advisory Response Mode:** All policies recommend `LOG_ALERT` with `enforcement_level = ADVISORY`; zero client blocking or disruption verified.
-- [x] **Zero Regressions:** Phase 3 gate (20/20), Phase 4.2 gate (PASSED), Phase 4.3 gate (PASSED), and full Maven suite (192/192 tests PASSED).
+- [x] **Flyway Migration V3 (`V3__soc_dashboard_indexes.sql`):** 8 schema-qualified performance indexes accelerating incident queries, event searches, and overview time-bucket aggregations on PostgreSQL 17.
+- [x] **Enhanced Event Search & Detail APIs:**
+  - `GET /api/v1/security/events`: Multi-parameter filters (`statusCode`, `httpMethod`, `customerId`, `sourceIp`, `anomalyFlags`, `resourceType`, `correlationId`, `from`, `to`), bounded pagination (max 100), ISO-8601 UTC date validation.
+  - `GET /api/v1/security/events/{id}`: Single event lookup with RFC 7807 404 handling.
+- [x] **Incident Investigation APIs:**
+  - `GET /api/v1/security/incidents`: Paginated, sorted, and filtered by status/severity/category.
+  - `GET /api/v1/security/incidents/{id}`: Single incident retrieval with verified 404 for missing IDs.
+  - `GET /api/v1/security/incidents/{id}/evidence`: Associated correlation evidence with trigger conditions and contributing event IDs.
+  - `GET /api/v1/security/incidents/{id}/history`: Full audit trail of status lifecycle changes.
+- [x] **Incident Lifecycle & Status Management (`PATCH /api/v1/security/incidents/{id}/status`):**
+  - Finite state machine transition enforcement (`OPEN`, `INVESTIGATING`, `CONTAINED`, `RESOLVED`, `FALSE_POSITIVE`).
+  - Mandatory audit reason validation (5–512 characters).
+  - Authenticated JWT actor attribution (`changedBy` extracted securely from `SecurityContextHolder`).
+  - Transactional persistence into `security_data.incident_status_history`.
+  - Terminal status reopen defense: only `ROLE_SECURITY_ADMIN` may reopen `RESOLVED` or `FALSE_POSITIVE` incidents; `ROLE_SECURITY_ANALYST` receives 403 Forbidden.
+- [x] **Security Overview Metrics (`GET /api/v1/security/overview?windowHours=24`):**
+  - Database-aggregated metrics (total events, anomalies, open incidents, distributions by severity and category, recent incidents, top rules, hourly time-series trend).
+  - Window validation ($1 \le \text{windowHours} \le 168$).
+- [x] **Advisory Policy Decisions Endpoints:**
+  - `GET /api/v1/security/incidents/{id}/policy-decisions` & `GET /api/v1/security/policy-decisions`.
+  - Invariant maintained: strictly advisory response mode (`LOG_ALERT`), zero disruptive client blocking.
+- [x] **Unit, Integration, and Live Verification Gates:**
+  - 28 new tests in `gateway` (7 event search, 9 incident controller, 8 lifecycle, 4 overview). Total 150/150 passing platform tests.
+  - Live verification script `scripts/verify-phase5-api.ps1`: **28 / 28 passing tests** against real Keycloak and PostgreSQL.
+  - Regression verified: Phase 3 gate (20/20), Phase 4.2 gate (100%), Phase 4.3 gate (100%), Phase 4.4 gate (100%).
 
 ---
 
@@ -75,4 +84,5 @@ All 9 platform services running and healthy via Docker Compose (`infrastructure/
 6. **Phase 4.3 (Completed):** Contextual Correlation layer implemented on top of `RULE-BOLA-01`, featuring Bayesian confidence combination, multi-resource campaign escalation (`CRITICAL BOLA_CAMPAIGN`), anti-affinity shared IP defense, 128 passing platform tests, and live evaluation benchmark.
 7. **Phase 4.4 (Completed):** Multi-Vector Detection and Cross-Rule Correlation (`RULE-AUTH-01`, `RULE-DATA-01`, `RULE-RATE-01`, `RULE-PROBE-01`, `RULE-INJ-01`), `MultiVectorCampaignCorrelator`, 192 platform tests, and expanded 14-scenario evaluation benchmark in `docs/phase-4-multivector-detection.md`.
 8. **Phase 5.1 (Completed):** Security Operations API Audit, Gap Analysis, and REST Contract Specification in `docs/phase-5-api-design.md`.
-9. **Phase 5.2 (Next Increment):** Security Operations Backend REST Endpoints & Flyway V3 Indexes.
+9. **Phase 5.2 (Completed):** Security Operations Backend REST Endpoints, Flyway V3 Indexes, 150 automated platform tests, and 28/28 live verification gate.
+10. **Phase 5.3 (Next Increment):** Angular SOC UI Scaffolding & Dashboard Views.

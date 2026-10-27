@@ -1,11 +1,11 @@
-# Aegis Phase 5.1 — Security Operations API Audit and Design Specification
+# Aegis Phase 5.1 / 5.2 — Security Operations API Audit, Design, and Implementation Specification
 
-**Milestone:** Phase 5.1  
-**Date:** 2026-10-26  
-**Repository:** `NIKHILGONUGUNTA-STACK/shieldops`  
-**System:** Intrusion Detection And Adaptive Security Response Through API Activity Analysis  
-**Expected Baseline Commit:** `3f16656dfb4b21d822129b849dd13a4c8dd9bc50`  
-**Document Status:** Approved Architecture & Contract Specification (Pre-Implementation)
+**Milestone:** Phase 5.2 Complete
+**Date:** 2026-10-27
+**Repository:** `NIKHILGONUGUNTA-STACK/shieldops`
+**System:** Intrusion Detection And Adaptive Security Response Through API Activity Analysis
+**Expected Baseline Commit:** `7e78d4ad1961fcef802adfe831171c3e1ae1bb14`
+**Document Status:** Implemented & Verified (Phase 5.2 Backend APIs Complete)
 
 ---
 
@@ -549,62 +549,67 @@ export interface PolicyDecision {
 
 ---
 
-## 7. Database Query & Flyway Index Acceleration Plan
+## 7. Database Query & Flyway Index Acceleration (Implemented)
 
-To guarantee sub-100ms response times on dashboard listing and metrics aggregation queries across millions of rows, the following Flyway migration (`V3__soc_dashboard_indexes.sql`) is designed for Phase 5.2:
+To guarantee sub-100ms response times on dashboard listing and metrics aggregation queries across millions of rows, the following Flyway migration (`V3__soc_dashboard_indexes.sql`) was implemented and applied to PostgreSQL 17:
 
 ```sql
 -- Flyway V3__soc_dashboard_indexes.sql
 -- Optimizing Security Operations Center (SOC) dashboard queries
 
 -- 1. Index for Incident Listing, Filtering, and Sorting
-CREATE INDEX IF NOT EXISTS incidents_created_at_idx 
+CREATE INDEX IF NOT EXISTS incidents_created_at_idx
     ON security_data.incidents(created_at DESC);
 
-CREATE INDEX IF NOT EXISTS incidents_severity_status_idx 
+CREATE INDEX IF NOT EXISTS incidents_last_event_at_idx
+    ON security_data.incidents(last_event_at DESC);
+
+CREATE INDEX IF NOT EXISTS incidents_severity_status_idx
     ON security_data.incidents(severity, status);
 
-CREATE INDEX IF NOT EXISTS incidents_category_idx 
+CREATE INDEX IF NOT EXISTS incidents_category_idx
     ON security_data.incidents(threat_category);
 
--- 2. Index for Event Search by Anomaly Flag and Resource Context
-CREATE INDEX IF NOT EXISTS api_events_anomaly_flags_idx 
+-- 2. Index for Event Search by Anomaly Flag, Source IP, and Time
+CREATE INDEX IF NOT EXISTS api_events_anomaly_flags_idx
     ON security_data.api_events(anomaly_flags);
 
-CREATE INDEX IF NOT EXISTS api_events_source_ip_idx 
+CREATE INDEX IF NOT EXISTS api_events_source_ip_idx
     ON security_data.api_events(source_ip);
 
--- 3. Index for Overview Time-Bucket Aggregations
-CREATE INDEX IF NOT EXISTS api_events_time_status_idx 
+CREATE INDEX IF NOT EXISTS api_events_time_status_idx
     ON security_data.api_events(timestamp DESC, status_code);
+
+-- 3. Index for Advisory Policy Decisions
+CREATE INDEX IF NOT EXISTS policy_decisions_created_at_idx
+    ON security_data.policy_decisions(created_at DESC);
 ```
 
 ---
 
-## 8. Test Strategy & Verification Plan
+## 8. Test Strategy & Verification Results
 
 ### 8.1 Unit & Component Tests (`gateway`)
-- `SecurityOverviewServiceTest`: Tests metric calculation logic, time-series bucket aggregation, and empty database edge cases.
-- `SecurityIncidentControllerTest`: Tests pagination, sorting defaults, filter binding, 404 behavior, and invalid parameter rejection.
-- `IncidentStatusTransitionTest`: Validates the state machine (e.g. `OPEN` $\to$ `INVESTIGATING` succeeds; `RESOLVED` $\to$ `OPEN` fails without Admin role; blank reason rejected with 400).
-- `SecurityEventSearchTest`: Verifies multi-parameter queries (`customerId`, `sourceIp`, `anomalyFlags`, `from`/`to`) with SQL parameter binding.
+- `SecurityOverviewControllerTest` (4 tests): Tests metric calculation logic, time-series bucket aggregation, window parameter validation, and empty database edge cases.
+- `SecurityIncidentControllerTest` (9 tests): Tests pagination, sorting defaults, filter binding, 404 behavior, evidence correlation retrieval, and policy decision lookup.
+- `IncidentLifecycleControllerTest` (8 tests): Validates the state machine (e.g. `OPEN` $\to$ `INVESTIGATING` succeeds; `RESOLVED` $\to$ `OPEN` fails with 403 without Admin role; invalid transition fails with 409 Conflict; blank reason rejected with 400).
+- `SecurityEventSearchTest` (7 tests): Verifies multi-parameter queries (`customerId`, `sourceIp`, `anomalyFlags`, `resourceType`, `from`/`to`) with SQL parameter binding and single event retrieval by ID (`GET /events/{id}`).
 
-### 8.2 Security & RBAC Integration Tests
-- Verify that unauthenticated requests to `/api/v1/security/**` receive `401 Unauthorized` (`ProblemDetail`).
-- Verify that customer tokens (`ROLE_CUSTOMER`) receive `403 Forbidden` (`ProblemDetail`).
-- Verify that `ROLE_SECURITY_ANALYST` can view overview, search events, list incidents, view evidence, and transition status.
-- Verify that only `ROLE_SECURITY_ADMIN` can perform privileged status overrides (e.g. reopening resolved incidents).
+**Total Gateway Tests:** 79 tests (all passing).
+**Total Platform Tests:** 150 tests across all 4 services (`customer-service`: 17, `account-service`: 26, `transaction-service`: 28, `gateway`: 79).
 
-### 8.3 Live Integration Script
-- Develop `scripts/verify-phase5-api.ps1` to test all 6 capabilities end-to-end against the running containerized stack with real Keycloak JWT tokens.
+### 8.2 Live Integration Script (`scripts/verify-phase5-api.ps1`)
+The dedicated end-to-end verification script exercises all 6 SOC capabilities against real Keycloak tokens and live PostgreSQL 17 data:
+- **Total Tests:** 28
+- **Passed Tests:** 28 (0 failures, 0 skipped)
+- **Keycloak RBAC Validated:** Unauthenticated (401), Customer role (403), Security Analyst (allowed except terminal reopen), Security Admin (full access).
+- **Advisory Response Mode Preserved:** Advisory `LOG_ALERT` decisions verified; customer account access unaffected.
 
 ---
 
 ## 9. Phased Implementation Roadmap
 
-To avoid unmanageably large code diffs and minimize regression risk, Phase 5 is structured into four distinct, verifiable increments:
-
-1. **Phase 5.1 (Current):** Security Operations API Audit, Gap Analysis, and Contract Specification (`docs/phase-5-api-design.md`).
-2. **Phase 5.2 (Backend SOC Endpoints):** Implement REST controllers, DTOs, repository queries, Flyway V3 indexes, and unit/integration test suite.
-3. **Phase 5.3 (Angular SOC UI Scaffolding):** Scaffold Angular application with Tailwind-free vanilla CSS, Keycloak OIDC authentication guard, and core SOC views (Overview, Incidents, Evidence, Audit History, Event Explorer).
+1. **Phase 5.1 (Completed):** Security Operations API Audit, Gap Analysis, and Contract Specification (`docs/phase-5-api-design.md`).
+2. **Phase 5.2 (Completed):** Security Operations Backend REST Endpoints, Flyway V3 Indexes, 150 automated platform tests, and 28/28 live verification gate.
+3. **Phase 5.3 (Next Increment):** Scaffold Angular application with Tailwind-free vanilla CSS, Keycloak OIDC authentication guard, and core SOC views (Overview, Incidents, Evidence, Audit History, Event Explorer).
 4. **Phase 5.4 (End-to-End Verification & Gate):** Live integration testing, performance benchmarks, and acceptance sign-off.
