@@ -5,6 +5,7 @@ import { filter } from 'rxjs';
 import { NavbarComponent } from './shared/components/navbar/navbar.component';
 import { SidebarComponent } from './shared/components/sidebar/sidebar.component';
 import { AuthService } from './core/auth/auth.service';
+import { LayoutService } from './core/services/layout.service';
 
 @Component({
   selector: 'app-root',
@@ -16,6 +17,7 @@ import { AuthService } from './core/auth/auth.service';
 export class AppComponent {
   private readonly router = inject(Router);
   readonly auth = inject(AuthService);
+  readonly layout = inject(LayoutService);
 
   isLoginRoute = false;
 
@@ -24,6 +26,7 @@ export class AppComponent {
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: any) => {
         this.isLoginRoute = event.urlAfterRedirects.startsWith('/login');
+        this.layout.closeMobile();
       });
   }
 }

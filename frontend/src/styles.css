@@ -1,36 +1,51 @@
 /* ==========================================================================
    Aegis SOC Design System & Reusable Design Tokens
-   Theme: Restrained Dark Navy & Slate with Tactical Teal Accents
+   Theme: Restrained Dark Navy & Charcoal with Tactical Teal & Wallarm Warm Amber Accents
    ========================================================================== */
 
 :root {
-  /* Surfaces & Backgrounds */
-  --bg-canvas: #090d16;
-  --bg-surface: #0f172a;
-  --bg-card: #141e33;
-  --bg-card-hover: #1a2742;
-  --bg-header: #0b1120;
-  --bg-sidebar: #0b1120;
-  --bg-input: #0a0f1d;
-  --bg-subtle: #1e293b;
+  /* Surfaces & Backgrounds (Sampled from Wallarm SOC Console) */
+  --bg-canvas: #0b0d13;
+  --bg-surface: #10131b;
+  --bg-card: #141722;
+  --bg-card-hover: #191d2c;
+  --bg-header: #0d0f16;
+  --bg-sidebar: #0d0f16;
+  --bg-input: #090b10;
+  --bg-subtle: #1c2130;
 
-  /* Borders */
-  --border-subtle: #1e293b;
-  --border-default: #26354a;
+  /* Borders & Dividers */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: #1e2333;
   --border-focus: #14b8a6;
-  --border-card: rgba(255, 255, 255, 0.06);
+  --border-card: rgba(255, 255, 255, 0.08);
 
   /* Typography Colors */
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
-  --text-inverse: #090d16;
+  --text-disabled: #475569;
+  --text-inverse: #0b0d13;
 
-  /* Accent: Tactical Teal */
+  /* Primary Tactical Accent: Teal */
   --accent-teal: #14b8a6;
   --accent-teal-hover: #0d9488;
   --accent-teal-subtle: rgba(20, 184, 166, 0.12);
   --accent-teal-border: rgba(20, 184, 166, 0.35);
+  --accent-teal-glow: 0 0 16px rgba(20, 184, 166, 0.22);
+
+  /* Secondary Warm Accent: Wallarm Amber / Orange */
+  --accent-amber: #f97316;
+  --accent-amber-hover: #ea580c;
+  --accent-amber-subtle: rgba(249, 115, 22, 0.12);
+  --accent-amber-border: rgba(249, 115, 22, 0.35);
+  --accent-amber-glow: 0 0 16px rgba(249, 115, 22, 0.22);
+
+  /* Cyber Accents */
+  --accent-violet: #818cf8;
+  --accent-violet-subtle: rgba(129, 140, 248, 0.12);
+  --accent-cyan: #06b6d4;
+  --accent-cyan-subtle: rgba(6, 182, 212, 0.12);
 
   /* Severity States */
   --sev-critical: #ef4444;
@@ -69,9 +84,25 @@
   --status-false-positive: #64748b;
   --status-false-positive-bg: rgba(100, 116, 139, 0.14);
 
+  /* Planned Capability State */
+  --status-planned: #94a3b8;
+  --status-planned-bg: rgba(148, 163, 184, 0.1);
+  --status-planned-border: rgba(148, 163, 184, 0.25);
+
   /* Typography */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'Roboto Mono', monospace;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, 'Fira Code', monospace;
+
+  /* Typography Scale */
+  --text-2xs: 10px;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 22px;
+  --text-3xl: 28px;
 
   /* Spacing Tokens */
   --space-1: 4px;
@@ -84,11 +115,14 @@
 
   /* Elevation & Radius */
   --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 10px -1px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.6);
 }
 
 /* Base Reset */
@@ -321,4 +355,202 @@ html, body {
 .badge-false-positive {
   color: var(--status-false-positive);
   background: var(--status-false-positive-bg);
+}
+
+.badge-planned {
+  color: var(--status-planned);
+  background: var(--status-planned-bg);
+  border: 1px solid var(--status-planned-border);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+}
+
+/* Wallarm-Inspired Pill Control Groups */
+.pill-group {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  padding: 2px;
+  gap: 2px;
+}
+
+.pill-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  text-decoration: none;
+  font-family: inherit;
+}
+
+.pill-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.pill-btn.active {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+/* Stat Pill Badges (Sampled from Wallarm Top-Right Stat Badges) */
+.soc-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 6px 12px;
+}
+
+.soc-stat-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.soc-stat-icon.amber {
+  background: var(--accent-amber-subtle);
+  color: var(--accent-amber);
+  border: 1px solid var(--accent-amber-border);
+}
+
+.soc-stat-icon.red {
+  background: var(--sev-critical-bg);
+  color: var(--sev-critical);
+  border: 1px solid var(--sev-critical-border);
+}
+
+.soc-stat-icon.teal {
+  background: var(--accent-teal-subtle);
+  color: var(--accent-teal);
+  border: 1px solid var(--accent-teal-border);
+}
+
+.soc-stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.soc-stat-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.soc-stat-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* Planned Capability Architectural Card */
+.planned-container {
+  padding: var(--space-6);
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.planned-banner {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  position: relative;
+  overflow: hidden;
+}
+
+.planned-badge-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  margin-bottom: var(--space-3);
+}
+
+.planned-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.planned-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 800px;
+}
+
+.planned-specs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.spec-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.spec-card-icon {
+  font-size: 20px;
+  margin-bottom: var(--space-2);
+}
+
+.spec-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.spec-card-detail {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Color Utilities */
+.text-amber {
+  color: var(--accent-amber);
+}
+
+.text-violet {
+  color: var(--accent-violet);
+}
+
+.text-cyan {
+  color: var(--accent-cyan);
 }

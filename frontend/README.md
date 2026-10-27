@@ -110,3 +110,33 @@ npm start
 - **Unit Tests:** 36 automated unit tests passing in ChromeHeadless (`TOTAL: 36 SUCCESS`).
 - **Production Build:** Angular production build (`ng build`) completes with 0 warnings and 0 errors (raw bundle 329.6 kB, gzipped 91.16 kB).
 - **Design Tokens:** Strict adherence to custom CSS design tokens in `src/styles.css` without external UI framework overhead.
+
+---
+
+## 6. Phase 5.5 Final SOC UI & Feature Navigation
+
+### 6.1 Wallarm-Inspired Design System & Typography
+- **Dark Matte Color Tokens:** Sampled from the Wallarm SOC reference: matte canvas (`#0b0d13`), card surfaces (`#141722`), tactical teal (`#14b8a6`), warm amber secondary accents (`#f97316`), violet threat indicators (`#818cf8`), and cyan resource indicators (`#06b6d4`).
+- **Typography:** Primary `Inter` sans-serif with geometric tabular figures for dense numeric metrics, complemented by `JetBrains Mono` for cryptographic hashes, UUIDs, IP addresses, and HTTP status codes.
+- **Specification Document:** Full design rationale, color tokens, and layout guidelines recorded in [`docs/phase-5-ui-design-spec.md`](file:///c:/Users/nikhi/aegis/docs/phase-5-ui-design-spec.md).
+
+### 6.2 Collapsible Sidebar & 15-Destination Route Map
+Organized into 5 distinct operational groups:
+1. **DASHBOARD:** `Overview` (`/overview`)
+2. **ATTACKS & INVESTIGATION:** `Incidents` (`/incidents`), `Attack Activity` (`/attacks`), `Attack Campaigns` (`/campaigns`), `Evidence Explorer` (`/evidence`)
+3. **API SECURITY:** `API Inventory` (`/api-inventory` - *Planned*), `API Event Explorer` (`/events`), `API Specifications` (`/api-specs` - *Planned*), `Data Access Monitoring` (`/data-access`)
+4. **DETECTION & RESPONSE:** `Detection Rules` (`/detection-rules`), `BOLA Detection` (`/bola-detection`), `Policy Decisions` (`/policy-decisions`)
+5. **GOVERNANCE & OPERATIONS:** `Audit History` (`/audit-history`), `System Health` (`/system-health`), `Settings` (`/settings`)
+
+### 6.3 Command Bar & Top Navigation
+- Wallarm-style global search input (`Search telemetry, incidents, events... ⌘K`) mapping directly to correlation ID lookups.
+- Prominent pulsing `ENGINE: ADVISORY MODE` indicator reinforcing the non-blocking security invariant.
+- User profile chip with initials avatar, authenticated role badge (`SEC-ADMIN` / `ANALYST`), and session logout button.
+
+### 6.4 Truthful Capability Classification
+- **13 Implemented Views:** Directly wired to live backend REST endpoints, Actuator health probes, or persisted telemetry data.
+- **2 Planned Capabilities:** `API Inventory` and `API Specifications` are badged with `PLANNED CAPABILITY — Phase 6 Roadmap` architectural previews. Zero fake mock datasets or deceptive simulated security controls.
+
+### 6.5 Quality & Performance Metrics
+- **Automated Tests:** 74 unit tests passing across all components, layout services, and guards (`TOTAL: 74 SUCCESS`).
+- **Production Build:** `ng build` generates production bundle in ~6s with 0 errors and 0 warnings (raw bundle 367.7 kB, gzipped 102.1 kB).

@@ -2,9 +2,17 @@
   <app-navbar></app-navbar>
 
   <div class="soc-body" [class.no-sidebar]="isLoginRoute">
-    <app-sidebar *ngIf="!isLoginRoute"></app-sidebar>
+    <app-sidebar *ngIf="!isLoginRoute" [class.mobile-open]="layout.isMobileOpen()"></app-sidebar>
 
-    <main class="soc-viewport">
+    <!-- Mobile Drawer Backdrop -->
+    <div
+      *ngIf="layout.isMobileOpen()"
+      class="mobile-backdrop"
+      (click)="layout.closeMobile()"
+      aria-hidden="true"
+    ></div>
+
+    <main class="soc-viewport" role="main">
       <router-outlet></router-outlet>
     </main>
   </div>

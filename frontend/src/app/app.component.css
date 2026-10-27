@@ -9,8 +9,9 @@
 .soc-body {
   display: flex;
   flex: 1;
-  min-height: calc(100vh - 52px);
+  min-height: calc(100vh - 56px);
   position: relative;
+  overflow: hidden;
 }
 
 .soc-body.no-sidebar {
@@ -20,6 +21,38 @@
 .soc-viewport {
   flex: 1;
   overflow-y: auto;
-  max-height: calc(100vh - 52px);
+  max-height: calc(100vh - 56px);
   background: var(--bg-canvas);
+}
+
+.mobile-backdrop {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  app-sidebar {
+    position: fixed;
+    top: 56px;
+    bottom: 0;
+    left: -260px;
+    z-index: 99;
+    transition: left 0.25s ease-in-out;
+    box-shadow: var(--shadow-lg);
+  }
+
+  app-sidebar.mobile-open {
+    left: 0;
+  }
+
+  .mobile-backdrop {
+    display: block;
+    position: fixed;
+    top: 56px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 98;
+    backdrop-filter: blur(2px);
+  }
 }

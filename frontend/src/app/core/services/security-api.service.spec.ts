@@ -166,6 +166,30 @@ describe('SecurityApiService', () => {
     });
   });
 
+  describe('getSystemHealth', () => {
+    it('should query /actuator/health for live platform health', () => {
+      service.getSystemHealth().subscribe(health => {
+        expect(health.status).toBe('UP');
+      });
+
+      const req = httpTesting.expectOne(`${environment.apiBaseUrl}/actuator/health`);
+      expect(req.request.method).toBe('GET');
+      req.flush({ status: 'UP', groups: ['liveness', 'readiness'] });
+    });
+  });
+
+  describe('getRecentPolicyDecisions', () => {
+    it('should query /api/v1/security/policy-decisions with page and size', () => {
+      service.getRecentPolicyDecisions(0, 20).subscribe(decisions => {
+        expect(decisions.length).toBe(1);
+      });
+
+      const req = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/policy-decisions?page=0&size=20`);
+      expect(req.request.method).toBe('GET');
+      req.flush([{ id: 'pd-1', recommendedAction: 'LOG_ALERT', reason: 'Advisory logging only' }]);
+    });
+  });
+
   describe('Error Handling', () => {
     it('should map RFC 7807 ProblemDetail from HTTP error', () => {
       service.getOverview(24).subscribe({

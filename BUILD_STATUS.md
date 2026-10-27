@@ -1,6 +1,6 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 5.4 Complete (Incident Triage, Investigation and API Event Explorer)
+## Current Milestone: Phase 5.5 Complete (Wallarm-Inspired SOC UI, Design Tokens & Feature Navigation)
 
 **Last Updated:** 2026-10-27
 **Active Git Branch:** `main`
@@ -27,12 +27,14 @@
 ### 1.2 Frontend SOC Dashboard (Angular 18 / TypeScript / Node 22)
 - **Framework & Tooling:** Angular 18.2.21 / Node.js 22.20.0 / npm 10.9.3
 - **Test Runner:** Karma 6.4 / Jasmine 5.2 / ChromeHeadless
-- **Production Build:** `dist/aegis-frontend` (329.6 kB initial bundle, 91.16 kB transfer, 0 warnings, 0 errors)
+- **Production Build:** `dist/aegis-frontend` (367.7 kB initial bundle, 102.1 kB transfer, 0 warnings, 0 errors)
 
 | Test Suite | Spec File | Tests Run | Failures | Status |
 | :--- | :--- | :---: | :---: | :--- |
 | **App Shell** | `app.component.spec.ts` | 2 | 0 | **SUCCESS** |
-| **Security API Service** | `security-api.service.spec.ts` | 7 | 0 | **SUCCESS** |
+| **Navbar & Search Bar** | `navbar.component.spec.ts` | 6 | 0 | **SUCCESS** |
+| **Sidebar & Nav Registry** | `sidebar.component.spec.ts` | 6 | 0 | **SUCCESS** |
+| **Security API Service** | `security-api.service.spec.ts` | 9 | 0 | **SUCCESS** |
 | **Auth Service** | `auth.service.spec.ts` | 3 | 0 | **SUCCESS** |
 | **Auth Guard** | `auth.guard.spec.ts` | 3 | 0 | **SUCCESS** |
 | **Overview Component** | `overview.component.spec.ts` | 3 | 0 | **SUCCESS** |
@@ -40,7 +42,18 @@
 | **Incidents Queue** | `incidents-list.component.spec.ts` | 5 | 0 | **SUCCESS** |
 | **Incident Detail** | `incident-detail.component.spec.ts` | 6 | 0 | **SUCCESS** |
 | **Event Explorer** | `events.component.spec.ts` | 6 | 0 | **SUCCESS** |
-| **Total Frontend Tests** | — | **36** | **0** | **BUILD SUCCESS** |
+| **Attack Activity** | `attacks.component.spec.ts` | 3 | 0 | **SUCCESS** |
+| **Attack Campaigns** | `campaigns.component.spec.ts` | 2 | 0 | **SUCCESS** |
+| **Evidence Explorer** | `evidence.component.spec.ts` | 2 | 0 | **SUCCESS** |
+| **Detection Rules** | `detection-rules.component.spec.ts` | 2 | 0 | **SUCCESS** |
+| **BOLA Detection** | `bola-detection.component.spec.ts` | 2 | 0 | **SUCCESS** |
+| **Policy Decisions** | `policy-decisions.component.spec.ts` | 2 | 0 | **SUCCESS** |
+| **Audit History** | `audit-history.component.spec.ts` | 2 | 0 | **SUCCESS** |
+| **System Health** | `system-health.component.spec.ts` | 2 | 0 | **SUCCESS** |
+| **API Inventory (Planned)** | `api-inventory.component.spec.ts` | 2 | 0 | **SUCCESS** |
+| **API Specifications (Planned)** | `api-specs.component.spec.ts` | 2 | 0 | **SUCCESS** |
+| **Settings Component** | `settings.component.spec.ts` | 3 | 0 | **SUCCESS** |
+| **Total Frontend Tests** | — | **74** | **0** | **BUILD SUCCESS** |
 
 ---
 
@@ -136,7 +149,34 @@ All 9 platform services running and healthy via Docker Compose (`infrastructure/
 
 ---
 
-## 5. Multi-Phase Progression Path
+## 5. Phase 5.5 Deliverables Checklist (Wallarm-Inspired SOC UI, Design Tokens & Feature Navigation)
+
+- [x] **Visual Reference Analysis & Design System Calibration (`docs/phase-5-ui-design-spec.md`):**
+  - Sampled and implemented Wallarm-inspired dark matte palette: canvas (`#0b0d13`), card surfaces (`#141722`), warm amber accents (`#f97316`), tactical teal (`#14b8a6`), violet (`#818cf8`), and cyan (`#06b6d4`).
+  - Centralized design tokens in `src/styles.css` including pill control groups, stat badges, planned banners, and accessible focus outlines.
+  - Documented `Inter` typography investigation, geometric UI scale, and `JetBrains Mono` monospace fallback hierarchy.
+- [x] **Persistent Collapsible Navigation Rail (`SidebarComponent`):**
+  - Exact 5 operational groups: `DASHBOARD`, `ATTACKS & INVESTIGATION`, `API SECURITY`, `DETECTION & RESPONSE`, `GOVERNANCE & OPERATIONS`.
+  - 15 total navigation destinations with crisp SVG icons, route-active indicators, and accessible labels.
+  - Desktop collapse/expand toggle (`240px` $\leftrightarrow$ `64px`) with tooltips.
+  - Mobile off-canvas drawer with backdrop overlay.
+  - Permanent `ADVISORY MODE` indicator and gateway version tag.
+- [x] **Wallarm-Inspired Header & Command Bar (`NavbarComponent`):**
+  - Brand shield: `🛡️ AEGIS SOC` with `ACTIVE RECON` pill.
+  - Center global search bar (`Search telemetry, incidents, events... ⌘K`) routing directly to correlation searches.
+  - Center-right pulsing `ENGINE: ADVISORY MODE` indicator.
+  - User profile card with avatar initials, role badge (`SEC-ADMIN` / `ANALYST`), and logout button.
+- [x] **Truthful Feature Availability & Complete Route Map:**
+  - **Implemented Active Views (13):** Overview, Incidents, Incident Detail, Attacks, Campaigns, Evidence, Events, Data Access, Detection Rules, BOLA Detection, Policy Decisions, Audit History, Settings, System Health.
+  - **Planned Capabilities (2):** API Inventory & API Specifications prominently badged with `PLANNED CAPABILITY — Phase 6 Roadmap` architectural previews. Zero fake mock data or simulated security controls.
+- [x] **Comprehensive Automated Verification & Zero Build Warnings:**
+  - 74 automated unit tests passing across all components, guards, layout services, and API layers (`TOTAL: 74 SUCCESS`).
+  - Angular production build completes with 0 errors and 0 warnings (raw bundle 367.7 kB, gzipped 102.1 kB).
+  - 150 backend platform tests passing (`mvn test`).
+
+---
+
+## 6. Multi-Phase Progression Path
 
 1. **Phase 2 (Completed):** FinTech foundation with 45 automated tests, service-layer orchestration, RFC 7807 error handling, and verified runtime idempotency.
 2. **Phase 3 (Completed):** Established security path (API Gateway routing, Keycloak OIDC/JWT perimeter enforcement, gateway bypass defense, request correlation, and privacy-conscious telemetry capture).
@@ -149,3 +189,4 @@ All 9 platform services running and healthy via Docker Compose (`infrastructure/
 9. **Phase 5.2 (Completed):** Security Operations Backend REST Endpoints, Flyway V3 Indexes, 150 automated platform tests, and 28/28 live verification gate.
 10. **Phase 5.3 (Completed):** Angular 18 SOC Dashboard Foundation, Keycloak PKCE Authentication, Design System Tokens, Typed API Service Layer, and Live Overview Dashboard.
 11. **Phase 5.4 (Completed):** Interactive Incident Triage Queue, Forensic Investigation Workspace, Analyst Status Transitions, API Event Explorer, 36 unit tests, and production build verification.
+12. **Phase 5.5 (Completed):** Final Wallarm-Inspired SOC UI, Design Tokens, Collapsible 15-Destination Sidebar Navigation, Truthful Feature Classification, 74 Unit Tests, and Zero Build Warnings.

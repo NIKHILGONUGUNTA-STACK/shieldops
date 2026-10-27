@@ -144,9 +144,20 @@ export class SecurityApiService {
    * GET /api/v1/security/policy-decisions
    * Retrieves recent global advisory policy decisions.
    */
-  getRecentPolicyDecisions(limit = 50): Observable<PolicyDecisionResponse[]> {
-    const params = new HttpParams().set('limit', limit.toString());
+  getRecentPolicyDecisions(page: number = 0, size: number = 50): Observable<PolicyDecisionResponse[]> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
     return this.http.get<PolicyDecisionResponse[]>(`${this.baseUrl}/api/v1/security/policy-decisions`, { params })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /actuator/health
+   * Retrieves live platform tier health status.
+   */
+  getSystemHealth(): Observable<{ status: string; groups?: string[] }> {
+    return this.http.get<{ status: string; groups?: string[] }>(`${this.baseUrl}/actuator/health`)
       .pipe(catchError(this.handleError));
   }
 
