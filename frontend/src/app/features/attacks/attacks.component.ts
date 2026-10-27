@@ -24,7 +24,7 @@ import { SeverityBadgeComponent } from '../../shared/components/severity-badge/s
           <div class="soc-stat-pill">
             <div class="soc-stat-icon amber">⚠️</div>
             <div class="soc-stat-content">
-              <span class="soc-stat-val">{{ overview?.totalAnomalies24h || events.length }}</span>
+              <span class="soc-stat-val">{{ overview?.totalAnomalies24h ?? events.length }}</span>
               <span class="soc-stat-sub">Anomalies (24h)</span>
             </div>
           </div>
@@ -252,6 +252,7 @@ export class AttacksComponent implements OnInit {
       },
       error: (err) => {
         this.error = err;
+        this.events = [];
         this.loading = false;
       }
     });

@@ -239,6 +239,7 @@ export class DataAccessComponent implements OnInit {
       },
       error: (err) => {
         this.error = err;
+        this.events = [];
         this.loading = false;
       }
     });

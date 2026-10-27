@@ -68,4 +68,14 @@ describe('NavbarComponent', () => {
     logoutBtn.click();
     expect(authServiceSpy.logout).toHaveBeenCalled();
   });
+
+  it('should fall back to truthful role identity and never Jane Cooper when profile username is absent', () => {
+    authServiceSpy.userProfile.and.returnValue(null);
+    authServiceSpy.isSecurityAdmin.and.returnValue(false);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.username')?.textContent).toContain('security-analyst');
+    expect(compiled.textContent).not.toContain('Jane Cooper');
+  });
 });

@@ -75,7 +75,7 @@ import { environment } from '../../../environments/environment';
             </div>
             <div class="setting-row">
               <span class="setting-key">Active User Session</span>
-              <span class="setting-val mono">{{ auth.userProfile()?.username || 'Jane Cooper' }}</span>
+              <span class="setting-val mono">{{ auth.userProfile()?.username || (auth.isSecurityAdmin() ? 'security-admin' : 'security-analyst') }}</span>
             </div>
             <div class="setting-row">
               <span class="setting-key">Assigned Roles</span>

@@ -63,4 +63,59 @@ describe('CampaignsComponent', () => {
     expect(compiled.querySelector('.campaign-title-link')?.textContent).toContain('Multi-Vector Escalation');
     expect(compiled.querySelector('.category-chip')?.textContent).toContain('MULTI_VECTOR_CAMPAIGN');
   });
+
+  it('should strictly filter out non-campaign single-vector incidents', () => {
+    apiServiceSpy.getIncidents.and.returnValue(of({
+      incidents: [
+        {
+          id: 'single-inc-1',
+          incidentFingerprint: 'FP-SINGLE-01',
+          ruleId: 'RULE-RATE-01',
+          ruleVersion: '1.0.0',
+          threatCategory: 'RATE_LIMIT_ABUSE',
+          severity: 'MEDIUM',
+          status: 'OPEN',
+          targetEntityType: 'IP_ADDRESS',
+          targetEntityValue: '198.51.100.4',
+          firstDetectedAt: '2026-10-27T10:00:00Z',
+          lastEventAt: '2026-10-27T10:05:00Z',
+          eventCount: 1,
+          summary: 'Single rate limit breach',
+          createdAt: '2026-10-27T10:00:00Z',
+          updatedAt: '2026-10-27T10:05:00Z'
+        }
+      ],
+      page: 0,
+      size: 50,
+      totalElements: 1,
+      totalPages: 1,
+      first: true,
+      last: true
+    }));
+
+    component.loadCampaigns();
+    fixture.detectChanges();
+
+    expect(component.campaigns.length).toBe(0);
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.empty-state')).toBeTruthy();
+    expect(compiled.textContent).toContain('No Correlated Campaigns Detected');
+  });
+
+  it('should display error banner and zero fabricated campaigns on HTTP failure', () => {
+    apiServiceSpy.getIncidents.and.returnValue(throwError(() => ({
+      title: 'Database Unreachable',
+      detail: 'Cannot query incident table',
+      status: 503
+    })));
+
+    component.loadCampaigns();
+    fixture.detectChanges();
+
+    expect(component.error?.title).toBe('Database Unreachable');
+    expect(component.campaigns.length).toBe(0);
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.error-banner')).toBeTruthy();
+    expect(compiled.querySelector('.soc-table')).toBeNull();
+  });
 });

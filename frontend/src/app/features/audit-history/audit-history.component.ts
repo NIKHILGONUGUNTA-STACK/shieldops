@@ -231,6 +231,7 @@ export class AuditHistoryComponent implements OnInit {
       },
       error: (err) => {
         this.error = err;
+        this.historyRecords = [];
         this.loading = false;
       }
     });

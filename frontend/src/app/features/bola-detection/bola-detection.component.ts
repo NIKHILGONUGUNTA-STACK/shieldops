@@ -42,10 +42,10 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
             <h3>Redis Sliding Window</h3>
           </div>
           <p class="mech-desc">
-            Tracks distinct resource IDs accessed per authenticated subject within a 60-second rolling TTL window.
-            Threshold: 3 unauthorized distinct resources triggers incident creation.
+            Tracks distinct resource IDs accessed per authenticated subject within a 300-second rolling TTL window.
+            Threshold: 3 unauthorized attempts across ≥ 2 distinct resources triggers incident creation.
           </p>
-          <div class="mech-badge mono">WINDOW: 60s | THRESHOLD: 3</div>
+          <div class="mech-badge mono">WINDOW: 300s | THRESHOLD: 3 ATTEMPTS / ≥ 2 RESOURCES</div>
         </div>
 
         <div class="mech-card">
@@ -71,6 +71,19 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
           </p>
           <div class="mech-badge mono">GROUP: aegis-detectors</div>
         </div>
+      </div>
+
+      <!-- Authorization Outcome Interpretation Notice -->
+      <div class="bola-interpretation-banner">
+        <div class="interpretation-header">
+          <span class="interpretation-icon">⚖️</span>
+          <strong>Authorization Outcome & Breach Distinction</strong>
+        </div>
+        <p class="interpretation-desc">
+          BOLA detector RULE-BOLA-01 evaluates authenticated callers receiving HTTP 403 Forbidden responses across multiple resources.
+          The 403 Forbidden outcome confirms unauthorized requests were rejected at the service authorization layer.
+          These findings represent attempted object-level enumeration; they do not indicate unauthorized data leakage or compromised customer data.
+        </p>
       </div>
 
       <!-- Live BOLA Incidents Table -->
@@ -208,6 +221,32 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
       display: inline-block;
       width: fit-content;
     }
+    .bola-interpretation-banner {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid var(--border-default);
+      border-left: 3px solid var(--accent-teal);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      margin-bottom: var(--space-6);
+    }
+    .interpretation-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    .interpretation-icon {
+      font-size: 16px;
+    }
+    .interpretation-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin: 0;
+    }
     .section-heading {
       font-size: 15px;
       font-weight: 600;
@@ -271,6 +310,7 @@ export class BolaDetectionComponent implements OnInit {
       },
       error: (err) => {
         this.error = err;
+        this.incidents = [];
         this.loading = false;
       }
     });

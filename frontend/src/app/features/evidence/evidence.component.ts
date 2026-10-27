@@ -303,12 +303,14 @@ export class EvidenceComponent implements OnInit {
           },
           error: (err) => {
             this.error = err;
+            this.evidenceList = [];
             this.loading = false;
           }
         });
       },
       error: (err) => {
         this.error = err;
+        this.evidenceList = [];
         this.loading = false;
       }
     });

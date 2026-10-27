@@ -272,6 +272,7 @@ export class PolicyDecisionsComponent implements OnInit {
       },
       error: (err) => {
         this.error = err;
+        this.decisions = [];
         this.loading = false;
       }
     });

@@ -62,7 +62,7 @@ import { LayoutService } from '../../../core/services/layout.service';
               {{ getInitials() }}
             </div>
             <div class="user-details">
-              <span class="username">{{ auth.userProfile()?.username || 'Jane Cooper' }}</span>
+              <span class="username">{{ auth.userProfile()?.username || (auth.isSecurityAdmin() ? 'security-admin' : 'security-analyst') }}</span>
               <span class="user-role-label">
                 {{ auth.isSecurityAdmin() ? 'SECURITY ADMIN' : 'SECURITY ANALYST' }}
               </span>

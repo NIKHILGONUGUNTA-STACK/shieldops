@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { BolaDetectionComponent } from './bola-detection.component';
 import { SecurityApiService } from '../../core/services/security-api.service';
 
@@ -64,5 +64,50 @@ describe('BolaDetectionComponent', () => {
     expect(cards.length).toBe(3);
     expect(compiled.textContent).toContain('Anti-Affinity Cross-Tenant Defense');
     expect(compiled.textContent).toContain('Redis Sliding Window');
+    expect(compiled.textContent).toContain('WINDOW: 300s');
+  });
+
+  it('should render authorization outcome breach distinction notice', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.bola-interpretation-banner')).toBeTruthy();
+    expect(compiled.textContent).toContain('Authorization Outcome & Breach Distinction');
+    expect(compiled.textContent).toContain('403 Forbidden outcome confirms unauthorized requests were rejected');
+  });
+
+  it('should render empty state when zero BOLA incidents exist', () => {
+    apiServiceSpy.getIncidents.and.returnValue(of({
+      incidents: [],
+      page: 0,
+      size: 20,
+      totalElements: 0,
+      totalPages: 0,
+      first: true,
+      last: true
+    }));
+
+    component.loadBolaIncidents();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(component.incidents.length).toBe(0);
+    expect(compiled.querySelector('.empty-state')).toBeTruthy();
+    expect(compiled.textContent).toContain('Zero BOLA Incidents');
+  });
+
+  it('should display error banner and zero fabricated incidents on HTTP failure', () => {
+    apiServiceSpy.getIncidents.and.returnValue(throwError(() => ({
+      title: 'Service Error',
+      detail: 'Cannot reach incident repository',
+      status: 500
+    })));
+
+    component.loadBolaIncidents();
+    fixture.detectChanges();
+
+    expect(component.error?.title).toBe('Service Error');
+    expect(component.incidents.length).toBe(0);
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.error-banner')).toBeTruthy();
+    expect(compiled.querySelector('.soc-table')).toBeNull();
   });
 });

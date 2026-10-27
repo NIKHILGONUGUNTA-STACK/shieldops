@@ -40,4 +40,16 @@ describe('SettingsComponent', () => {
     expect(compiled.textContent).toContain('aegis-dev');
     expect(compiled.textContent).toContain('S256 (SHA-256)');
   });
+
+  it('should display active session username or truthful role fallback without Jane Cooper', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('admin-user');
+    expect(compiled.textContent).not.toContain('Jane Cooper');
+
+    authServiceSpy.userProfile.and.returnValue(null);
+    authServiceSpy.isSecurityAdmin.and.returnValue(true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('security-admin');
+    expect(fixture.nativeElement.textContent).not.toContain('Jane Cooper');
+  });
 });

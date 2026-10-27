@@ -232,17 +232,18 @@ export class CampaignsComponent implements OnInit {
     // Retrieve incidents and filter for campaigns or multi-vector correlated threats
     this.api.getIncidents({ page: 0, size: 50 }).subscribe({
       next: (page) => {
-        // Multi-vector campaigns or high-impact correlated threats
+        // Strictly filter for correlated multi-vector campaigns or complex multi-rule intrusions
         this.campaigns = (page.incidents || []).filter(inc =>
           inc.threatCategory === 'MULTI_VECTOR_CAMPAIGN' ||
-          inc.threatCategory === 'BOLA' ||
-          inc.severity === 'CRITICAL' ||
-          inc.severity === 'HIGH'
+          inc.threatCategory === 'COMPLEX_INTRUSION' ||
+          inc.summary?.includes('Multi-Vector') ||
+          inc.summary?.includes('Campaign')
         );
         this.loading = false;
       },
       error: (err) => {
         this.error = err;
+        this.campaigns = [];
         this.loading = false;
       }
     });
