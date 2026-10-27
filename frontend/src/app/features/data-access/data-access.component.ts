@@ -47,10 +47,10 @@ import { SecurityEventResponse, ProblemDetail } from '../../core/models/security
               <polyline points="9 12 11 14 15 10"></polyline>
             </svg>
           </span>
-          <strong>Aegis Privacy-Conscious Telemetry Invariants</strong>
+          <strong>ShieldOps Privacy-Conscious Telemetry Invariants</strong>
         </div>
         <p class="privacy-desc">
-          Aegis Gateway enforces zero-raw-PII storage. In accordance with banking security standards,
+          ShieldOps Gateway enforces zero-raw-PII storage. In accordance with banking security standards,
           Authorization headers are strictly redacted (<code>Bearer [REDACTED]</code>), request/response bodies are
           hashed via cryptographic SHA-256, and only structural resource IDs and customer subjects are retained in telemetry.
         </p>

@@ -38,7 +38,7 @@ describe('NavbarComponent', () => {
 
   it('should display brand shield and active recon environment', () => {
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.brand-name')?.textContent).toContain('AEGIS');
+    expect(compiled.querySelector('.brand-name')?.textContent).toContain('SHIELDOPS');
     expect(compiled.querySelector('.env-pill')?.textContent).toContain('ACTIVE RECON');
   });
 

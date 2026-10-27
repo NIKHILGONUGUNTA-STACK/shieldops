@@ -64,7 +64,7 @@ export class AuthService {
 
       return authenticated;
     } catch (err) {
-      console.warn('[Aegis Auth] Keycloak SSO initialization skipped or unavailable:', err);
+      console.warn('[ShieldOps Auth] Keycloak SSO initialization skipped or unavailable:', err);
       this.isInitialized = true;
       this.isAuthenticated.set(false);
       return false;
@@ -90,8 +90,12 @@ export class AuthService {
 
   async login(redirectUri?: string): Promise<void> {
     if (!this.keycloak) return;
+    let target = redirectUri || '/overview';
+    if (!target.startsWith('http://') && !target.startsWith('https://')) {
+      target = `${window.location.origin}${target.startsWith('/') ? '' : '/'}${target}`;
+    }
     await this.keycloak.login({
-      redirectUri: redirectUri || `${window.location.origin}/overview`
+      redirectUri: target
     });
   }
 
@@ -115,7 +119,7 @@ export class AuthService {
       await this.keycloak.updateToken(30);
       return this.keycloak.token || null;
     } catch {
-      console.warn('[Aegis Auth] Token refresh failed; re-authentication required.');
+      console.warn('[ShieldOps Auth] Token refresh failed; re-authentication required.');
       return null;
     }
   }

@@ -1,5 +1,5 @@
 /**
- * Aegis Security Operations Models & DTOs
+ * ShieldOps Security Operations Models & DTOs
  * Strictly aligned with Phase 5.2 backend response contracts.
  */
 

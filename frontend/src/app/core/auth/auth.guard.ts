@@ -17,7 +17,7 @@ export const authGuard: CanActivateFn = async (route, state) => {
     if (expectedRoles && expectedRoles.length > 0) {
       const hasRequiredRole = expectedRoles.some(role => authService.hasRole(role));
       if (!hasRequiredRole) {
-        console.warn(`[Aegis AuthGuard] User lacks required roles: ${expectedRoles.join(', ')}`);
+        console.warn(`[ShieldOps AuthGuard] User lacks required roles: ${expectedRoles.join(', ')}`);
         router.navigate(['/login'], { queryParams: { error: 'insufficient_role' } });
         return false;
       }

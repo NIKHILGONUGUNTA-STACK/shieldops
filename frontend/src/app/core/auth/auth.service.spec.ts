@@ -22,7 +22,7 @@ describe('AuthService', () => {
   it('should correctly set simulated analyst authentication', () => {
     service.setMockAuthenticated({
       username: 'analyst',
-      email: 'analyst@aegis.local',
+      email: 'analyst@shieldops.local',
       roles: ['SECURITY_ANALYST']
     });
 
@@ -37,7 +37,7 @@ describe('AuthService', () => {
   it('should correctly set simulated admin authentication', () => {
     service.setMockAuthenticated({
       username: 'admin',
-      email: 'admin@aegis.local',
+      email: 'admin@shieldops.local',
       roles: ['SECURITY_ADMIN', 'SECURITY_ANALYST']
     });
 

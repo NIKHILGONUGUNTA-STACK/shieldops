@@ -11,8 +11,8 @@ import { AuthService } from '../../core/auth/auth.service';
     <div class="login-wrapper">
       <div class="login-card soc-card">
         <div class="login-header">
-          <div class="login-badge">AEGIS SECURITY SUITE</div>
-          <h1 class="login-title">Security Operations Center</h1>
+          <div class="login-badge">SHIELDOPS SECURITY SUITE</div>
+          <h1 class="login-title">ShieldOps SOC Console</h1>
           <p class="login-subtitle">
             Authenticated telemetry and adaptive response console. Protected by Keycloak OIDC (PKCE S256).
           </p>
@@ -176,13 +176,16 @@ export class LoginComponent {
 
   async onKeycloakLogin(): Promise<void> {
     const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/overview';
-    await this.auth.login(returnUrl);
+    const targetUrl = returnUrl.startsWith('http')
+      ? returnUrl
+      : `${window.location.origin}${returnUrl.startsWith('/') ? '' : '/'}${returnUrl}`;
+    await this.auth.login(targetUrl);
   }
 
   simulateAnalystLogin(): void {
     this.auth.setMockAuthenticated({
       username: 'analyst',
-      email: 'analyst@aegis.local',
+      email: 'analyst@shieldops.local',
       firstName: 'Security',
       lastName: 'Analyst',
       roles: ['SECURITY_ANALYST']
@@ -193,7 +196,7 @@ export class LoginComponent {
   simulateAdminLogin(): void {
     this.auth.setMockAuthenticated({
       username: 'admin',
-      email: 'admin@aegis.local',
+      email: 'admin@shieldops.local',
       firstName: 'Security',
       lastName: 'Admin',
       roles: ['SECURITY_ADMIN', 'SECURITY_ANALYST']

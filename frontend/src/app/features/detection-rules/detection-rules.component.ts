@@ -27,7 +27,7 @@ interface RuleDefinition {
         <div>
           <h1 class="soc-title">Detection Rules</h1>
           <p class="soc-subtitle">
-            Operational status, sliding-window thresholds, and detection telemetry for the 6 core Aegis correlation rules.
+            Operational status, sliding-window thresholds, and detection telemetry for the 6 core ShieldOps correlation rules.
           </p>
         </div>
 

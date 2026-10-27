@@ -7,7 +7,7 @@ import { environment } from '../../../environments/environment';
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
 
-  // Only attach authorization header to Aegis backend APIs
+  // Only attach authorization header to ShieldOps backend APIs
   const isApiRequest = req.url.startsWith(environment.apiBaseUrl) || req.url.startsWith('/api/');
 
   if (!isApiRequest) {

@@ -28,7 +28,7 @@ import { environment } from '../../../environments/environment';
             <h3>Security Enforcement Invariant</h3>
           </div>
           <p class="card-desc">
-            Aegis is strictly configured in non-blocking Advisory Mode. To protect legitimate banking microservices
+            ShieldOps is strictly configured in non-blocking Advisory Mode. To protect legitimate banking microservices
             from automated availability hazards, this setting is non-toggleable at runtime.
           </p>
 

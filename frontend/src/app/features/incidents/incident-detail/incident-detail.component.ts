@@ -195,7 +195,7 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4A6CFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                 </span>
                 <span>
-                  <strong>Advisory Invariant:</strong> Aegis functions strictly in advisory alert mode.
+                  <strong>Advisory Invariant:</strong> ShieldOps functions strictly in advisory alert mode.
                   Automatic blocking, IP blacklisting, or credential invalidation are intentionally bypassed to preserve customer availability.
                 </span>
               </div>

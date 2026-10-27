@@ -48,11 +48,11 @@ import { PolicyDecisionResponse, ProblemDetail } from '../../core/models/securit
               <polyline points="9 12 11 14 15 10"></polyline>
             </svg>
           </span>
-          <strong>Aegis Non-Intrusive Advisory Invariant</strong>
+          <strong>ShieldOps Non-Intrusive Advisory Invariant</strong>
         </div>
         <p class="advisory-desc">
           To maintain zero false-positive service disruption against legitimate customer banking traffic,
-          Aegis operates in strict <code>ADVISORY MODE</code>. All policy evaluations produce recommendations
+          ShieldOps operates in strict <code>ADVISORY MODE</code>. All policy evaluations produce recommendations
           (such as <code>LOG_ALERT</code>) for analyst review and never execute autonomous traffic blocking,
           rate throttling, or session invalidation.
         </p>

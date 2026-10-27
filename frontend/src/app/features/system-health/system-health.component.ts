@@ -23,7 +23,7 @@ interface HealthTier {
         <div>
           <h1 class="soc-title">Platform System Health</h1>
           <p class="soc-subtitle">
-            Live operational health monitoring across Aegis Gateway, Redis Stream, PostgreSQL Flyway V3, and Keycloak tiers.
+            Live operational health monitoring across ShieldOps Gateway, Redis Stream, PostgreSQL Flyway V3, and Keycloak tiers.
           </p>
         </div>
 
@@ -77,7 +77,7 @@ interface HealthTier {
 
       <!-- Architecture Topology Card -->
       <div class="topology-card">
-        <h3 class="topology-title">Aegis SOC Architecture Tier Invariants</h3>
+        <h3 class="topology-title">ShieldOps SOC Architecture Tier Invariants</h3>
         <div class="topology-points">
           <div class="top-point">
             <span class="point-num">01</span>
@@ -266,7 +266,7 @@ export class SystemHealthComponent implements OnInit {
   tiers: HealthTier[] = [
     {
       id: 'gateway',
-      name: 'Aegis Gateway',
+      name: 'ShieldOps Gateway',
       service: 'Spring Boot 3.4 / Java 25',
       status: 'CHECKING',
       endpoint: 'http://127.0.0.1:8000/actuator/health',

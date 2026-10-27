@@ -117,7 +117,7 @@ export const NAV_SECTIONS: NavSection[] = [
         path: '/detection-rules',
         icon: 'sliders',
         availability: 'implemented',
-        description: 'Operational status, sliding windows, and trigger stats for all 6 Aegis detection rules'
+        description: 'Operational status, sliding windows, and trigger stats for all 6 ShieldOps detection rules'
       },
       {
         id: 'bola-detection',

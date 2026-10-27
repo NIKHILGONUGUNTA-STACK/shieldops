@@ -62,6 +62,6 @@ describe('SidebarComponent', () => {
   it('should display ADVISORY MODE indicator in footer', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.advisory-pill')?.textContent).toContain('ADVISORY MODE');
-    expect(compiled.querySelector('.stack-tag')?.textContent).toContain('AEGIS v5.5');
+    expect(compiled.querySelector('.stack-tag')?.textContent).toContain('SHIELDOPS v5.5');
   });
 });

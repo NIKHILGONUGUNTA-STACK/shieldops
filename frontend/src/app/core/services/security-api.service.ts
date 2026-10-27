@@ -170,7 +170,7 @@ export class SecurityApiService {
       problem = {
         title: error.statusText || 'Network Error',
         status: error.status || 0,
-        detail: error.message || 'An unexpected error occurred while communicating with the Aegis API.'
+        detail: error.message || 'An unexpected error occurred while communicating with the ShieldOps API.'
       };
     }
 

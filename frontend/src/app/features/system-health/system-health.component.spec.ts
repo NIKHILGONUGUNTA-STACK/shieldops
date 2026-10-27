@@ -39,7 +39,7 @@ describe('SystemHealthComponent', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const tierCards = compiled.querySelectorAll('.tier-card');
     expect(tierCards.length).toBe(4);
-    expect(compiled.textContent).toContain('Aegis Gateway');
+    expect(compiled.textContent).toContain('ShieldOps Gateway');
     expect(compiled.textContent).toContain('Redis 7 Engine');
     expect(compiled.textContent).toContain('PostgreSQL 17 Tier');
     expect(compiled.textContent).toContain('Keycloak 26 IAM');

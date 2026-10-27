@@ -159,7 +159,7 @@ import { LayoutService } from '../../../core/services/layout.service';
             <span class="pulse-dot"></span>
             <span class="advisory-text">ADVISORY MODE</span>
           </div>
-          <span class="stack-tag mono">AEGIS v5.5</span>
+          <span class="stack-tag mono">SHIELDOPS v5.5</span>
         </div>
 
         <button
