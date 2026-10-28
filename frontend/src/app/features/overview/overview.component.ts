@@ -26,7 +26,7 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
         <div class="title-with-controls">
           <div class="breadcrumb-tag">
             <span class="live-dot"></span>
-            SHIELDOPS SOC / SITUATIONAL AWARENESS
+            SITUATIONAL AWARENESS
           </div>
           <h1 class="main-title">API Abuse Prevention & Telemetry</h1>
 
@@ -354,7 +354,7 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
       align-items: center;
       gap: 6px;
       font-size: 10px;
-      font-weight: 700;
+      font-weight: 400;
       letter-spacing: 0.08em;
       color: var(--accent-orange);
       font-family: var(--font-mono);
@@ -371,7 +371,7 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
 
     .main-title {
       font-size: 22px;
-      font-weight: 700;
+      font-weight: 400;
       color: var(--text-primary);
       letter-spacing: -0.02em;
     }

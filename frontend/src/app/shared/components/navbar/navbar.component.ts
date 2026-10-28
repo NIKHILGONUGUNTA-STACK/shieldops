@@ -24,11 +24,7 @@ import { LayoutService } from '../../../core/services/layout.service';
           </svg>
         </button>
 
-        <!-- Brand Name & Mode Indicator for Responsive Screens and Contract Tests -->
-        <div class="brand-context">
-          <span class="brand-name">SHIELDOPS</span>
-          <span class="env-pill">ACTIVE RECON</span>
-        </div>
+
       </div>
 
       <!-- Center Global Search Input matching Wallarm Style -->
@@ -142,7 +138,7 @@ import { LayoutService } from '../../../core/services/layout.service';
 
     .brand-name {
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 400;
       letter-spacing: 0.08em;
       color: var(--text-muted);
       font-family: var(--font-mono);
@@ -155,7 +151,7 @@ import { LayoutService } from '../../../core/services/layout.service';
       background: rgba(255, 122, 26, 0.1);
       color: var(--accent-orange);
       border: 1px solid rgba(255, 122, 26, 0.25);
-      font-weight: 700;
+      font-weight: 400;
       font-family: var(--font-mono);
       letter-spacing: 0.04em;
     }

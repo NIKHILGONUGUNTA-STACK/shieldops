@@ -215,7 +215,7 @@ html, body {
 
 .soc-card-title {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 400;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-secondary);
@@ -245,7 +245,7 @@ html, body {
 .btn-primary {
   background: var(--accent-teal);
   color: var(--text-inverse);
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .btn-primary:hover {
@@ -330,7 +330,7 @@ html, body {
   padding: 2px 8px;
   border-radius: 9999px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 400;
   letter-spacing: 0.03em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -396,7 +396,7 @@ html, body {
   background: var(--status-planned-bg);
   border: 1px solid var(--status-planned-border);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 400;
   letter-spacing: 0.05em;
   padding: 1px 6px;
   border-radius: var(--radius-sm);
@@ -436,7 +436,7 @@ html, body {
 .pill-btn.active {
   background: var(--bg-card);
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: 400;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-subtle);
 }
@@ -588,3 +588,9 @@ html, body {
 .text-cyan {
   color: var(--accent-cyan);
 }
+
+/* Global override to enforce regular font weight */
+* {
+  font-weight: 400 !important;
+}
+
