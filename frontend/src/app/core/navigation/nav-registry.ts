@@ -76,9 +76,8 @@ export const NAV_SECTIONS: NavSection[] = [
         label: 'API Inventory',
         path: '/api-inventory',
         icon: 'layers',
-        availability: 'planned',
-        badge: 'PLANNED',
-        description: 'Automated endpoint discovery, runtime service cataloging, and asset classification (Phase 6 Roadmap)'
+        availability: 'implemented',
+        description: 'Passive endpoint discovery, runtime service cataloging, and telemetry-derived inventory'
       },
       {
         id: 'api-events',

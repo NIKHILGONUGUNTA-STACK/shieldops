@@ -40,11 +40,11 @@ describe('SidebarComponent', () => {
     expect(navLinks.length).toBe(15);
   });
 
-  it('should display PLANNED badges for API Inventory and API Specifications', () => {
+  it('should display PLANNED badge for API Specifications', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const badges = Array.from(compiled.querySelectorAll('.badge-planned')).map(b => b.textContent?.trim());
-    expect(badges.length).toBe(2);
-    expect(badges.every(b => b === 'PLANNED')).toBeTrue();
+    expect(badges.length).toBe(1);
+    expect(badges[0]).toBe('PLANNED');
   });
 
   it('should toggle collapsed state when collapse button is clicked', () => {

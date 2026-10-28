@@ -300,12 +300,7 @@ public class TelemetryFilter extends OncePerRequestFilter {
     }
 
     private String normalizeRouteTemplate(String uri) {
-        if (uri == null || uri.isBlank()) {
-            return "/";
-        }
-        String normalized = uri.replaceAll("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}", "{id}");
-        normalized = normalized.replaceAll("(ACCT|CUST|SYNTH)-[a-zA-Z0-9_-]+", "{ref}");
-        return normalized;
+        return com.aegis.gateway.discovery.RouteNormalizer.normalize(uri);
     }
 
     private void publishToRedisOrDatabase(ApiEvent event) {

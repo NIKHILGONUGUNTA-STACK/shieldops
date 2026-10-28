@@ -1,8 +1,8 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 5.5 Complete (Wallarm-Inspired SOC UI, Design Tokens & Feature Navigation)
+## Current Milestone: Phase 6.1 Complete (Telemetry-Based API Discovery & Inventory)
 
-**Last Updated:** 2026-10-27
+**Last Updated:** 2026-10-28
 **Active Git Branch:** `main`
 **Git Working Tree:** Clean (Ready for Review)
 **Remote Upstream:** `origin/main` (`https://github.com/NIKHILGONUGUNTA-STACK/shieldops.git`)
@@ -21,20 +21,20 @@
 | `customer-service` | 17 | 0 | 0 | 0 | **SUCCESS** |
 | `account-service` | 26 | 0 | 0 | 0 | **SUCCESS** |
 | `transaction-service` | 28 | 0 | 0 | 0 | **SUCCESS** |
-| `gateway` | 79 | 0 | 0 | 0 | **SUCCESS** |
-| **Total Backend Platform Tests** | **150** | **0** | **0** | **0** | **BUILD SUCCESS** |
+| `gateway` | 97 | 0 | 0 | 0 | **SUCCESS** |
+| **Total Backend Platform Tests** | **168** | **0** | **0** | **0** | **BUILD SUCCESS** |
 
 ### 1.2 Frontend SOC Dashboard (Angular 18 / TypeScript / Node 22)
 - **Framework & Tooling:** Angular 18.2.21 / Node.js 22.20.0 / npm 10.9.3
 - **Test Runner:** Karma 6.4 / Jasmine 5.2 / ChromeHeadless
-- **Production Build:** `dist/aegis-frontend` (367.7 kB initial bundle, 102.1 kB transfer, 0 warnings, 0 errors)
+- **Production Build:** `dist/aegis-frontend` (371.6 kB initial bundle, 102.8 kB transfer, 0 warnings, 0 errors)
 
 | Test Suite | Spec File | Tests Run | Failures | Status |
 | :--- | :--- | :---: | :---: | :--- |
 | **App Shell** | `app.component.spec.ts` | 2 | 0 | **SUCCESS** |
 | **Navbar & Search Bar** | `navbar.component.spec.ts` | 6 | 0 | **SUCCESS** |
 | **Sidebar & Nav Registry** | `sidebar.component.spec.ts` | 6 | 0 | **SUCCESS** |
-| **Security API Service** | `security-api.service.spec.ts` | 9 | 0 | **SUCCESS** |
+| **Security API Service** | `security-api.service.spec.ts` | 11 | 0 | **SUCCESS** |
 | **Auth Service** | `auth.service.spec.ts` | 3 | 0 | **SUCCESS** |
 | **Auth Guard** | `auth.guard.spec.ts` | 3 | 0 | **SUCCESS** |
 | **Overview Component** | `overview.component.spec.ts` | 3 | 0 | **SUCCESS** |
@@ -50,10 +50,10 @@
 | **Policy Decisions** | `policy-decisions.component.spec.ts` | 2 | 0 | **SUCCESS** |
 | **Audit History** | `audit-history.component.spec.ts` | 2 | 0 | **SUCCESS** |
 | **System Health** | `system-health.component.spec.ts` | 2 | 0 | **SUCCESS** |
-| **API Inventory (Planned)** | `api-inventory.component.spec.ts` | 2 | 0 | **SUCCESS** |
+| **Observed API Inventory** | `api-inventory.component.spec.ts` | 7 | 0 | **SUCCESS** |
 | **API Specifications (Planned)** | `api-specs.component.spec.ts` | 2 | 0 | **SUCCESS** |
 | **Settings Component** | `settings.component.spec.ts` | 3 | 0 | **SUCCESS** |
-| **Total Frontend Tests** | — | **74** | **0** | **BUILD SUCCESS** |
+| **Total Frontend Tests** | — | **88** | **0** | **BUILD SUCCESS** |
 
 ---
 

@@ -190,6 +190,77 @@ describe('SecurityApiService', () => {
     });
   });
 
+  describe('getDiscoveredEndpoints', () => {
+    it('should query /api/v1/security/discovery/endpoints with filter params', () => {
+      const mockDiscovery = {
+        content: [
+          {
+            id: 'ep_test123',
+            httpMethod: 'GET',
+            routeTemplate: '/api/v1/customers/{customerId}',
+            serviceName: 'customer-service',
+            firstObservedAt: '2026-10-28T10:00:00Z',
+            lastObservedAt: '2026-10-28T10:30:00Z',
+            totalRequests: 42,
+            statusDistribution: { '2xx': 40, '4xx': 2, '5xx': 0 },
+            distinctStatusCodes: [200, 404],
+            averageLatencyMs: 25.4
+          }
+        ],
+        page: 0,
+        size: 20,
+        totalElements: 1,
+        totalPages: 1,
+        hasNext: false,
+        hasPrevious: false,
+        totalObservedEndpoints: 1,
+        totalObservedRequests: 42,
+        totalMonitoredServices: 1
+      };
+
+      service.getDiscoveredEndpoints({
+        page: 0,
+        size: 20,
+        method: 'GET',
+        service: 'customer-service',
+        search: 'customers'
+      }).subscribe(res => {
+        expect(res.totalElements).toBe(1);
+        expect(res.content[0].routeTemplate).toBe('/api/v1/customers/{customerId}');
+        expect(res.content[0].serviceName).toBe('customer-service');
+      });
+
+      const req = httpTesting.expectOne(r => r.url.includes('/api/v1/security/discovery/endpoints'));
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('method')).toBe('GET');
+      expect(req.request.params.get('service')).toBe('customer-service');
+      expect(req.request.params.get('search')).toBe('customers');
+      req.flush(mockDiscovery);
+    });
+
+    it('should query single endpoint by ID', () => {
+      service.getDiscoveredEndpointById('ep_123').subscribe(ep => {
+        expect(ep.id).toBe('ep_123');
+        expect(ep.httpMethod).toBe('POST');
+      });
+
+      const req = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/discovery/endpoints/ep_123`);
+      expect(req.request.method).toBe('GET');
+      req.flush({
+        id: 'ep_123',
+        httpMethod: 'POST',
+        routeTemplate: '/api/v1/transfers',
+        serviceName: 'transaction-service',
+        firstObservedAt: '2026-10-28T10:00:00Z',
+        lastObservedAt: '2026-10-28T10:30:00Z',
+        totalRequests: 10,
+        statusDistribution: { '2xx': 10 },
+        distinctStatusCodes: [200],
+        averageLatencyMs: 45.0
+      });
+    });
+  });
+
   describe('Error Handling', () => {
     it('should map RFC 7807 ProblemDetail from HTTP error', () => {
       service.getOverview(24).subscribe({

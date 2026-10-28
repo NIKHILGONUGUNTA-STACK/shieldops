@@ -176,3 +176,40 @@ export interface EventFilterParams {
   from?: string;
   to?: string;
 }
+
+export interface DiscoveredEndpointResponse {
+  id: string;
+  httpMethod: string;
+  routeTemplate: string;
+  serviceName: string;
+  firstObservedAt: string;
+  lastObservedAt: string;
+  totalRequests: number;
+  statusDistribution: { [key: string]: number };
+  distinctStatusCodes: number[];
+  averageLatencyMs: number | null;
+}
+
+export interface DiscoveredEndpointPageResponse {
+  content: DiscoveredEndpointResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  totalObservedEndpoints: number;
+  totalObservedRequests: number;
+  totalMonitoredServices: number;
+}
+
+export interface EndpointFilterParams {
+  page?: number;
+  size?: number;
+  method?: string;
+  service?: string;
+  search?: string;
+  sortBy?: string;
+  sortDirection?: 'ASC' | 'DESC' | 'asc' | 'desc';
+}
+

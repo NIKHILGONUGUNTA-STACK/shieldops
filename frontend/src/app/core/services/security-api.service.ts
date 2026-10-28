@@ -14,7 +14,10 @@ import {
   PolicyDecisionResponse,
   EventFilterParams,
   IncidentFilterParams,
-  ProblemDetail
+  ProblemDetail,
+  DiscoveredEndpointResponse,
+  DiscoveredEndpointPageResponse,
+  EndpointFilterParams
 } from '../models/security.models';
 
 @Injectable({
@@ -149,6 +152,36 @@ export class SecurityApiService {
       .set('page', page.toString())
       .set('size', size.toString());
     return this.http.get<PolicyDecisionResponse[]>(`${this.baseUrl}/api/v1/security/policy-decisions`, { params })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/discovery/endpoints
+   * Retrieves discovered API endpoints with filtering and pagination.
+   */
+  getDiscoveredEndpoints(filterParams?: EndpointFilterParams): Observable<DiscoveredEndpointPageResponse> {
+    let params = new HttpParams();
+
+    if (filterParams) {
+      if (filterParams.page !== undefined) params = params.set('page', filterParams.page.toString());
+      if (filterParams.size !== undefined) params = params.set('size', filterParams.size.toString());
+      if (filterParams.method) params = params.set('method', filterParams.method);
+      if (filterParams.service) params = params.set('service', filterParams.service);
+      if (filterParams.search) params = params.set('search', filterParams.search);
+      if (filterParams.sortBy) params = params.set('sortBy', filterParams.sortBy);
+      if (filterParams.sortDirection) params = params.set('sortDirection', filterParams.sortDirection);
+    }
+
+    return this.http.get<DiscoveredEndpointPageResponse>(`${this.baseUrl}/api/v1/security/discovery/endpoints`, { params })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/discovery/endpoints/{id}
+   * Retrieves single discovered endpoint details.
+   */
+  getDiscoveredEndpointById(id: string): Observable<DiscoveredEndpointResponse> {
+    return this.http.get<DiscoveredEndpointResponse>(`${this.baseUrl}/api/v1/security/discovery/endpoints/${encodeURIComponent(id)}`)
       .pipe(catchError(this.handleError));
   }
 

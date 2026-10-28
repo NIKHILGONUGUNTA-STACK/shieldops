@@ -36,10 +36,10 @@ describe('NavbarComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should display brand shield and active recon environment', () => {
+  it('should render clean navbar layout with search input placed first', () => {
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.brand-name')?.textContent).toContain('SHIELDOPS');
-    expect(compiled.querySelector('.env-pill')?.textContent).toContain('ACTIVE RECON');
+    expect(compiled.querySelector('.brand-name')).toBeFalsy();
+    expect(compiled.querySelector('.global-search-input')).toBeTruthy();
   });
 
   it('should display Wallarm-style global search input', () => {
