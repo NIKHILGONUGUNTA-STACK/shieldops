@@ -213,3 +213,54 @@ export interface EndpointFilterParams {
   sortDirection?: 'ASC' | 'DESC' | 'asc' | 'desc';
 }
 
+export interface DeclaredOperationResponse {
+  id: string;
+  specificationId: string;
+  httpMethod: string;
+  pathPattern: string;
+  normalizedRoute: string;
+  operationId: string | null;
+  summary: string | null;
+  description: string | null;
+  tags: string | null;
+  deprecated: boolean;
+  serviceBoundary: string;
+}
+
+export interface ApiSpecificationResponse {
+  id: string;
+  name: string;
+  description: string | null;
+  version: string;
+  openapiVersion: string;
+  sourceFilename: string;
+  contentHash: string;
+  format: 'JSON' | 'YAML' | string;
+  status: string;
+  importedAt: string;
+  importedBy: string;
+  operationCount: number;
+  pathCount: number;
+  validationSummary: string;
+  operations?: DeclaredOperationResponse[];
+}
+
+export interface ApiSpecificationPageResponse {
+  content: ApiSpecificationResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  totalSpecifications: number;
+  totalOperations: number;
+}
+
+export interface SpecificationFilterParams {
+  page?: number;
+  size?: number;
+  search?: string;
+  status?: string;
+}
+

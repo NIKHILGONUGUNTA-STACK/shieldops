@@ -589,6 +589,46 @@ html, body {
   color: var(--accent-cyan);
 }
 
+/* Method & Format Badges */
+.method-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-family: var(--font-mono);
+}
+.method-badge.get { background: rgba(0, 229, 163, 0.12); border: 1px solid rgba(0, 229, 163, 0.3); color: #00E5A3; }
+.method-badge.post { background: rgba(0, 210, 255, 0.12); border: 1px solid rgba(0, 210, 255, 0.3); color: #00D2FF; }
+.method-badge.put { background: rgba(255, 184, 0, 0.12); border: 1px solid rgba(255, 184, 0, 0.3); color: #FFB800; }
+.method-badge.delete { background: rgba(255, 77, 90, 0.12); border: 1px solid rgba(255, 77, 90, 0.3); color: #FF4D5A; }
+.method-badge.patch { background: rgba(157, 123, 255, 0.12); border: 1px solid rgba(157, 123, 255, 0.3); color: #9D7BFF; }
+.method-badge.options, .method-badge.head { background: rgba(148, 163, 184, 0.12); border: 1px solid rgba(148, 163, 184, 0.3); color: #94A3B8; }
+
+.format-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.format-badge.json { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.25); color: #60a5fa; }
+.format-badge.yaml { background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.25); color: #c084fc; }
+
+.service-pill {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  font-family: var(--font-mono);
+}
+.service-customer { background: rgba(0, 210, 255, 0.08); border: 1px solid rgba(0, 210, 255, 0.25); color: #00D2FF; }
+.service-account { background: rgba(0, 229, 163, 0.08); border: 1px solid rgba(0, 229, 163, 0.25); color: #00E5A3; }
+.service-transaction { background: rgba(157, 123, 255, 0.08); border: 1px solid rgba(157, 123, 255, 0.25); color: #9D7BFF; }
+.service-default { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-subtle); color: var(--text-secondary); }
+
 /* Global override to enforce regular font weight */
 * {
   font-weight: 400 !important;

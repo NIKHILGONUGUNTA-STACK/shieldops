@@ -40,11 +40,10 @@ describe('SidebarComponent', () => {
     expect(navLinks.length).toBe(15);
   });
 
-  it('should display PLANNED badge for API Specifications', () => {
+  it('should not display PLANNED badges when all core modules are implemented', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const badges = Array.from(compiled.querySelectorAll('.badge-planned')).map(b => b.textContent?.trim());
-    expect(badges.length).toBe(1);
-    expect(badges[0]).toBe('PLANNED');
+    expect(badges.length).toBe(0);
   });
 
   it('should toggle collapsed state when collapse button is clicked', () => {

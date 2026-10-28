@@ -17,7 +17,11 @@ import {
   ProblemDetail,
   DiscoveredEndpointResponse,
   DiscoveredEndpointPageResponse,
-  EndpointFilterParams
+  EndpointFilterParams,
+  DeclaredOperationResponse,
+  ApiSpecificationResponse,
+  ApiSpecificationPageResponse,
+  SpecificationFilterParams
 } from '../models/security.models';
 
 @Injectable({
@@ -182,6 +186,63 @@ export class SecurityApiService {
    */
   getDiscoveredEndpointById(id: string): Observable<DiscoveredEndpointResponse> {
     return this.http.get<DiscoveredEndpointResponse>(`${this.baseUrl}/api/v1/security/discovery/endpoints/${encodeURIComponent(id)}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * POST /api/v1/security/specs/upload
+   * Uploads an OpenAPI 3.0.x / 3.1.x specification file (JSON or YAML).
+   */
+  uploadSpecification(file: File): Observable<ApiSpecificationResponse> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+
+    return this.http.post<ApiSpecificationResponse>(`${this.baseUrl}/api/v1/security/specs/upload`, formData)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/specs
+   * Lists imported OpenAPI specifications with pagination, search, and filtering.
+   */
+  getSpecifications(filterParams?: SpecificationFilterParams): Observable<ApiSpecificationPageResponse> {
+    let params = new HttpParams();
+
+    if (filterParams) {
+      if (filterParams.page !== undefined) params = params.set('page', filterParams.page.toString());
+      if (filterParams.size !== undefined) params = params.set('size', filterParams.size.toString());
+      if (filterParams.search) params = params.set('search', filterParams.search);
+      if (filterParams.status) params = params.set('status', filterParams.status);
+    }
+
+    return this.http.get<ApiSpecificationPageResponse>(`${this.baseUrl}/api/v1/security/specs`, { params })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/specs/{id}
+   * Retrieves single specification details including declared operations.
+   */
+  getSpecificationById(id: string): Observable<ApiSpecificationResponse> {
+    return this.http.get<ApiSpecificationResponse>(`${this.baseUrl}/api/v1/security/specs/${encodeURIComponent(id)}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/specs/{id}/operations
+   * Retrieves declared operations of an imported specification.
+   */
+  getSpecificationOperations(id: string): Observable<DeclaredOperationResponse[]> {
+    return this.http.get<DeclaredOperationResponse[]>(`${this.baseUrl}/api/v1/security/specs/${encodeURIComponent(id)}/operations`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * DELETE /api/v1/security/specs/{id}
+   * Deletes an imported specification and cascaded operations.
+   */
+  deleteSpecification(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/v1/security/specs/${encodeURIComponent(id)}`)
       .pipe(catchError(this.handleError));
   }
 

@@ -261,6 +261,100 @@ describe('SecurityApiService', () => {
     });
   });
 
+  describe('OpenAPI Specifications API', () => {
+    it('should upload a specification file via POST /api/v1/security/specs/upload', () => {
+      const mockFile = new File(['{"openapi":"3.0.0"}'], 'spec.json', { type: 'application/json' });
+      const mockResponse = {
+        id: 'spec-1',
+        name: 'Customer API',
+        version: '1.0.0',
+        openapiVersion: '3.0.0',
+        sourceFilename: 'spec.json',
+        format: 'JSON',
+        status: 'VALID',
+        operationCount: 5,
+        pathCount: 3,
+        validationSummary: 'Valid',
+        importedAt: '2026-10-28T12:00:00Z',
+        importedBy: 'admin',
+        contentHash: 'hash-1'
+      };
+
+      service.uploadSpecification(mockFile).subscribe(res => {
+        expect(res.id).toBe('spec-1');
+        expect(res.name).toBe('Customer API');
+      });
+
+      const req = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/specs/upload`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body instanceof FormData).toBeTrue();
+      req.flush(mockResponse);
+    });
+
+    it('should query specifications page via GET /api/v1/security/specs', () => {
+      const mockPage = {
+        content: [],
+        page: 0,
+        size: 10,
+        totalElements: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrevious: false,
+        totalSpecifications: 0,
+        totalOperations: 0
+      };
+
+      service.getSpecifications({ page: 0, size: 10, search: 'customer' }).subscribe(res => {
+        expect(res.totalElements).toBe(0);
+      });
+
+      const req = httpTesting.expectOne(r => r.url.includes('/api/v1/security/specs') && r.params.get('search') === 'customer');
+      expect(req.request.method).toBe('GET');
+      req.flush(mockPage);
+    });
+
+    it('should query single spec by ID via GET /api/v1/security/specs/{id}', () => {
+      service.getSpecificationById('spec-123').subscribe(res => {
+        expect(res.id).toBe('spec-123');
+      });
+
+      const req = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/specs/spec-123`);
+      expect(req.request.method).toBe('GET');
+      req.flush({ id: 'spec-123', name: 'Test Spec' });
+    });
+
+    it('should query spec operations via GET /api/v1/security/specs/{id}/operations', () => {
+      service.getSpecificationOperations('spec-123').subscribe(ops => {
+        expect(ops.length).toBe(1);
+        expect(ops[0].httpMethod).toBe('GET');
+      });
+
+      const req = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/specs/spec-123/operations`);
+      expect(req.request.method).toBe('GET');
+      req.flush([{
+        id: 'op-1',
+        specificationId: 'spec-123',
+        httpMethod: 'GET',
+        pathPattern: '/api/v1/users',
+        normalizedRoute: '/api/v1/users',
+        operationId: 'listUsers',
+        summary: 'List users',
+        description: null,
+        tags: 'Users',
+        deprecated: false,
+        serviceBoundary: 'user-service'
+      }]);
+    });
+
+    it('should delete a specification via DELETE /api/v1/security/specs/{id}', () => {
+      service.deleteSpecification('spec-123').subscribe();
+
+      const req = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/specs/spec-123`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null);
+    });
+  });
+
   describe('Error Handling', () => {
     it('should map RFC 7807 ProblemDetail from HTTP error', () => {
       service.getOverview(24).subscribe({

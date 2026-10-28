@@ -1,5 +1,6 @@
 package com.aegis.gateway.security;
 
+import com.aegis.gateway.specs.OpenApiValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -71,6 +72,16 @@ public class SecurityApiExceptionHandler {
             errors.put(fieldError.getField(), fieldError.getDefaultMessage());
         }
         problem.setProperty("errors", errors);
+        return problem;
+    }
+
+    @ExceptionHandler(OpenApiValidationException.class)
+    public ProblemDetail handleOpenApiValidation(OpenApiValidationException ex) {
+        log.warn("OpenAPI specification validation failed: {}", ex.getMessage());
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problem.setTitle("OpenAPI Specification Validation Failed");
+        problem.setType(URI.create("https://aegis.dev/errors/openapi-validation-failed"));
+        problem.setProperty("timestamp", Instant.now());
         return problem;
     }
 

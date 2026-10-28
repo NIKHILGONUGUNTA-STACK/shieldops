@@ -1,6 +1,6 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 6.1 Complete (Telemetry-Based API Discovery & Inventory)
+## Current Milestone: Phase 6.2 Complete (Secure OpenAPI Specification Import)
 
 **Last Updated:** 2026-10-28
 **Active Git Branch:** `main`
@@ -21,20 +21,20 @@
 | `customer-service` | 17 | 0 | 0 | 0 | **SUCCESS** |
 | `account-service` | 26 | 0 | 0 | 0 | **SUCCESS** |
 | `transaction-service` | 28 | 0 | 0 | 0 | **SUCCESS** |
-| `gateway` | 97 | 0 | 0 | 0 | **SUCCESS** |
-| **Total Backend Platform Tests** | **168** | **0** | **0** | **0** | **BUILD SUCCESS** |
+| `gateway` | 116 | 0 | 0 | 0 | **SUCCESS** |
+| **Total Backend Platform Tests** | **187** | **0** | **0** | **0** | **BUILD SUCCESS** |
 
 ### 1.2 Frontend SOC Dashboard (Angular 18 / TypeScript / Node 22)
 - **Framework & Tooling:** Angular 18.2.21 / Node.js 22.20.0 / npm 10.9.3
 - **Test Runner:** Karma 6.4 / Jasmine 5.2 / ChromeHeadless
-- **Production Build:** `dist/aegis-frontend` (371.6 kB initial bundle, 102.8 kB transfer, 0 warnings, 0 errors)
+- **Production Build:** `dist/aegis-frontend` (373.1 kB initial bundle, 102.8 kB transfer, 0 warnings, 0 errors)
 
 | Test Suite | Spec File | Tests Run | Failures | Status |
 | :--- | :--- | :---: | :---: | :--- |
 | **App Shell** | `app.component.spec.ts` | 2 | 0 | **SUCCESS** |
 | **Navbar & Search Bar** | `navbar.component.spec.ts` | 6 | 0 | **SUCCESS** |
 | **Sidebar & Nav Registry** | `sidebar.component.spec.ts` | 6 | 0 | **SUCCESS** |
-| **Security API Service** | `security-api.service.spec.ts` | 11 | 0 | **SUCCESS** |
+| **Security API Service** | `security-api.service.spec.ts` | 16 | 0 | **SUCCESS** |
 | **Auth Service** | `auth.service.spec.ts` | 3 | 0 | **SUCCESS** |
 | **Auth Guard** | `auth.guard.spec.ts` | 3 | 0 | **SUCCESS** |
 | **Overview Component** | `overview.component.spec.ts` | 3 | 0 | **SUCCESS** |
@@ -51,9 +51,9 @@
 | **Audit History** | `audit-history.component.spec.ts` | 2 | 0 | **SUCCESS** |
 | **System Health** | `system-health.component.spec.ts` | 2 | 0 | **SUCCESS** |
 | **Observed API Inventory** | `api-inventory.component.spec.ts` | 7 | 0 | **SUCCESS** |
-| **API Specifications (Planned)** | `api-specs.component.spec.ts` | 2 | 0 | **SUCCESS** |
+| **API Specifications & Operations** | `api-specs.component.spec.ts` | 10 | 0 | **SUCCESS** |
 | **Settings Component** | `settings.component.spec.ts` | 3 | 0 | **SUCCESS** |
-| **Total Frontend Tests** | — | **88** | **0** | **BUILD SUCCESS** |
+| **Total Frontend Tests** | — | **102** | **0** | **BUILD SUCCESS** |
 
 ---
 
@@ -190,3 +190,5 @@ All 9 platform services running and healthy via Docker Compose (`infrastructure/
 10. **Phase 5.3 (Completed):** Angular 18 SOC Dashboard Foundation, Keycloak PKCE Authentication, Design System Tokens, Typed API Service Layer, and Live Overview Dashboard.
 11. **Phase 5.4 (Completed):** Interactive Incident Triage Queue, Forensic Investigation Workspace, Analyst Status Transitions, API Event Explorer, 36 unit tests, and production build verification.
 12. **Phase 5.5 (Completed):** Final Wallarm-Inspired SOC UI, Design Tokens, Collapsible 15-Destination Sidebar Navigation, Truthful Feature Classification, 74 Unit Tests, and Zero Build Warnings.
+13. **Phase 6.1 (Completed):** Telemetry-Based API Discovery Architecture, route normalization, database persistence (`security_data.api_events`), `ApiDiscoveryService`, `SecurityDiscoveryController`, `ApiInventoryComponent` live table and slide-in drawer, 88 frontend unit tests, 168 backend platform tests.
+14. **Phase 6.2 (Completed):** Secure OpenAPI Specification Import, offline structural parser supporting OpenAPI 3.0.x / 3.1.x (JSON/YAML), rejection of external references and recursion loops, Flyway V5 schema (`api_specifications` and `api_spec_operations`), `SecuritySpecificationController`, Angular file dropzone, operations exploration drawer, 102 frontend tests, 187 backend platform tests, and zero build warnings.

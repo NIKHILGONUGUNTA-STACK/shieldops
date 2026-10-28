@@ -92,9 +92,8 @@ export const NAV_SECTIONS: NavSection[] = [
         label: 'API Specifications',
         path: '/api-specs',
         icon: 'file-code',
-        availability: 'planned',
-        badge: 'PLANNED',
-        description: 'OpenAPI 3.0 contract drift analysis and shadow endpoint detection (Phase 6 Roadmap)'
+        availability: 'implemented',
+        description: 'Persistent OpenAPI 3.0 / 3.1 specification import, contract parsing, and declared operations inventory'
       },
       {
         id: 'data-access',
