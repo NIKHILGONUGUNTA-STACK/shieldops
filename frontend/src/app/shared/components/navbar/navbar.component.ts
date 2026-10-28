@@ -24,23 +24,17 @@ import { LayoutService } from '../../../core/services/layout.service';
           </svg>
         </button>
 
-        <a routerLink="/overview" class="brand-link" title="ShieldOps Security Operations Center">
-          <span class="brand-shield">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-              <polyline points="9 12 11 14 15 10"></polyline>
-            </svg>
-          </span>
-          <span class="brand-name">SHIELDOPS <span class="brand-accent">SOC</span></span>
-        </a>
-
-        <span class="env-pill">ACTIVE RECON</span>
+        <!-- Brand Name & Mode Indicator for Responsive Screens and Contract Tests -->
+        <div class="brand-context">
+          <span class="brand-name">SHIELDOPS</span>
+          <span class="env-pill">ACTIVE RECON</span>
+        </div>
       </div>
 
-      <!-- Wallarm-Inspired Center Global Search & Telemetry Controls -->
+      <!-- Center Global Search Input matching Wallarm Style -->
       <div class="nav-center">
         <div class="global-search-container">
-          <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#88838D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
@@ -59,31 +53,40 @@ import { LayoutService } from '../../../core/services/layout.service';
         </div>
       </div>
 
-      <!-- User Profile & Session Controls (Wallarm Style) -->
+      <!-- User Profile & Action Controls matching Wallarm Style -->
       <div class="nav-right">
         <ng-container *ngIf="auth.isAuthenticated(); else unauthTpl">
-          <div class="user-profile-card">
-            <div class="user-avatar" [class.admin]="auth.isSecurityAdmin()">
-              {{ getInitials() }}
+          <div class="user-profile-pill">
+            <div class="user-avatar-circle" [class.admin]="auth.isSecurityAdmin()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
             </div>
-            <div class="user-details">
+            <div class="user-text-col">
               <span class="username">{{ auth.userProfile()?.username || (auth.isSecurityAdmin() ? 'security-admin' : 'security-analyst') }}</span>
-              <span class="user-role-label">
-                {{ auth.isSecurityAdmin() ? 'SECURITY ADMIN' : 'SECURITY ANALYST' }}
-              </span>
+              <span class="user-display-email">{{ auth.userProfile()?.email || (auth.isSecurityAdmin() ? 'admin@shieldops.local' : 'analyst@shieldops.local') }}</span>
             </div>
             <span class="user-role-badge" [class.admin]="auth.isSecurityAdmin()">
               {{ auth.isSecurityAdmin() ? 'SEC-ADMIN' : 'ANALYST' }}
             </span>
           </div>
 
-          <button (click)="logout()" class="btn btn-secondary btn-sm logout-btn" title="End SOC Session">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Settings Button -->
+          <a routerLink="/settings" class="nav-icon-btn" title="Platform Settings">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </a>
+
+          <!-- Logout Button -->
+          <button (click)="logout()" class="nav-icon-btn logout-btn" title="End SOC Session">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
               <polyline points="16 17 21 12 16 7"></polyline>
               <line x1="21" y1="12" x2="9" y2="12"></line>
             </svg>
-            <span class="logout-label">Logout</span>
           </button>
         </ng-container>
 
@@ -95,24 +98,24 @@ import { LayoutService } from '../../../core/services/layout.service';
   `,
   styles: [`
     .soc-navbar {
-      height: 56px;
-      background: var(--bg-header);
-      border-bottom: 1px solid var(--border-default);
+      height: 52px;
+      min-height: 52px;
+      background: transparent;
+      border-bottom: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 var(--space-4);
-      z-index: 100;
+      padding: 0 24px;
+      gap: 16px;
       position: sticky;
       top: 0;
-      gap: var(--space-4);
+      z-index: 50;
     }
 
     .nav-left {
       display: flex;
       align-items: center;
-      gap: var(--space-3);
-      flex-shrink: 0;
+      gap: 12px;
     }
 
     .mobile-toggle-btn {
@@ -128,38 +131,31 @@ import { LayoutService } from '../../../core/services/layout.service';
     @media (max-width: 900px) {
       .mobile-toggle-btn {
         display: flex;
-        align-items: center;
-        justify-content: center;
       }
     }
 
-    .brand-link {
+    .brand-context {
       display: flex;
       align-items: center;
-      gap: var(--space-2);
-      text-decoration: none;
-      color: var(--text-primary);
+      gap: 8px;
+    }
+
+    .brand-name {
+      font-size: 11px;
       font-weight: 700;
-      font-size: 15px;
-      letter-spacing: 0.05em;
-    }
-
-    .brand-shield {
-      font-size: 18px;
-    }
-
-    .brand-accent {
-      color: var(--accent-teal);
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
     }
 
     .env-pill {
-      font-size: 10px;
+      font-size: 9px;
       padding: 2px 6px;
-      border-radius: var(--radius-sm);
-      background: rgba(20, 184, 166, 0.1);
-      color: var(--accent-teal);
-      border: 1px solid var(--accent-teal-border);
-      font-weight: 600;
+      border-radius: 4px;
+      background: rgba(255, 122, 26, 0.1);
+      color: var(--accent-orange);
+      border: 1px solid rgba(255, 122, 26, 0.25);
+      font-weight: 700;
       font-family: var(--font-mono);
       letter-spacing: 0.04em;
     }
@@ -167,16 +163,15 @@ import { LayoutService } from '../../../core/services/layout.service';
     .nav-center {
       display: flex;
       align-items: center;
-      gap: var(--space-4);
+      gap: 16px;
       flex: 1;
-      max-width: 600px;
-      justify-content: center;
+      max-width: 540px;
     }
 
     .global-search-container {
       position: relative;
       width: 100%;
-      max-width: 380px;
+      max-width: 320px;
     }
 
     .search-icon {
@@ -184,137 +179,138 @@ import { LayoutService } from '../../../core/services/layout.service';
       left: 10px;
       top: 50%;
       transform: translateY(-50%);
-      color: var(--text-muted);
       pointer-events: none;
     }
 
     .global-search-input {
       width: 100%;
       background: var(--bg-input);
-      border: 1px solid var(--border-default);
+      border: 1px solid var(--border-input);
       color: var(--text-primary);
-      border-radius: var(--radius-full);
+      border-radius: 6px;
       padding: 6px 12px 6px 30px;
       font-size: 12px;
-      font-family: inherit;
+      font-family: var(--font-sans);
       transition: all 0.15s ease-in-out;
     }
 
     .global-search-input:focus {
       outline: none;
-      border-color: var(--accent-teal);
-      box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.15);
+      border-color: var(--border-focus);
+      background: #0D0D10;
     }
 
     .threat-status {
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 11px;
+      font-size: 10px;
       font-family: var(--font-mono);
-      color: var(--text-secondary);
-      background: var(--bg-surface);
-      padding: 4px 10px;
-      border-radius: var(--radius-full);
-      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
       white-space: nowrap;
     }
 
     .pulse-dot {
-      width: 7px;
-      height: 7px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      background: var(--accent-teal);
-      box-shadow: 0 0 8px var(--accent-teal);
+      background: var(--accent-orange);
+      box-shadow: 0 0 6px var(--accent-orange);
       animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
     }
 
     .nav-right {
       display: flex;
       align-items: center;
-      gap: var(--space-3);
-      flex-shrink: 0;
+      gap: 10px;
     }
 
-    .user-profile-card {
+    .user-profile-pill {
       display: flex;
       align-items: center;
-      gap: var(--space-2);
-      background: var(--bg-surface);
+      gap: 8px;
+      background: var(--bg-card);
       border: 1px solid var(--border-default);
-      border-radius: var(--radius-lg);
+      border-radius: 6px;
       padding: 4px 10px;
     }
 
-    .user-avatar {
-      width: 26px;
-      height: 26px;
+    .user-avatar-circle {
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
-      background: var(--accent-teal-subtle);
-      color: var(--accent-teal);
-      border: 1px solid var(--accent-teal-border);
-      font-size: 11px;
-      font-weight: 700;
+      background: rgba(255, 255, 255, 0.06);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: var(--font-mono);
+      color: var(--text-secondary);
     }
 
-    .user-avatar.admin {
-      background: var(--sev-critical-bg);
-      color: var(--sev-critical);
-      border-color: var(--sev-critical-border);
+    .user-avatar-circle.admin {
+      background: rgba(255, 122, 26, 0.15);
+      color: var(--accent-orange);
     }
 
-    .user-details {
+    .user-text-col {
       display: flex;
       flex-direction: column;
-      line-height: 1.2;
+      line-height: 1.15;
     }
 
     .username {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       color: var(--text-primary);
     }
 
-    .user-role-label {
+    .user-display-email {
       font-size: 9px;
       color: var(--text-muted);
-      letter-spacing: 0.04em;
     }
 
     .user-role-badge {
       font-size: 9px;
-      padding: 1px 6px;
-      border-radius: var(--radius-sm);
-      background: var(--accent-teal-subtle);
-      color: var(--accent-teal);
       font-weight: 700;
-      border: 1px solid var(--accent-teal-border);
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: rgba(74, 108, 255, 0.15);
+      color: #8CA3FF;
+      font-family: var(--font-mono);
     }
 
     .user-role-badge.admin {
-      background: var(--sev-critical-bg);
-      color: var(--sev-critical);
-      border-color: var(--sev-critical-border);
+      background: rgba(255, 122, 26, 0.15);
+      color: var(--accent-orange);
     }
 
-    .logout-btn {
+    .nav-icon-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-default);
+      color: var(--text-secondary);
       display: flex;
       align-items: center;
-      gap: 4px;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-decoration: none;
     }
 
-    @media (max-width: 768px) {
-      .nav-center {
-        display: none;
-      }
-      .user-details {
-        display: none;
-      }
-      .logout-label {
+    .nav-icon-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+      border-color: var(--border-focus);
+    }
+
+    @media (max-width: 800px) {
+      .nav-center, .brand-context {
         display: none;
       }
     }
@@ -329,13 +325,8 @@ export class NavbarComponent {
     this.auth.logout();
   }
 
-  getInitials(): string {
-    const username = this.auth.userProfile()?.username || (this.auth.isSecurityAdmin() ? 'Admin' : 'Analyst');
-    return username.substring(0, 2).toUpperCase();
-  }
-
   onSearch(event: any): void {
-    const val = event.target.value?.trim();
+    const val = (event?.target?.value || '').trim();
     if (val) {
       this.router.navigate(['/events'], { queryParams: { correlationId: val } });
     }

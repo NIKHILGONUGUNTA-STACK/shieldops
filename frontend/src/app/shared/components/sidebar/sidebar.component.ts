@@ -10,6 +10,21 @@ import { LayoutService } from '../../../core/services/layout.service';
   imports: [CommonModule, RouterLink, RouterLinkActive],
   template: `
     <aside class="soc-sidebar" [class.collapsed]="layout.isSidebarCollapsed()">
+      <!-- Top Brand Header with ShieldOps Transparent Logo matching Wallarm Top-Left Placement -->
+      <div class="sidebar-header" *ngIf="!layout.isSidebarCollapsed()">
+        <a routerLink="/overview" class="brand-link" title="ShieldOps Security Operations Center">
+          <img src="assets/shieldops-logo.png" alt="ShieldOps" class="brand-logo-img" />
+        </a>
+      </div>
+
+      <!-- Collapsed Brand Header -->
+      <div class="sidebar-header collapsed-header" *ngIf="layout.isSidebarCollapsed()">
+        <a routerLink="/overview" class="brand-link" title="ShieldOps">
+          <img src="assets/shieldops-logo.png" alt="ShieldOps" class="brand-logo-collapsed" />
+        </a>
+      </div>
+
+      <!-- Navigation Items Container -->
       <div class="sidebar-scrollable">
         <nav class="sidebar-nav" role="navigation" aria-label="SOC Navigation">
           <ng-container *ngFor="let section of sections">
@@ -37,7 +52,7 @@ import { LayoutService } from '../../../core/services/layout.service';
                     <rect x="14" y="14" width="7" height="7"></rect>
                     <rect x="3" y="14" width="7" height="7"></rect>
                   </svg>
-                  <!-- Alert Triangle / Shield -->
+                  <!-- Alert Triangle / Incidents -->
                   <svg *ngSwitchCase="'alert-triangle'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
                     <line x1="12" y1="9" x2="12" y2="13"></line>
@@ -100,7 +115,7 @@ import { LayoutService } from '../../../core/services/layout.service';
                     <line x1="9" y1="8" x2="15" y2="8"></line>
                     <line x1="17" y1="16" x2="23" y2="16"></line>
                   </svg>
-                  <!-- Shield Lock / BOLA -->
+                  <!-- Shield Lock / Automated Response -->
                   <svg *ngSwitchCase="'shield-lock'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                     <rect x="9" y="11" width="6" height="4" rx="1"></rect>
@@ -130,16 +145,11 @@ import { LayoutService } from '../../../core/services/layout.service';
                     <line x1="1" y1="9" x2="4" y2="9"></line>
                     <line x1="1" y1="14" x2="4" y2="14"></line>
                   </svg>
-                  <!-- Settings / Gear -->
-                  <svg *ngSwitchCase="'settings'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="3"></circle>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                  </svg>
                   <!-- Default Bullet -->
                   <span *ngSwitchDefault class="nav-dot"></span>
                 </span>
 
-                <!-- Label -->
+                <!-- Label with Inter Regular Font -->
                 <span class="nav-label" *ngIf="!layout.isSidebarCollapsed()">{{ item.label }}</span>
 
                 <!-- Badge for Planned Capabilities -->
@@ -152,14 +162,39 @@ import { LayoutService } from '../../../core/services/layout.service';
         </nav>
       </div>
 
-      <!-- Sidebar Footer with Collapse Toggle -->
+      <!-- Wallarm-Style Bottom Footer: Advisory Pill + Theme Switch Pill + Collapse Toggle -->
       <div class="sidebar-footer">
-        <div class="footer-info" *ngIf="!layout.isSidebarCollapsed()">
-          <div class="advisory-pill">
-            <span class="pulse-dot"></span>
-            <span class="advisory-text">ADVISORY MODE</span>
+        <div class="footer-left" *ngIf="!layout.isSidebarCollapsed()">
+          <div class="footer-info">
+            <div class="advisory-pill">
+              <span class="pulse-dot"></span>
+              <span class="advisory-text">ADVISORY MODE</span>
+            </div>
+            <span class="stack-tag mono">SHIELDOPS v5.5</span>
           </div>
-          <span class="stack-tag mono">SHIELDOPS v5.5</span>
+
+          <div class="theme-toggle-container">
+            <div class="theme-switch-pill">
+              <button type="button" class="theme-pill-btn" title="Light theme (Planned Phase 6)">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="5"></circle>
+                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                  <line x1="1" y1="12" x2="3" y2="12"></line>
+                  <line x1="21" y1="12" x2="23" y2="12"></line>
+                </svg>
+                <span>Light</span>
+              </button>
+              <button type="button" class="theme-pill-btn active" title="Dark theme active">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+                <span>Dark</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <button
@@ -168,11 +203,11 @@ import { LayoutService } from '../../../core/services/layout.service';
           [attr.title]="layout.isSidebarCollapsed() ? 'Expand Sidebar' : 'Collapse Sidebar'"
           [attr.aria-label]="layout.isSidebarCollapsed() ? 'Expand Sidebar' : 'Collapse Sidebar'"
         >
-          <svg *ngIf="!layout.isSidebarCollapsed()" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg *ngIf="!layout.isSidebarCollapsed()" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="11 19 4 12 11 5"></polyline>
             <polyline points="18 19 11 12 18 5"></polyline>
           </svg>
-          <svg *ngIf="layout.isSidebarCollapsed()" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg *ngIf="layout.isSidebarCollapsed()" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="13 19 20 12 13 5"></polyline>
             <polyline points="6 19 13 12 6 5"></polyline>
           </svg>
@@ -184,14 +219,15 @@ import { LayoutService } from '../../../core/services/layout.service';
     .soc-sidebar {
       width: 240px;
       min-width: 240px;
-      background: var(--bg-sidebar);
-      border-right: 1px solid var(--border-default);
+      height: 100vh;
+      background: var(--bg-sidebar); /* #0C0C10 */
+      border-right: 1px solid var(--border-default); /* #262329 */
       display: flex;
       flex-direction: column;
-      height: calc(100vh - 56px);
-      transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       user-select: none;
+      z-index: 20;
+      transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .soc-sidebar.collapsed {
@@ -199,19 +235,54 @@ import { LayoutService } from '../../../core/services/layout.service';
       min-width: 64px;
     }
 
+    /* Top Brand Header matching Wallarm */
+    .sidebar-header {
+      padding: 14px 18px 12px;
+      display: flex;
+      align-items: center;
+      height: 52px;
+      border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+
+    .sidebar-header.collapsed-header {
+      justify-content: center;
+      padding: 12px 0;
+    }
+
+    .brand-link {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+    }
+
+    .brand-logo-img {
+      height: 28px;
+      max-width: 175px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .brand-logo-collapsed {
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
+    }
+
+    /* Scrollable Navigation */
     .sidebar-scrollable {
       flex: 1;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: var(--space-3) var(--space-2);
+      padding: 12px 8px;
     }
 
     .sidebar-scrollable::-webkit-scrollbar {
-      width: 4px;
+      width: 3px;
     }
 
     .sidebar-scrollable::-webkit-scrollbar-thumb {
-      background: var(--border-default);
+      background: var(--border-subtle);
       border-radius: var(--radius-full);
     }
 
@@ -219,34 +290,39 @@ import { LayoutService } from '../../../core/services/layout.service';
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.08em;
-      color: var(--text-muted);
-      padding: var(--space-3) var(--space-3) var(--space-1);
+      color: var(--text-muted); /* #88838D */
+      padding: 12px 12px 4px;
       text-transform: uppercase;
+      font-family: var(--font-mono);
     }
 
     .section-divider {
       height: 1px;
       background: var(--border-subtle);
-      margin: var(--space-2) var(--space-2);
+      margin: 8px 8px;
     }
 
     .nav-items-group {
       display: flex;
       flex-direction: column;
       gap: 2px;
-      margin-bottom: var(--space-2);
+      margin-bottom: 8px;
     }
 
+    /* Inter Regular font for tabs in sidebar */
     .nav-item {
       display: flex;
       align-items: center;
-      gap: var(--space-3);
-      padding: 8px 12px;
-      border-radius: var(--radius-md);
-      color: var(--text-secondary);
+      gap: 10px;
+      padding: 7px 12px;
+      border-radius: 6px;
+      color: var(--text-secondary); /* #AAA6AD */
       text-decoration: none;
+      font-family: var(--font-sans); /* Inter */
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 400; /* Inter Regular! */
+      line-height: 1.4;
+      letter-spacing: -0.01em;
       transition: all 0.15s ease-in-out;
       border-left: 3px solid transparent;
       position: relative;
@@ -256,24 +332,33 @@ import { LayoutService } from '../../../core/services/layout.service';
       justify-content: center;
       padding: 10px 0;
       border-left: none;
-      border-radius: var(--radius-md);
+      border-radius: 6px;
     }
 
     .nav-item:hover {
-      background: var(--bg-surface);
+      background: var(--bg-hover); /* #18181B */
+      color: var(--text-primary); /* #F2F0F2 */
+    }
+
+    .nav-item:hover .nav-icon {
       color: var(--text-primary);
     }
 
+    /* Active State matching Wallarm */
     .nav-item.active {
-      background: rgba(20, 184, 166, 0.08);
-      color: var(--text-primary);
-      border-left-color: var(--accent-teal);
-      font-weight: 600;
+      background: var(--bg-nav-active); /* #222124 */
+      color: #FFFFFF;
+      font-weight: 400; /* Inter Regular */
+      border-left-color: var(--accent-orange); /* #FF7A1A */
     }
 
     .soc-sidebar.collapsed .nav-item.active {
-      background: rgba(20, 184, 166, 0.14);
-      color: var(--accent-teal);
+      background: var(--bg-nav-active);
+      color: var(--accent-orange);
+    }
+
+    .nav-item.active .nav-icon {
+      color: var(--accent-orange);
     }
 
     .nav-icon {
@@ -287,84 +372,115 @@ import { LayoutService } from '../../../core/services/layout.service';
       transition: color 0.15s ease-in-out;
     }
 
-    .nav-item:hover .nav-icon,
-    .nav-item.active .nav-icon {
-      color: var(--accent-teal);
-    }
-
     .nav-label {
       flex: 1;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      line-height: 1.2;
+      font-family: var(--font-sans);
+      font-weight: 400; /* Inter Regular */
     }
 
     .nav-badge {
       flex-shrink: 0;
       font-size: 9px;
+      font-family: var(--font-mono);
+      font-weight: 600;
     }
 
+    /* Wallarm-Style Footer with Light/Dark Switch Pill */
     .sidebar-footer {
-      padding: var(--space-3) var(--space-3);
-      border-top: 1px solid var(--border-default);
+      padding: 12px 14px;
+      border-top: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: var(--bg-header);
+      background: var(--bg-sidebar);
+      flex-shrink: 0;
     }
 
     .soc-sidebar.collapsed .sidebar-footer {
       justify-content: center;
-      padding: var(--space-2) 0;
+      padding: 10px 0;
+    }
+
+    .theme-toggle-container {
+      display: flex;
+      align-items: center;
+    }
+
+    .theme-switch-pill {
+      display: inline-flex;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-full);
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .theme-pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      font-family: var(--font-sans);
+      font-weight: 500;
+      transition: all 0.15s ease;
+    }
+
+    .theme-pill-btn.active {
+      background: var(--bg-nav-active);
+      color: var(--text-primary);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    }
+
+    .footer-left {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
     .footer-info {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 2px;
     }
 
     .advisory-pill {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      font-size: 10px;
+      gap: 5px;
+      font-size: 9px;
       font-weight: 600;
-      color: var(--accent-teal);
-      background: rgba(20, 184, 166, 0.08);
-      border: 1px solid var(--accent-teal-border);
-      padding: 2px 8px;
-      border-radius: var(--radius-full);
+      color: var(--accent-orange);
       font-family: var(--font-mono);
     }
 
     .pulse-dot {
-      width: 6px;
-      height: 6px;
+      width: 5px;
+      height: 5px;
       border-radius: 50%;
-      background: var(--accent-teal);
-      box-shadow: 0 0 6px var(--accent-teal);
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
+      background: var(--accent-orange);
+      box-shadow: 0 0 5px var(--accent-orange);
     }
 
     .stack-tag {
-      font-size: 10px;
+      font-size: 9px;
       color: var(--text-muted);
-      letter-spacing: 0.04em;
     }
 
     .collapse-btn {
       background: transparent;
       border: 1px solid var(--border-default);
       color: var(--text-secondary);
-      width: 28px;
-      height: 28px;
+      width: 26px;
+      height: 26px;
       border-radius: var(--radius-sm);
       display: flex;
       align-items: center;
@@ -374,13 +490,9 @@ import { LayoutService } from '../../../core/services/layout.service';
     }
 
     .collapse-btn:hover {
-      background: var(--bg-surface);
+      background: var(--bg-hover);
       color: var(--text-primary);
       border-color: var(--border-focus);
-    }
-
-    .collapse-btn:focus-visible {
-      outline: 2px solid var(--border-focus);
     }
   `]
 })

@@ -1,16 +1,16 @@
 <div class="soc-shell">
-  <app-navbar></app-navbar>
+  <app-sidebar *ngIf="!isLoginRoute" [class.mobile-open]="layout.isMobileOpen()"></app-sidebar>
 
-  <div class="soc-body" [class.no-sidebar]="isLoginRoute">
-    <app-sidebar *ngIf="!isLoginRoute" [class.mobile-open]="layout.isMobileOpen()"></app-sidebar>
+  <!-- Mobile Drawer Backdrop -->
+  <div
+    *ngIf="layout.isMobileOpen()"
+    class="mobile-backdrop"
+    (click)="layout.closeMobile()"
+    aria-hidden="true"
+  ></div>
 
-    <!-- Mobile Drawer Backdrop -->
-    <div
-      *ngIf="layout.isMobileOpen()"
-      class="mobile-backdrop"
-      (click)="layout.closeMobile()"
-      aria-hidden="true"
-    ></div>
+  <div class="soc-main-area" [class.full-width]="isLoginRoute">
+    <app-navbar *ngIf="!isLoginRoute"></app-navbar>
 
     <main class="soc-viewport" role="main">
       <router-outlet></router-outlet>

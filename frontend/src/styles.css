@@ -5,27 +5,35 @@
 
 :root {
   /* Surfaces & Primary Backgrounds */
-  --bg-canvas: #0B0B12;      /* Main background: Deep charcoal black */
-  --bg-surface: #101118;     /* Surface: Dark navy-black */
-  --bg-card: #13141C;        /* Cards/Panels: Very dark gray */
-  --bg-card-hover: #191B24;
-  --bg-header: #101118;      /* Header / Navbar: Dark navy-black */
-  --bg-sidebar: #101118;     /* Sidebar: Dark navy-black */
-  --bg-input: #0B0B12;
-  --bg-subtle: #191B24;
+  --bg-canvas: #080808;      /* Main background: #080808 · Nearly black */
+  --bg-surface: #100C10;     /* Surface: Very dark charcoal with warm tint */
+  --bg-card: #100C10;        /* Card / panel background: #100C10 */
+  --bg-card-hover: #18181B;  /* Hover / elevated surface: #18181B */
+  --bg-hover: #18181B;
+  --bg-header: #0C0C10;      /* Header / Navbar: Black with subtle cool tint */
+  --bg-sidebar: #0C0C10;     /* Sidebar: #0C0C10 · Black with subtle cool tint */
+  --bg-nav-active: #222124;  /* Active navigation background: #222124 */
+  --bg-input: #080808;       /* Input background: #080808 */
+  --bg-subtle: #18181B;
 
   /* Borders & Dividers */
-  --border-subtle: rgba(255, 255, 255, 0.05);
-  --border-default: #232530;  /* Muted graphite */
-  --border-focus: #FF7A1A;    /* Orange focus */
-  --border-card: #232530;
+  --border-subtle: #1C1A1F;  /* Subtle divider: #1C1A1F */
+  --border-default: #262329; /* Primary border: #262329 */
+  --border-card: #262329;
+  --border-input: #29262C;   /* Input border: #29262C */
+  --border-focus: #FF7A1A;   /* Orange focus */
+
+  /* Track / chart grid & tooltips */
+  --chart-grid: #242126;     /* Track / chart grid: #242126 */
+  --tooltip-bg: #100C10;     /* Tooltip background: #100C10 */
+  --tooltip-border: #302A30; /* Tooltip border: #302A30 */
 
   /* Typography Colors */
-  --text-primary: #F5F5F7;    /* Primary text */
-  --text-secondary: #A0A3B0;  /* Secondary text */
-  --text-muted: #6E7280;      /* Muted labels */
-  --text-disabled: #525866;   /* Disabled text */
-  --text-inverse: #0B0B12;
+  --text-primary: #F2F0F2;   /* Primary text: #F2F0F2 */
+  --text-secondary: #AAA6AD; /* Secondary text: #AAA6AD */
+  --text-muted: #88838D;     /* Muted / tertiary text: #88838D */
+  --text-disabled: #65616A;  /* Disabled text: #65616A */
+  --text-inverse: #080808;
 
   /* Accent Colors */
   /* Orange: Primary highlight, selected state, charts */
