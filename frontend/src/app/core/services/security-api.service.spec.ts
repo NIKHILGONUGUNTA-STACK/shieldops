@@ -355,6 +355,86 @@ describe('SecurityApiService', () => {
     });
   });
 
+  describe('API Reconciliation API', () => {
+    it('should query /api/v1/security/reconciliation with composite filters', () => {
+      const mockReconciliationPage = {
+        content: [],
+        page: 0,
+        size: 20,
+        totalElements: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrevious: false,
+        summary: {
+          matchedCount: 0,
+          observedUndocumentedCount: 0,
+          documentedUnobservedCount: 0,
+          methodMismatchCount: 0,
+          ambiguousCount: 0,
+          totalEvaluated: 0,
+          coveragePercentage: 0,
+          windowHours: 24,
+          windowStart: '2026-10-28T12:00:00Z',
+          windowEnd: '2026-10-29T12:00:00Z',
+          specificationId: null,
+          specificationName: null
+        }
+      };
+
+      service.getReconciliation({
+        page: 0,
+        size: 20,
+        category: 'MATCHED',
+        service: 'customer-service',
+        windowHours: 48,
+        search: 'customer'
+      }).subscribe(res => {
+        expect(res.totalElements).toBe(0);
+        expect(res.summary.windowHours).toBe(24);
+      });
+
+      const req = httpTesting.expectOne(r =>
+        r.url === `${environment.apiBaseUrl}/api/v1/security/reconciliation` &&
+        r.params.get('category') === 'MATCHED' &&
+        r.params.get('service') === 'customer-service' &&
+        r.params.get('windowHours') === '48' &&
+        r.params.get('search') === 'customer'
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush(mockReconciliationPage);
+    });
+
+    it('should query /api/v1/security/reconciliation/summary', () => {
+      const mockSummary = {
+        matchedCount: 5,
+        observedUndocumentedCount: 2,
+        documentedUnobservedCount: 3,
+        methodMismatchCount: 1,
+        ambiguousCount: 0,
+        totalEvaluated: 11,
+        coveragePercentage: 62.5,
+        windowHours: 72,
+        windowStart: '2026-10-26T12:00:00Z',
+        windowEnd: '2026-10-29T12:00:00Z',
+        specificationId: 'spec-1',
+        specificationName: 'Customer API'
+      };
+
+      service.getReconciliationSummary({ specId: 'spec-1', windowHours: 72 }).subscribe(res => {
+        expect(res.matchedCount).toBe(5);
+        expect(res.coveragePercentage).toBe(62.5);
+      });
+
+      const req = httpTesting.expectOne(r =>
+        r.url === `${environment.apiBaseUrl}/api/v1/security/reconciliation/summary` &&
+        r.params.get('specId') === 'spec-1' &&
+        r.params.get('windowHours') === '72'
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush(mockSummary);
+    });
+  });
+
   describe('Error Handling', () => {
     it('should map RFC 7807 ProblemDetail from HTTP error', () => {
       service.getOverview(24).subscribe({

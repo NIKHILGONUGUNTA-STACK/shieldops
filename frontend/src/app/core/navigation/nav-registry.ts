@@ -96,6 +96,14 @@ export const NAV_SECTIONS: NavSection[] = [
         description: 'Persistent OpenAPI 3.0 / 3.1 specification import, contract parsing, and declared operations inventory'
       },
       {
+        id: 'api-reconciliation',
+        label: 'API Reconciliation',
+        path: '/api-reconciliation',
+        icon: 'git-compare',
+        availability: 'implemented',
+        description: 'Documented vs. observed contract reconciliation, coverage analysis, and drift detection'
+      },
+      {
         id: 'data-access',
         label: 'Data Access Monitoring',
         path: '/data-access',

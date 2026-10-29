@@ -97,6 +97,13 @@ import { LayoutService } from '../../../core/services/layout.service';
                     <polyline points="10 13 8 15 10 17"></polyline>
                     <polyline points="14 13 16 15 14 17"></polyline>
                   </svg>
+                  <!-- Git Compare / Reconciliation -->
+                  <svg *ngSwitchCase="'git-compare'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="18" cy="18" r="3"></circle>
+                    <circle cx="6" cy="6" r="3"></circle>
+                    <path d="M13 6h3a2 2 0 0 1 2 2v7"></path>
+                    <path d="M11 18H8a2 2 0 0 1-2-2V9"></path>
+                  </svg>
                   <!-- Database / Data Access -->
                   <svg *ngSwitchCase="'database'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>

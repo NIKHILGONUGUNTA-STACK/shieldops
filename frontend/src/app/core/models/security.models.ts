@@ -264,3 +264,74 @@ export interface SpecificationFilterParams {
   status?: string;
 }
 
+export type ReconciliationCategory =
+  | 'MATCHED'
+  | 'OBSERVED_UNDOCUMENTED'
+  | 'DOCUMENTED_UNOBSERVED'
+  | 'METHOD_MISMATCH'
+  | 'AMBIGUOUS';
+
+export interface ReconciliationItemResponse {
+  id: string;
+  httpMethod: string;
+  normalizedRoute: string;
+  pathPattern: string;
+  category: ReconciliationCategory;
+  specificationId: string | null;
+  specificationName: string | null;
+  specificationVersion: string | null;
+  operationId: string | null;
+  serviceBoundary: string;
+  firstObservedAt: string | null;
+  lastObservedAt: string | null;
+  totalRequests: number;
+  statusDistribution: { [key: string]: number };
+  declaredMethodsForRoute: string[];
+  observedMethodsForRoute: string[];
+  windowStart: string;
+  windowEnd: string;
+  explanation: string;
+}
+
+export interface ReconciliationSummaryResponse {
+  matchedCount: number;
+  observedUndocumentedCount: number;
+  documentedUnobservedCount: number;
+  methodMismatchCount: number;
+  ambiguousCount: number;
+  totalEvaluated: number;
+  coveragePercentage: number;
+  windowHours: number;
+  windowStart: string;
+  windowEnd: string;
+  specificationId: string | null;
+  specificationName: string | null;
+}
+
+export interface ReconciliationPageResponse {
+  content: ReconciliationItemResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  summary: ReconciliationSummaryResponse;
+}
+
+export interface ReconciliationFilterParams {
+  page?: number;
+  size?: number;
+  specId?: string;
+  service?: string;
+  method?: string;
+  category?: ReconciliationCategory | string;
+  windowHours?: number;
+  from?: string;
+  to?: string;
+  search?: string;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc' | 'ASC' | 'DESC';
+}
+
+

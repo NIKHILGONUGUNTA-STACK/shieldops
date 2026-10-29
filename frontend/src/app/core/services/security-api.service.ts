@@ -21,7 +21,12 @@ import {
   DeclaredOperationResponse,
   ApiSpecificationResponse,
   ApiSpecificationPageResponse,
-  SpecificationFilterParams
+  SpecificationFilterParams,
+  ReconciliationCategory,
+  ReconciliationItemResponse,
+  ReconciliationSummaryResponse,
+  ReconciliationPageResponse,
+  ReconciliationFilterParams
 } from '../models/security.models';
 
 @Injectable({
@@ -243,6 +248,44 @@ export class SecurityApiService {
    */
   deleteSpecification(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/api/v1/security/specs/${encodeURIComponent(id)}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/reconciliation
+   * Reconciles declared OpenAPI contracts against passive wire telemetry.
+   */
+  getReconciliation(params: ReconciliationFilterParams = {}): Observable<ReconciliationPageResponse> {
+    let httpParams = new HttpParams();
+    if (params.page !== undefined) httpParams = httpParams.set('page', params.page.toString());
+    if (params.size !== undefined) httpParams = httpParams.set('size', params.size.toString());
+    if (params.specId) httpParams = httpParams.set('specId', params.specId);
+    if (params.service) httpParams = httpParams.set('service', params.service);
+    if (params.method) httpParams = httpParams.set('method', params.method);
+    if (params.category) httpParams = httpParams.set('category', params.category);
+    if (params.windowHours !== undefined) httpParams = httpParams.set('windowHours', params.windowHours.toString());
+    if (params.from) httpParams = httpParams.set('from', params.from);
+    if (params.to) httpParams = httpParams.set('to', params.to);
+    if (params.search) httpParams = httpParams.set('search', params.search);
+    if (params.sortBy) httpParams = httpParams.set('sortBy', params.sortBy);
+    if (params.sortDirection) httpParams = httpParams.set('sortDirection', params.sortDirection);
+
+    return this.http.get<ReconciliationPageResponse>(`${this.baseUrl}/api/v1/security/reconciliation`, { params: httpParams })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/reconciliation/summary
+   * Returns reconciliation coverage summary metrics.
+   */
+  getReconciliationSummary(params: { specId?: string; windowHours?: number; from?: string; to?: string } = {}): Observable<ReconciliationSummaryResponse> {
+    let httpParams = new HttpParams();
+    if (params.specId) httpParams = httpParams.set('specId', params.specId);
+    if (params.windowHours !== undefined) httpParams = httpParams.set('windowHours', params.windowHours.toString());
+    if (params.from) httpParams = httpParams.set('from', params.from);
+    if (params.to) httpParams = httpParams.set('to', params.to);
+
+    return this.http.get<ReconciliationSummaryResponse>(`${this.baseUrl}/api/v1/security/reconciliation/summary`, { params: httpParams })
       .pipe(catchError(this.handleError));
   }
 

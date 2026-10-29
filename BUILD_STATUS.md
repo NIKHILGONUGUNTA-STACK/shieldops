@@ -1,8 +1,8 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 6.2 Complete (Secure OpenAPI Specification Import)
+## Current Milestone: Phase 6.3 Complete (Documented vs. Observed API Reconciliation)
 
-**Last Updated:** 2026-10-28
+**Last Updated:** 2026-10-29
 **Active Git Branch:** `main`
 **Git Working Tree:** Clean (Ready for Review)
 **Remote Upstream:** `origin/main` (`https://github.com/NIKHILGONUGUNTA-STACK/shieldops.git`)
@@ -21,20 +21,20 @@
 | `customer-service` | 17 | 0 | 0 | 0 | **SUCCESS** |
 | `account-service` | 26 | 0 | 0 | 0 | **SUCCESS** |
 | `transaction-service` | 28 | 0 | 0 | 0 | **SUCCESS** |
-| `gateway` | 116 | 0 | 0 | 0 | **SUCCESS** |
-| **Total Backend Platform Tests** | **187** | **0** | **0** | **0** | **BUILD SUCCESS** |
+| `gateway` | 202 | 0 | 0 | 0 | **SUCCESS** |
+| **Total Backend Platform Tests** | **273** | **0** | **0** | **0** | **BUILD SUCCESS** |
 
 ### 1.2 Frontend SOC Dashboard (Angular 18 / TypeScript / Node 22)
 - **Framework & Tooling:** Angular 18.2.21 / Node.js 22.20.0 / npm 10.9.3
 - **Test Runner:** Karma 6.4 / Jasmine 5.2 / ChromeHeadless
-- **Production Build:** `dist/aegis-frontend` (373.1 kB initial bundle, 102.8 kB transfer, 0 warnings, 0 errors)
+- **Production Build:** `dist/aegis-frontend` (373.7 kB initial bundle, 102.9 kB transfer, 0 warnings, 0 errors)
 
 | Test Suite | Spec File | Tests Run | Failures | Status |
 | :--- | :--- | :---: | :---: | :--- |
 | **App Shell** | `app.component.spec.ts` | 2 | 0 | **SUCCESS** |
 | **Navbar & Search Bar** | `navbar.component.spec.ts` | 6 | 0 | **SUCCESS** |
 | **Sidebar & Nav Registry** | `sidebar.component.spec.ts` | 6 | 0 | **SUCCESS** |
-| **Security API Service** | `security-api.service.spec.ts` | 16 | 0 | **SUCCESS** |
+| **Security API Service** | `security-api.service.spec.ts` | 18 | 0 | **SUCCESS** |
 | **Auth Service** | `auth.service.spec.ts` | 3 | 0 | **SUCCESS** |
 | **Auth Guard** | `auth.guard.spec.ts` | 3 | 0 | **SUCCESS** |
 | **Overview Component** | `overview.component.spec.ts` | 3 | 0 | **SUCCESS** |
@@ -52,8 +52,9 @@
 | **System Health** | `system-health.component.spec.ts` | 2 | 0 | **SUCCESS** |
 | **Observed API Inventory** | `api-inventory.component.spec.ts` | 7 | 0 | **SUCCESS** |
 | **API Specifications & Operations** | `api-specs.component.spec.ts` | 10 | 0 | **SUCCESS** |
+| **Documented vs Observed API Reconciliation** | `api-reconciliation.component.spec.ts` | 9 | 0 | **SUCCESS** |
 | **Settings Component** | `settings.component.spec.ts` | 3 | 0 | **SUCCESS** |
-| **Total Frontend Tests** | — | **102** | **0** | **BUILD SUCCESS** |
+| **Total Frontend Tests** | — | **113** | **0** | **BUILD SUCCESS** |
 
 ---
 
@@ -192,3 +193,38 @@ All 9 platform services running and healthy via Docker Compose (`infrastructure/
 12. **Phase 5.5 (Completed):** Final Wallarm-Inspired SOC UI, Design Tokens, Collapsible 15-Destination Sidebar Navigation, Truthful Feature Classification, 74 Unit Tests, and Zero Build Warnings.
 13. **Phase 6.1 (Completed):** Telemetry-Based API Discovery Architecture, route normalization, database persistence (`security_data.api_events`), `ApiDiscoveryService`, `SecurityDiscoveryController`, `ApiInventoryComponent` live table and slide-in drawer, 88 frontend unit tests, 168 backend platform tests.
 14. **Phase 6.2 (Completed):** Secure OpenAPI Specification Import, offline structural parser supporting OpenAPI 3.0.x / 3.1.x (JSON/YAML), rejection of external references and recursion loops, Flyway V5 schema (`api_specifications` and `api_spec_operations`), `SecuritySpecificationController`, Angular file dropzone, operations exploration drawer, 102 frontend tests, 187 backend platform tests, and zero build warnings.
+15. **Phase 6.3 (Completed):** Documented vs. Observed API Reconciliation engine, canonical operation identity normalization (`RouteNormalizer`), deterministic mutually exclusive category precedence (`AMBIGUOUS` > `MATCHED` > `METHOD_MISMATCH` > `OBSERVED_UNDOCUMENTED` > `DOCUMENTED_UNOBSERVED`), observation windowing (1h–720h), composite summary statistics, Angular SOC dashboard (`/api-reconciliation`) with 6 KPI cards, multi-filter dropdowns, deep links to events/specs, 113 frontend tests, 202 gateway tests (273 platform tests total), and zero build warnings.
+
+---
+
+## 7. Phase 6.3 Deliverables Checklist (Documented vs. Observed API Reconciliation)
+
+- [x] **Canonical Operation Identity & Precedence Normalization:**
+  - Standardized triplet: `(Service Boundary, Normalized Route Template, HTTP Method)`.
+  - Deterministic precedence: `AMBIGUOUS` > `MATCHED` > `METHOD_MISMATCH` > `OBSERVED_UNDOCUMENTED` > `DOCUMENTED_UNOBSERVED`.
+  - Disjoint mathematical partitioning: `totalEvaluated == matched + undocumented + unobserved + methodMismatch + ambiguous`. Zero double counting.
+- [x] **Backend Reconciliation Repository & Service (`gateway/src/main/java/com/aegis/gateway/reconciliation/`):**
+  - Parameterized windowed aggregation on wire telemetry (`security_data.api_events`) with strict 1h–720h window boundaries.
+  - Declared OpenAPI operation joining from `security_data.api_spec_operations` and `security_data.api_specifications`.
+  - In-memory route normalization, ambiguity detection across multi-spec deployments, composite summary metrics, and pagination.
+- [x] **REST API Controller & Authorization:**
+  - `GET /api/v1/security/reconciliation` (supports page, size, specId, service, category, windowHours, search).
+  - `GET /api/v1/security/reconciliation/summary`.
+  - `@PreAuthorize("hasAnyRole('SECURITY_ANALYST', 'SECURITY_ADMIN')")` role security.
+  - RFC 7807 `ProblemDetail` responses for invalid window hours and bad parameters.
+- [x] **Frontend SOC View (`/api-reconciliation`):**
+  - Standalone `ApiReconciliationComponent` in `frontend/src/app/features/api-reconciliation/`.
+  - 6 interactive KPI cards: Total Evaluated, Matched Contracts, Observed Undocumented, Documented Unobserved, Method Mismatch, and Contract Coverage %.
+  - Click-to-filter capability on KPI cards.
+  - Window selector (24h, 48h, 7d, 30d) with 720h max retention pill indicator.
+  - Search input and dropdown filters for Category, Service, and Specification.
+  - Table with method badges, category status chips, request counts with HTTP status distributions (`2xx`, `4xx`), and human-readable provenance explanations.
+  - Deep action links to wire events (`/events`) and OpenAPI specs (`/api-specs`).
+  - Strict Wallarm SOC styling with Inter Regular (`font-weight: 400`) typography.
+- [x] **Automated Tests & Production Build:**
+  - 15 new backend tests (7 service tests, 8 WebMvcTest controller tests).
+  - 202 gateway unit & integration tests passing (`BUILD SUCCESS`).
+  - 9 new frontend component unit tests, 2 service tests, 1 sidebar navigation test.
+  - 113 frontend tests passing in ChromeHeadless (`TOTAL: 113 SUCCESS`).
+  - Production build successful with 0 errors and 0 warnings (`ng build`).
+

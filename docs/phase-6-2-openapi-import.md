@@ -133,3 +133,4 @@ Table definition in `gateway/src/main/resources/db/migration/V5__api_specificati
   - `api-specs.component.spec.ts` (10 tests): Spec catalog display, KPI metrics, drag-and-drop file upload, size/type validation, empty state, error handling, operation drawer slide-in, search filtering, and deletion.
   - `security-api.service.spec.ts`: Specification API contract verification.
 - **Production Build:** Angular 18 production build complete (`dist/aegis-frontend`), 0 warnings, 0 errors. Strict Inter Regular (`font-weight: 400`) typography enforced.
+

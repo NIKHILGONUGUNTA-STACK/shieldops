@@ -55,6 +55,11 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'api-reconciliation',
+    loadComponent: () => import('./features/api-reconciliation/api-reconciliation.component').then(m => m.ApiReconciliationComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'data-access',
     loadComponent: () => import('./features/data-access/data-access.component').then(m => m.DataAccessComponent),
     canActivate: [authGuard]
