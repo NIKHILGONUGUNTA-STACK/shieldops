@@ -1,10 +1,8 @@
 package com.aegis.gateway.reconciliation;
 
 import com.aegis.gateway.discovery.RouteNormalizer;
-import com.aegis.gateway.reconciliation.dto.ReconciliationCategory;
-import com.aegis.gateway.reconciliation.dto.ReconciliationItemResponse;
-import com.aegis.gateway.reconciliation.dto.ReconciliationPageResponse;
-import com.aegis.gateway.reconciliation.dto.ReconciliationSummaryResponse;
+import com.aegis.gateway.reconciliation.dto.*;
+import com.aegis.gateway.security.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.security.MessageDigest;
@@ -17,7 +15,8 @@ import java.util.stream.Collectors;
 
 /**
  * Service for reconciling declared OpenAPI specifications against live passive wire telemetry.
- * Enforces canonical operation identity, deterministic category precedence, and bounded observation windows.
+ * Enforces canonical operation identity, deterministic category precedence, explainable prioritization,
+ * and bounded observation windows.
  */
 @Service
 public class ApiReconciliationService {
@@ -27,15 +26,19 @@ public class ApiReconciliationService {
     private static final int MIN_WINDOW_HOURS = 1;
 
     private final ApiReconciliationRepository reconciliationRepository;
+    private final ApiDiscrepancyPrioritizer prioritizer;
 
-    public ApiReconciliationService(ApiReconciliationRepository reconciliationRepository) {
+    public ApiReconciliationService(
+            ApiReconciliationRepository reconciliationRepository,
+            ApiDiscrepancyPrioritizer prioritizer) {
         this.reconciliationRepository = reconciliationRepository;
+        this.prioritizer = prioritizer;
     }
 
     public record WindowBoundaries(Instant start, Instant end, int hours) {}
 
     /**
-     * Reconciles documented OpenAPI contracts against passive gateway wire telemetry.
+     * Reconciles documented OpenAPI contracts against passive gateway wire telemetry with priority filtering.
      */
     public ReconciliationPageResponse reconcile(
             int page,
@@ -44,6 +47,7 @@ public class ApiReconciliationService {
             String serviceName,
             String httpMethod,
             String categoryStr,
+            String priorityStr,
             Integer windowHours,
             Instant from,
             Instant to,
@@ -53,6 +57,7 @@ public class ApiReconciliationService {
 
         WindowBoundaries window = resolveWindow(windowHours, from, to);
         ReconciliationCategory filterCategory = parseCategory(categoryStr);
+        ReconciliationPriority filterPriority = parsePriority(priorityStr);
 
         int boundedPage = Math.max(0, page);
         int boundedSize = Math.min(Math.max(1, size), 100);
@@ -64,7 +69,7 @@ public class ApiReconciliationService {
         List<ApiReconciliationRepository.RawObservedOperation> observedOps =
             reconciliationRepository.findObservedOperationsInWindow(window.start(), window.end(), httpMethod);
 
-        // 2. Perform reconciliation evaluation
+        // 2. Perform reconciliation evaluation & explainable prioritization
         List<ReconciliationItemResponse> allItems = evaluateReconciliation(
             declaredOps,
             observedOps,
@@ -79,6 +84,9 @@ public class ApiReconciliationService {
         List<ReconciliationItemResponse> filtered = allItems.stream()
             .filter(item -> {
                 if (filterCategory != null && item.category() != filterCategory) {
+                    return false;
+                }
+                if (filterPriority != null && item.priority() != filterPriority) {
                     return false;
                 }
                 if (serviceName != null && !serviceName.isBlank()) {
@@ -138,6 +146,171 @@ public class ApiReconciliationService {
     }
 
     /**
+     * Backward-compatible overload without priority filter.
+     */
+    public ReconciliationPageResponse reconcile(
+            int page,
+            int size,
+            UUID specificationId,
+            String serviceName,
+            String httpMethod,
+            String categoryStr,
+            Integer windowHours,
+            Instant from,
+            Instant to,
+            String search,
+            String sortBy,
+            String sortDirection) {
+        return reconcile(page, size, specificationId, serviceName, httpMethod, categoryStr, null, windowHours, from, to, search, sortBy, sortDirection);
+    }
+
+    /**
+     * Retrieves complete investigation detail and telemetry evidence for a specific finding.
+     */
+    public ReconciliationInvestigationResponse investigate(
+            String findingId,
+            Integer windowHours,
+            Instant from,
+            Instant to,
+            UUID specificationId) {
+
+        WindowBoundaries window = resolveWindow(windowHours, from, to);
+
+        List<ApiReconciliationRepository.RawDeclaredOperation> declaredOps =
+            reconciliationRepository.findDeclaredOperations(specificationId);
+
+        List<ApiReconciliationRepository.RawObservedOperation> observedOps =
+            reconciliationRepository.findObservedOperationsInWindow(window.start(), window.end(), null);
+
+        List<ReconciliationItemResponse> allItems = evaluateReconciliation(
+            declaredOps,
+            observedOps,
+            window,
+            specificationId
+        );
+
+        ReconciliationItemResponse match = allItems.stream()
+            .filter(i -> i.id().equalsIgnoreCase(findingId))
+            .findFirst()
+            .orElseThrow(() -> new ResourceNotFoundException("Reconciliation finding not found with ID: " + findingId));
+
+        // Re-evaluate prioritizer to retrieve full contributing factors list
+        ReconciliationPrioritizationResult prio = prioritizer.prioritize(
+            match.category(),
+            match.normalizedRoute(),
+            match.serviceBoundary(),
+            match.totalRequests(),
+            match.authFailureCount(),
+            match.anomalyEventCount(),
+            match.firstObservedAt(),
+            match.lastObservedAt(),
+            match.category() == ReconciliationCategory.AMBIGUOUS
+        );
+
+        // Fetch distinct status codes
+        List<Integer> distinctStatusCodes = reconciliationRepository.findDistinctStatusCodesForRoute(
+            match.httpMethod(), match.normalizedRoute(), window.start(), window.end()
+        );
+
+        // Fetch linked incidents
+        List<InvestigationLinkedIncident> linkedIncidents = reconciliationRepository.findLinkedIncidents(
+            match.serviceBoundary(), match.normalizedRoute(), window.start(), window.end()
+        );
+
+        // Associated Spec metadata
+        InvestigationSpecMetadata specMeta = null;
+        if (match.specificationId() != null) {
+            var rawDec = declaredOps.stream()
+                .filter(d -> d.specificationId().equals(match.specificationId()) &&
+                             d.normalizedRoute().equalsIgnoreCase(match.normalizedRoute()) &&
+                             d.httpMethod().equalsIgnoreCase(match.httpMethod()))
+                .findFirst()
+                .orElse(null);
+            if (rawDec != null) {
+                specMeta = new InvestigationSpecMetadata(
+                    rawDec.specificationId(),
+                    rawDec.specificationName(),
+                    rawDec.specificationVersion(),
+                    rawDec.openapiVersion(),
+                    rawDec.format(),
+                    rawDec.sourceFilename(),
+                    rawDec.openApiOperationId(),
+                    rawDec.summary(),
+                    rawDec.description()
+                );
+            }
+        }
+
+        InvestigationTelemetryEvidence telemetryEvidence = new InvestigationTelemetryEvidence(
+            match.totalRequests(),
+            match.firstObservedAt(),
+            match.lastObservedAt(),
+            match.statusDistribution(),
+            match.authFailureCount(),
+            match.anomalyEventCount(),
+            distinctStatusCodes
+        );
+
+        List<String> limitations = List.of(
+            "Telemetry reflects gateway wire observations within the bounded window and excludes unmonitored internal networks.",
+            "A discrepancy represents contract divergence, NOT a confirmed vulnerability or active exploit.",
+            "Authorization failures (401/403) indicate access denials and do not establish unauthorized data exposure.",
+            "Documented unobserved endpoints may represent dormant, scheduled, batch, or low-frequency operational tasks."
+        );
+
+        List<String> recommendations = switch (match.category()) {
+            case OBSERVED_UNDOCUMENTED -> List.of(
+                "Verify whether this route represents an uncataloged internal microservice or unintended public endpoint.",
+                "Review gateway route filters and update official OpenAPI specification if intended.",
+                "Inspect client identities and authentication headers in Wire Events."
+            );
+            case METHOD_MISMATCH -> List.of(
+                "Investigate client requests using undeclared HTTP verbs against this endpoint.",
+                "Verify if backend returns 405 Method Not Allowed or processes the unexpected verb.",
+                "Update OpenAPI specification if this HTTP method was legitimately added."
+            );
+            case AMBIGUOUS -> List.of(
+                "Resolve conflicting route definitions across imported OpenAPI specifications.",
+                "Verify service boundary tagging and version headers."
+            );
+            case DOCUMENTED_UNOBSERVED -> List.of(
+                "Check if the operation is deprecated, seasonal, or pending front-end client rollout.",
+                "Review gateway route matching rules to confirm traffic is reaching the designated service.",
+                "Deprecate or remove the operation from the specification if decommissioned."
+            );
+            case MATCHED -> List.of(
+                "Contract is actively verified against wire traffic. Monitor status code anomalies and latency."
+            );
+        };
+
+        return new ReconciliationInvestigationResponse(
+            match.id(),
+            match.httpMethod(),
+            match.normalizedRoute(),
+            match.pathPattern(),
+            match.category(),
+            prio.priority(),
+            prio.score(),
+            prio.ruleVersion(),
+            prio.contributingFactors(),
+            prio.matchingConfidence(),
+            prio.confidenceRationale(),
+            false, // confirmedVulnerability is FALSE
+            match.serviceBoundary(),
+            specMeta,
+            telemetryEvidence,
+            window.hours(),
+            window.start(),
+            window.end(),
+            match.declaredMethodsForRoute(),
+            match.observedMethodsForRoute(),
+            linkedIncidents,
+            limitations,
+            recommendations
+        );
+    }
+
+    /**
      * Returns reconciliation summary metrics for a given scope and observation window.
      */
     public ReconciliationSummaryResponse getSummary(
@@ -165,7 +338,7 @@ public class ApiReconciliationService {
     }
 
     /**
-     * Pure reconciliation evaluation core: compares declared and observed operations.
+     * Pure reconciliation evaluation core: compares declared and observed operations and scores priority.
      */
     List<ReconciliationItemResponse> evaluateReconciliation(
             List<ApiReconciliationRepository.RawDeclaredOperation> declaredOps,
@@ -174,7 +347,6 @@ public class ApiReconciliationService {
             UUID selectedSpecId) {
 
         // Index declared operations by canonical key (METHOD:ROUTE)
-        // A route might have multiple declared methods (e.g. GET and POST)
         Map<String, List<ApiReconciliationRepository.RawDeclaredOperation>> declaredByKey = new LinkedHashMap<>();
         Map<String, Set<String>> declaredMethodsByRoute = new HashMap<>();
 
@@ -204,7 +376,9 @@ public class ApiReconciliationService {
                 obs.count2xx(),
                 obs.count3xx(),
                 obs.count4xx(),
-                obs.count5xx()
+                obs.count5xx(),
+                obs.authFailures(),
+                obs.anomalyEvents()
             );
 
             observedMethodsByRoute.computeIfAbsent(route, r -> new LinkedHashSet<>()).add(method);
@@ -234,7 +408,6 @@ public class ApiReconciliationService {
             // Check for ambiguity across overlapping specs
             boolean isAmbiguous = false;
             if (isDeclared && decList.size() > 1 && selectedSpecId == null) {
-                // Multiple specs declare this exact method and route with different service boundaries or definitions
                 Set<String> distinctServices = decList.stream()
                     .map(ApiReconciliationRepository.RawDeclaredOperation::serviceBoundary)
                     .collect(Collectors.toSet());
@@ -298,6 +471,8 @@ public class ApiReconciliationService {
             Instant firstObs = obs != null ? obs.firstObserved : null;
             Instant lastObs = obs != null ? obs.lastObserved : null;
             long totalReqs = obs != null ? obs.totalRequests : 0L;
+            long authFailures = obs != null ? obs.authFailures : 0L;
+            long anomalyEvents = obs != null ? obs.anomalyEvents : 0L;
 
             Map<String, Long> statusDist = new LinkedHashMap<>();
             if (obs != null) {
@@ -308,6 +483,19 @@ public class ApiReconciliationService {
             }
 
             String stableId = generateStableId(method, route, specId);
+
+            // Prioritization evaluation
+            ReconciliationPrioritizationResult prio = prioritizer.prioritize(
+                category,
+                route,
+                service,
+                totalReqs,
+                authFailures,
+                anomalyEvents,
+                firstObs,
+                lastObs,
+                isAmbiguous
+            );
 
             results.add(new ReconciliationItemResponse(
                 stableId,
@@ -328,7 +516,12 @@ public class ApiReconciliationService {
                 new ArrayList<>(obsMethods),
                 window.start(),
                 window.end(),
-                explanation
+                explanation,
+                prio.priority(),
+                prio.score(),
+                prio.matchingConfidence(),
+                authFailures,
+                anomalyEvents
             ));
         }
 
@@ -416,11 +609,24 @@ public class ApiReconciliationService {
         }
     }
 
+    private ReconciliationPriority parsePriority(String priorityStr) {
+        if (priorityStr == null || priorityStr.isBlank()) {
+            return null;
+        }
+        try {
+            return ReconciliationPriority.valueOf(priorityStr.toUpperCase().trim());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid priority filter: " + priorityStr + ". Accepted: CRITICAL, HIGH, MEDIUM, LOW");
+        }
+    }
+
     private Comparator<ReconciliationItemResponse> getComparator(String sortBy, String sortDirection) {
         boolean desc = sortDirection == null || !sortDirection.equalsIgnoreCase("ASC");
         Comparator<ReconciliationItemResponse> comp;
 
-        if ("requests".equalsIgnoreCase(sortBy) || "totalRequests".equalsIgnoreCase(sortBy)) {
+        if ("priority".equalsIgnoreCase(sortBy) || "priorityScore".equalsIgnoreCase(sortBy)) {
+            comp = Comparator.comparingInt(ReconciliationItemResponse::priorityScore);
+        } else if ("requests".equalsIgnoreCase(sortBy) || "totalRequests".equalsIgnoreCase(sortBy)) {
             comp = Comparator.comparingLong(ReconciliationItemResponse::totalRequests);
         } else if ("route".equalsIgnoreCase(sortBy) || "normalizedRoute".equalsIgnoreCase(sortBy)) {
             comp = Comparator.comparing(ReconciliationItemResponse::normalizedRoute, String.CASE_INSENSITIVE_ORDER);
@@ -434,8 +640,8 @@ public class ApiReconciliationService {
                 Comparator.nullsLast(Comparator.naturalOrder())
             );
         } else {
-            // Default: Category precedence
-            comp = Comparator.comparing(item -> item.category().ordinal());
+            // Default: Priority score descending first, then category precedence
+            comp = Comparator.comparingInt(ReconciliationItemResponse::priorityScore);
         }
 
         return desc ? comp.reversed() : comp;
@@ -462,13 +668,15 @@ public class ApiReconciliationService {
         long count3xx = 0;
         long count4xx = 0;
         long count5xx = 0;
+        long authFailures = 0;
+        long anomalyEvents = 0;
 
         MutableObserved(String httpMethod, String routeTemplate) {
             this.httpMethod = httpMethod;
             this.routeTemplate = routeTemplate;
         }
 
-        void merge(long reqs, Instant first, Instant last, long c2, long c3, long c4, long c5) {
+        void merge(long reqs, Instant first, Instant last, long c2, long c3, long c4, long c5, long authFails, long anomalies) {
             this.totalRequests += reqs;
             if (this.firstObserved == null || (first != null && first.isBefore(this.firstObserved))) {
                 this.firstObserved = first;
@@ -480,7 +688,8 @@ public class ApiReconciliationService {
             this.count3xx += c3;
             this.count4xx += c4;
             this.count5xx += c5;
+            this.authFailures += authFails;
+            this.anomalyEvents += anomalies;
         }
     }
 }
-

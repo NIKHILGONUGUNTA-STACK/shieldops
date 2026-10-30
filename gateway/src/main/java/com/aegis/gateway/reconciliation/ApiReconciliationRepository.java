@@ -32,7 +32,9 @@ public class ApiReconciliationRepository {
         long count2xx,
         long count3xx,
         long count4xx,
-        long count5xx
+        long count5xx,
+        long authFailures,
+        long anomalyEvents
     ) {}
 
     public record RawDeclaredOperation(
@@ -44,7 +46,12 @@ public class ApiReconciliationRepository {
         String pathPattern,
         String normalizedRoute,
         String openApiOperationId,
-        String serviceBoundary
+        String serviceBoundary,
+        String summary,
+        String description,
+        String openapiVersion,
+        String format,
+        String sourceFilename
     ) {}
 
     /**
@@ -61,7 +68,9 @@ public class ApiReconciliationRepository {
                 SUM(CASE WHEN status_code >= 200 AND status_code < 300 THEN 1 ELSE 0 END) AS count_2xx,
                 SUM(CASE WHEN status_code >= 300 AND status_code < 400 THEN 1 ELSE 0 END) AS count_3xx,
                 SUM(CASE WHEN status_code >= 400 AND status_code < 500 THEN 1 ELSE 0 END) AS count_4xx,
-                SUM(CASE WHEN status_code >= 500 AND status_code < 600 THEN 1 ELSE 0 END) AS count_5xx
+                SUM(CASE WHEN status_code >= 500 AND status_code < 600 THEN 1 ELSE 0 END) AS count_5xx,
+                SUM(CASE WHEN status_code IN (401, 403) THEN 1 ELSE 0 END) AS auth_failures,
+                SUM(CASE WHEN anomaly_flags IS NOT NULL AND anomaly_flags != 'NONE' AND anomaly_flags != '' THEN 1 ELSE 0 END) AS anomaly_events
             FROM security_data.api_events
             WHERE timestamp >= :windowStart AND timestamp <= :windowEnd
             """);
@@ -95,7 +104,9 @@ public class ApiReconciliationRepository {
                 rs.getLong("count_2xx"),
                 rs.getLong("count_3xx"),
                 rs.getLong("count_4xx"),
-                rs.getLong("count_5xx")
+                rs.getLong("count_5xx"),
+                rs.getLong("auth_failures"),
+                rs.getLong("anomaly_events")
             );
         }).list();
     }
@@ -110,11 +121,16 @@ public class ApiReconciliationRepository {
                 op.specification_id,
                 s.name AS specification_name,
                 s.version AS specification_version,
+                s.openapi_version,
+                s.format,
+                s.source_filename,
                 op.http_method,
                 op.path_pattern,
                 op.normalized_route,
                 op.operation_id AS openapi_op_id,
-                op.service_boundary
+                op.service_boundary,
+                op.summary,
+                op.description
             FROM security_data.api_spec_operations op
             JOIN security_data.api_specifications s ON op.specification_id = s.id
             """);
@@ -141,7 +157,12 @@ public class ApiReconciliationRepository {
             rs.getString("path_pattern"),
             rs.getString("normalized_route"),
             rs.getString("openapi_op_id"),
-            rs.getString("service_boundary")
+            rs.getString("service_boundary"),
+            rs.getString("summary"),
+            rs.getString("description"),
+            rs.getString("openapi_version"),
+            rs.getString("format"),
+            rs.getString("source_filename")
         )).list();
     }
 
@@ -156,6 +177,65 @@ public class ApiReconciliationRepository {
             .param("id", specificationId)
             .query(String.class)
             .optional();
+    }
+
+    /**
+     * Finds distinct HTTP status codes observed for a specific route and method in the observation window.
+     */
+    public List<Integer> findDistinctStatusCodesForRoute(String httpMethod, String endpointRoute, Instant windowStart, Instant windowEnd) {
+        String sql = """
+            SELECT DISTINCT status_code
+            FROM security_data.api_events
+            WHERE timestamp >= :windowStart AND timestamp <= :windowEnd
+              AND UPPER(http_method) = :httpMethod
+              AND (route_id = :route OR request_path = :route OR COALESCE(NULLIF(route_id, ''), request_path) = :route)
+            ORDER BY status_code ASC
+            """;
+
+        return jdbcClient.sql(sql)
+            .param("windowStart", Timestamp.from(windowStart))
+            .param("windowEnd", Timestamp.from(windowEnd))
+            .param("httpMethod", httpMethod.toUpperCase().trim())
+            .param("route", endpointRoute)
+            .query(Integer.class)
+            .list();
+    }
+
+    /**
+     * Finds active or historical security incidents linked to this service boundary or route within the observation window.
+     */
+    public List<com.aegis.gateway.reconciliation.dto.InvestigationLinkedIncident> findLinkedIncidents(
+            String serviceBoundary, String route, Instant windowStart, Instant windowEnd) {
+        String sql = """
+            SELECT id, rule_id, threat_category, severity, status, summary, first_detected_at
+            FROM security_data.incidents
+            WHERE first_detected_at >= :windowStart AND first_detected_at <= :windowEnd
+              AND (
+                  target_entity_value = :serviceBoundary
+                  OR target_entity_value = :route
+                  OR summary ILIKE ('%' || :route || '%')
+              )
+            ORDER BY first_detected_at DESC
+            LIMIT 10
+            """;
+
+        return jdbcClient.sql(sql)
+            .param("windowStart", Timestamp.from(windowStart))
+            .param("windowEnd", Timestamp.from(windowEnd))
+            .param("serviceBoundary", serviceBoundary != null ? serviceBoundary : "")
+            .param("route", route != null ? route : "")
+            .query((rs, rowNum) -> {
+                Timestamp ts = rs.getTimestamp("first_detected_at");
+                return new com.aegis.gateway.reconciliation.dto.InvestigationLinkedIncident(
+                    (UUID) rs.getObject("id"),
+                    rs.getString("rule_id"),
+                    rs.getString("threat_category"),
+                    rs.getString("severity"),
+                    rs.getString("status"),
+                    rs.getString("summary"),
+                    ts != null ? ts.toInstant() : windowStart
+                );
+            }).list();
     }
 }
 

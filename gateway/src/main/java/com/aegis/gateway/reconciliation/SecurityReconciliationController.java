@@ -1,5 +1,6 @@
 package com.aegis.gateway.reconciliation;
 
+import com.aegis.gateway.reconciliation.dto.ReconciliationInvestigationResponse;
 import com.aegis.gateway.reconciliation.dto.ReconciliationPageResponse;
 import com.aegis.gateway.reconciliation.dto.ReconciliationSummaryResponse;
 import org.slf4j.Logger;
@@ -39,15 +40,16 @@ public class SecurityReconciliationController {
             @RequestParam(required = false) String service,
             @RequestParam(required = false) String method,
             @RequestParam(required = false) String category,
+            @RequestParam(required = false) String priority,
             @RequestParam(required = false) Integer windowHours,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
             @RequestParam(required = false) String search,
-            @RequestParam(defaultValue = "category") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDirection) {
+            @RequestParam(defaultValue = "priorityScore") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDirection) {
 
-        log.debug("Reconciliation request: page={}, size={}, specId={}, category={}, windowHours={}",
-            page, size, specId, category, windowHours);
+        log.debug("Reconciliation request: page={}, size={}, specId={}, category={}, priority={}, windowHours={}",
+            page, size, specId, category, priority, windowHours);
 
         ReconciliationPageResponse response = reconciliationService.reconcile(
             page,
@@ -56,6 +58,7 @@ public class SecurityReconciliationController {
             service,
             method,
             category,
+            priority,
             windowHours,
             from,
             to,
@@ -81,5 +84,21 @@ public class SecurityReconciliationController {
         ReconciliationSummaryResponse summary = reconciliationService.getSummary(specId, windowHours, from, to);
         return ResponseEntity.ok(summary);
     }
-}
 
+    /**
+     * Detailed investigation view and telemetry evidence for a single reconciliation finding.
+     */
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SECURITY_ANALYST', 'SECURITY_ADMIN')")
+    public ResponseEntity<ReconciliationInvestigationResponse> getInvestigation(
+            @PathVariable String id,
+            @RequestParam(required = false) UUID specId,
+            @RequestParam(required = false) Integer windowHours,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to) {
+
+        log.debug("Investigation request for finding id={}, specId={}, windowHours={}", id, specId, windowHours);
+        ReconciliationInvestigationResponse response = reconciliationService.investigate(id, windowHours, from, to, specId);
+        return ResponseEntity.ok(response);
+    }
+}
