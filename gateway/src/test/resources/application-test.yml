@@ -43,6 +43,9 @@ management:
       show-details: when_authorized
       probes:
         enabled: true
+  health:
+    redis:
+      enabled: false
     prometheus:
       access: unrestricted
   prometheus:

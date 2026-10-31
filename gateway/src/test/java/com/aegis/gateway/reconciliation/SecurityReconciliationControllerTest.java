@@ -202,4 +202,82 @@ class SecurityReconciliationControllerTest {
             .andExpect(jsonPath("$.totalEvaluated", is(0)))
             .andExpect(jsonPath("$.coveragePercentage", is(0.0)));
     }
+
+    @Test
+    @DisplayName("Filter by priority returns matched priority findings with priority metadata")
+    void filterByPriorityReturnsFindings() throws Exception {
+        // Telemetry observes uncataloged endpoint on sensitive route with 401 auth failures
+        apiEventRepository.save(new ApiEvent(
+            UUID.randomUUID(), "cid-prio-1", Instant.now().minusSeconds(10), "10.0.0.1", "POST",
+            "/api/v1/transfers/payout", "/api/v1/transfers/payout",
+            401, 15L, "u-1", "ROLE_USER", "cust-1", "curl", "hash", "NONE"
+        ));
+
+        mockMvc.perform(get("/api/v1/security/reconciliation")
+                .param("priority", "HIGH")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ANALYST"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content", hasSize(1)))
+            .andExpect(jsonPath("$.content[0].priority", is("HIGH")))
+            .andExpect(jsonPath("$.content[0].priorityScore", greaterThanOrEqualTo(50)))
+            .andExpect(jsonPath("$.content[0].matchingConfidence", notNullValue()))
+            .andExpect(jsonPath("$.content[0].authFailureCount", is(1)));
+    }
+
+    @Test
+    @DisplayName("Investigation endpoint returns 200 with complete evidence provenance and false vulnerability confirmation")
+    void investigationEndpointReturns200() throws Exception {
+        // Create an event to generate a stable finding
+        apiEventRepository.save(new ApiEvent(
+            UUID.randomUUID(), "cid-inv-1", Instant.now().minusSeconds(10), "10.0.0.1", "POST",
+            "/api/v1/accounts/secret", "/api/v1/accounts/secret",
+            200, 15L, "u-1", "ROLE_USER", "cust-1", "curl", "hash", "NONE"
+        ));
+
+        // Get the finding ID from list endpoint
+        var result = mockMvc.perform(get("/api/v1/security/reconciliation")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ANALYST"))))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        String responseJson = result.getResponse().getContentAsString();
+        String findingId = com.jayway.jsonpath.JsonPath.read(responseJson, "$.content[0].id");
+
+        mockMvc.perform(get("/api/v1/security/reconciliation/" + findingId)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ANALYST"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id", is(findingId)))
+            .andExpect(jsonPath("$.priority", notNullValue()))
+            .andExpect(jsonPath("$.priorityScore", greaterThan(0)))
+            .andExpect(jsonPath("$.priorityRuleVersion", is("v1.0.0")))
+            .andExpect(jsonPath("$.contributingFactors", hasSize(greaterThan(0))))
+            .andExpect(jsonPath("$.matchingConfidence", notNullValue()))
+            .andExpect(jsonPath("$.confirmedVulnerability", is(false)))
+            .andExpect(jsonPath("$.telemetryEvidence.totalRequests", is(1)))
+            .andExpect(jsonPath("$.explicitLimitations", hasSize(greaterThan(0))))
+            .andExpect(jsonPath("$.recommendedSteps", hasSize(greaterThan(0))));
+    }
+
+    @Test
+    @DisplayName("Investigation endpoint returns 404 ProblemDetail for non-existent finding ID")
+    void investigationEndpointReturns404ForUnknownId() throws Exception {
+        mockMvc.perform(get("/api/v1/security/reconciliation/rec_non_existent_id")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ANALYST"))))
+            .andExpect(status().isNotFound())
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
+            .andExpect(jsonPath("$.title", is("Not Found")))
+            .andExpect(jsonPath("$.detail", containsString("Reconciliation finding not found with ID: rec_non_existent_id")));
+    }
+
+    @Test
+    @DisplayName("Invalid priority parameter returns 400 ProblemDetail")
+    void invalidPriorityReturns400() throws Exception {
+        mockMvc.perform(get("/api/v1/security/reconciliation")
+                .param("priority", "INVALID_PRIO")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ANALYST"))))
+            .andExpect(status().isBadRequest())
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
+            .andExpect(jsonPath("$.title", is("Bad Request")))
+            .andExpect(jsonPath("$.detail", containsString("Invalid priority filter: INVALID_PRIO")));
+    }
 }

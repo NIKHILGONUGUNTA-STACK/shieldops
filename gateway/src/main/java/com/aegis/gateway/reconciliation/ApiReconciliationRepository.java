@@ -35,7 +35,20 @@ public class ApiReconciliationRepository {
         long count5xx,
         long authFailures,
         long anomalyEvents
-    ) {}
+    ) {
+        public RawObservedOperation(
+                String httpMethod,
+                String endpointRoute,
+                long totalRequests,
+                Instant firstObserved,
+                Instant lastObserved,
+                long count2xx,
+                long count3xx,
+                long count4xx,
+                long count5xx) {
+            this(httpMethod, endpointRoute, totalRequests, firstObserved, lastObserved, count2xx, count3xx, count4xx, count5xx, 0L, 0L);
+        }
+    }
 
     public record RawDeclaredOperation(
         UUID operationId,
@@ -52,7 +65,20 @@ public class ApiReconciliationRepository {
         String openapiVersion,
         String format,
         String sourceFilename
-    ) {}
+    ) {
+        public RawDeclaredOperation(
+                UUID operationId,
+                UUID specificationId,
+                String specificationName,
+                String specificationVersion,
+                String httpMethod,
+                String pathPattern,
+                String normalizedRoute,
+                String openApiOperationId,
+                String serviceBoundary) {
+            this(operationId, specificationId, specificationName, specificationVersion, httpMethod, pathPattern, normalizedRoute, openApiOperationId, serviceBoundary, null, null, "3.0.3", "JSON", "spec.json");
+        }
+    }
 
     /**
      * Aggregates telemetry events within the bounded observation window.

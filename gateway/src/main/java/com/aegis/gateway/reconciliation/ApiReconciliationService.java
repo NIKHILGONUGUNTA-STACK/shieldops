@@ -3,6 +3,7 @@ package com.aegis.gateway.reconciliation;
 import com.aegis.gateway.discovery.RouteNormalizer;
 import com.aegis.gateway.reconciliation.dto.*;
 import com.aegis.gateway.security.ResourceNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.security.MessageDigest;
@@ -28,6 +29,11 @@ public class ApiReconciliationService {
     private final ApiReconciliationRepository reconciliationRepository;
     private final ApiDiscrepancyPrioritizer prioritizer;
 
+    public ApiReconciliationService(ApiReconciliationRepository reconciliationRepository) {
+        this(reconciliationRepository, new ApiDiscrepancyPrioritizer());
+    }
+
+    @Autowired
     public ApiReconciliationService(
             ApiReconciliationRepository reconciliationRepository,
             ApiDiscrepancyPrioritizer prioritizer) {
