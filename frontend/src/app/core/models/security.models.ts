@@ -271,6 +271,8 @@ export type ReconciliationCategory =
   | 'METHOD_MISMATCH'
   | 'AMBIGUOUS';
 
+export type ReconciliationPriority = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+
 export interface ReconciliationItemResponse {
   id: string;
   httpMethod: string;
@@ -291,6 +293,76 @@ export interface ReconciliationItemResponse {
   windowStart: string;
   windowEnd: string;
   explanation: string;
+  priority: ReconciliationPriority;
+  priorityScore: number;
+  matchingConfidence: string;
+  authFailureCount: number;
+  anomalyEventCount: number;
+}
+
+export interface PriorityContributingFactor {
+  factorId: string;
+  factorName: string;
+  scoreDelta: number;
+  rationale: string;
+}
+
+export interface InvestigationSpecMetadata {
+  id: string;
+  name: string;
+  version: string;
+  openapiVersion: string;
+  format: string;
+  sourceFilename: string;
+  operationId: string | null;
+  summary: string | null;
+  description: string | null;
+}
+
+export interface InvestigationTelemetryEvidence {
+  totalRequests: number;
+  firstObservedAt: string | null;
+  lastObservedAt: string | null;
+  statusDistribution: { [key: string]: number };
+  authFailureCount: number;
+  anomalyEventCount: number;
+  distinctStatusCodes: number[];
+}
+
+export interface InvestigationLinkedIncident {
+  id: string;
+  ruleId: string;
+  threatCategory: string;
+  severity: string;
+  status: string;
+  summary: string;
+  firstDetectedAt: string;
+}
+
+export interface ReconciliationInvestigationResponse {
+  id: string;
+  httpMethod: string;
+  normalizedRoute: string;
+  pathPattern: string;
+  category: ReconciliationCategory;
+  priority: ReconciliationPriority;
+  priorityScore: number;
+  priorityRuleVersion: string;
+  contributingFactors: PriorityContributingFactor[];
+  matchingConfidence: string;
+  confidenceRationale: string;
+  confirmedVulnerability: boolean;
+  serviceBoundary: string;
+  specification: InvestigationSpecMetadata | null;
+  telemetryEvidence: InvestigationTelemetryEvidence;
+  windowHours: number;
+  windowStart: string;
+  windowEnd: string;
+  declaredMethodsForRoute: string[];
+  observedMethodsForRoute: string[];
+  linkedIncidents: InvestigationLinkedIncident[];
+  explicitLimitations: string[];
+  recommendedSteps: string[];
 }
 
 export interface ReconciliationSummaryResponse {
@@ -326,6 +398,7 @@ export interface ReconciliationFilterParams {
   service?: string;
   method?: string;
   category?: ReconciliationCategory | string;
+  priority?: ReconciliationPriority | string;
   windowHours?: number;
   from?: string;
   to?: string;

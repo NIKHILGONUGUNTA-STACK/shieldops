@@ -1,8 +1,8 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 6.3 Complete (Documented vs. Observed API Reconciliation)
+## Current Milestone: Phase 6.4 Complete (API Discrepancy Prioritization & Forensic Investigation)
 
-**Last Updated:** 2026-10-29
+**Last Updated:** 2026-11-01
 **Active Git Branch:** `main`
 **Git Working Tree:** Clean (Ready for Review)
 **Remote Upstream:** `origin/main` (`https://github.com/NIKHILGONUGUNTA-STACK/shieldops.git`)
@@ -21,8 +21,8 @@
 | `customer-service` | 17 | 0 | 0 | 0 | **SUCCESS** |
 | `account-service` | 26 | 0 | 0 | 0 | **SUCCESS** |
 | `transaction-service` | 28 | 0 | 0 | 0 | **SUCCESS** |
-| `gateway` | 202 | 0 | 0 | 0 | **SUCCESS** |
-| **Total Backend Platform Tests** | **273** | **0** | **0** | **0** | **BUILD SUCCESS** |
+| `gateway` | 212 | 0 | 0 | 0 | **SUCCESS** |
+| **Total Backend Platform Tests** | **283** | **0** | **0** | **0** | **BUILD SUCCESS** |
 
 ### 1.2 Frontend SOC Dashboard (Angular 18 / TypeScript / Node 22)
 - **Framework & Tooling:** Angular 18.2.21 / Node.js 22.20.0 / npm 10.9.3
@@ -34,7 +34,7 @@
 | **App Shell** | `app.component.spec.ts` | 2 | 0 | **SUCCESS** |
 | **Navbar & Search Bar** | `navbar.component.spec.ts` | 6 | 0 | **SUCCESS** |
 | **Sidebar & Nav Registry** | `sidebar.component.spec.ts` | 6 | 0 | **SUCCESS** |
-| **Security API Service** | `security-api.service.spec.ts` | 18 | 0 | **SUCCESS** |
+| **Security API Service** | `security-api.service.spec.ts` | 20 | 0 | **SUCCESS** |
 | **Auth Service** | `auth.service.spec.ts` | 3 | 0 | **SUCCESS** |
 | **Auth Guard** | `auth.guard.spec.ts` | 3 | 0 | **SUCCESS** |
 | **Overview Component** | `overview.component.spec.ts` | 3 | 0 | **SUCCESS** |
@@ -52,9 +52,9 @@
 | **System Health** | `system-health.component.spec.ts` | 2 | 0 | **SUCCESS** |
 | **Observed API Inventory** | `api-inventory.component.spec.ts` | 7 | 0 | **SUCCESS** |
 | **API Specifications & Operations** | `api-specs.component.spec.ts` | 10 | 0 | **SUCCESS** |
-| **Documented vs Observed API Reconciliation** | `api-reconciliation.component.spec.ts` | 9 | 0 | **SUCCESS** |
+| **Documented vs Observed API Reconciliation** | `api-reconciliation.component.spec.ts` | 12 | 0 | **SUCCESS** |
 | **Settings Component** | `settings.component.spec.ts` | 3 | 0 | **SUCCESS** |
-| **Total Frontend Tests** | — | **113** | **0** | **BUILD SUCCESS** |
+| **Total Frontend Tests** | — | **118** | **0** | **BUILD SUCCESS** |
 
 ---
 
@@ -227,4 +227,42 @@ All 9 platform services running and healthy via Docker Compose (`infrastructure/
   - 9 new frontend component unit tests, 2 service tests, 1 sidebar navigation test.
   - 113 frontend tests passing in ChromeHeadless (`TOTAL: 113 SUCCESS`).
   - Production build successful with 0 errors and 0 warnings (`ng build`).
+
+---
+
+## 8. Phase 6.4 Deliverables Checklist (API Discrepancy Prioritization & Forensic Investigation)
+
+- [x] **Deterministic Prioritization Model (`ApiDiscrepancyPrioritizer`):**
+  - Rule version `v1.0.0` with transparent 0–100 composite scoring.
+  - 4 independent, explainable dimensions: Category Base Risk (0–35), Service Criticality & Sensitive Routes (0–20), Security Telemetry Signals (0–40, 401/403 auth failures & anomaly events), Operational Exposure (0–10), and Temporal Persistence (0–5).
+  - Deterministic priority banding: `CRITICAL` (>=75), `HIGH` (50–74), `MEDIUM` (25–49), `LOW` (<25).
+  - Separate, orthogonal route matching confidence (`HIGH`, `MEDIUM`, `LOW`) with confidence rationale.
+- [x] **Defensive Security Attestation & Provenance Invariant:**
+  - Explicit invariant: `confirmedVulnerability: false`.
+  - Empirical disclaimer: A discrepancy is an empirical observation of divergence between runtime telemetry and documentation, not proof of exploitability or vulnerability.
+  - Missing evidence treated as unknown, not risk.
+- [x] **Repository & Service Forensic Dossier Synthesis:**
+  - Query extensions: `findDistinctStatusCodesForRoute`, `findLinkedIncidents`, auth failure counts (`status_code IN (401, 403)`), and anomaly flags.
+  - `ApiReconciliationService.investigate(...)` synthesizes complete forensic dossier with evidence, OpenAPI context, linked incidents, empirical limitations, and actionable next steps.
+  - Priority filtering support on list queries (`GET /api/v1/security/reconciliation?priority=CRITICAL|HIGH|MEDIUM|LOW`).
+- [x] **REST API Controller Contracts:**
+  - `GET /api/v1/security/reconciliation`: Added optional `priority` parameter with RFC 7807 400 validation.
+  - `GET /api/v1/security/reconciliation/{id}`: Dedicated investigation endpoint returning `ReconciliationInvestigationResponse` (200 on success, 404 RFC 7807 when finding absent).
+  - Role-based authorization enforced via `@PreAuthorize("hasAnyRole('SECURITY_ANALYST', 'SECURITY_ADMIN')")`.
+- [x] **Angular SOC Forensic Investigation Drawer:**
+  - Standalone `ApiReconciliationComponent` enhanced with color-coded priority pills (`prio-critical`, `prio-high`, `prio-medium`, `prio-low`) and numeric score tags.
+  - Priority dropdown filter in header controls bar.
+  - Interactive slide-out Forensic Investigation Drawer with:
+    - Safety Attestation Card (`CONFIRMED VULNERABILITY: NO (DISCREPANCY ONLY)`).
+    - Score breakdown showing rule version `v1.0.0` and individual contributing factors with positive score deltas and rationales.
+    - Observed telemetry evidence grid (request volume, window duration, 401/403 auth failures, anomaly flags, distinct HTTP status codes).
+    - Declared OpenAPI specification metadata and operation details.
+    - Linked security incidents and empirical limitations.
+    - Prescriptive recommended investigation steps and deep links.
+  - Strict Inter Regular (`font-weight: 400`) typography throughout.
+- [x] **Comprehensive Test Verification & Production Build:**
+  - 25 backend reconciliation tests (6 prioritizer tests, 7 service tests, 12 WebMvcTest controller tests).
+  - 212 gateway unit & integration tests passing (`BUILD SUCCESS`).
+  - 118 frontend unit tests passing in ChromeHeadless (`TOTAL: 118 SUCCESS`).
+  - Angular production build successful with 0 errors and 0 warnings (`ng build`).
 

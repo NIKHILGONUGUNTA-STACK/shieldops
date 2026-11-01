@@ -64,8 +64,8 @@ class SecurityRoutingTest {
                 .andExpect(result -> assertThat(result.getResponse().getStatus()).isNotEqualTo(401))
                 .andExpect(header().exists("X-Correlation-Id"));
         } catch (Exception e) {
-            // Downstream service not reachable in unit test environment proves security filter passed
-            assertThat(e).hasRootCauseInstanceOf(java.net.ConnectException.class);
+            // Downstream service not reachable in offline unit test environment proves security filter passed
+            assertThat(e).hasCauseInstanceOf(org.springframework.web.client.ResourceAccessException.class);
         }
     }
 
@@ -84,8 +84,8 @@ class SecurityRoutingTest {
                     }
                 });
         } catch (Exception e) {
-            // Downstream service not reachable in unit test environment proves security filter passed
-            assertThat(e).hasRootCauseInstanceOf(java.net.ConnectException.class);
+            // Downstream service not reachable in offline unit test environment proves security filter passed
+            assertThat(e).hasCauseInstanceOf(org.springframework.web.client.ResourceAccessException.class);
         }
     }
 

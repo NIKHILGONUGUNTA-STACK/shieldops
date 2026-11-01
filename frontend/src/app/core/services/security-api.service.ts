@@ -26,7 +26,8 @@ import {
   ReconciliationItemResponse,
   ReconciliationSummaryResponse,
   ReconciliationPageResponse,
-  ReconciliationFilterParams
+  ReconciliationFilterParams,
+  ReconciliationInvestigationResponse
 } from '../models/security.models';
 
 @Injectable({
@@ -263,6 +264,7 @@ export class SecurityApiService {
     if (params.service) httpParams = httpParams.set('service', params.service);
     if (params.method) httpParams = httpParams.set('method', params.method);
     if (params.category) httpParams = httpParams.set('category', params.category);
+    if (params.priority) httpParams = httpParams.set('priority', params.priority);
     if (params.windowHours !== undefined) httpParams = httpParams.set('windowHours', params.windowHours.toString());
     if (params.from) httpParams = httpParams.set('from', params.from);
     if (params.to) httpParams = httpParams.set('to', params.to);
@@ -271,6 +273,24 @@ export class SecurityApiService {
     if (params.sortDirection) httpParams = httpParams.set('sortDirection', params.sortDirection);
 
     return this.http.get<ReconciliationPageResponse>(`${this.baseUrl}/api/v1/security/reconciliation`, { params: httpParams })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/reconciliation/{id}
+   * Returns deep investigation details and evidence for a single reconciliation finding.
+   */
+  getReconciliationInvestigation(
+    id: string,
+    params: { specId?: string; windowHours?: number; from?: string; to?: string } = {}
+  ): Observable<ReconciliationInvestigationResponse> {
+    let httpParams = new HttpParams();
+    if (params.specId) httpParams = httpParams.set('specId', params.specId);
+    if (params.windowHours !== undefined) httpParams = httpParams.set('windowHours', params.windowHours.toString());
+    if (params.from) httpParams = httpParams.set('from', params.from);
+    if (params.to) httpParams = httpParams.set('to', params.to);
+
+    return this.http.get<ReconciliationInvestigationResponse>(`${this.baseUrl}/api/v1/security/reconciliation/${id}`, { params: httpParams })
       .pipe(catchError(this.handleError));
   }
 

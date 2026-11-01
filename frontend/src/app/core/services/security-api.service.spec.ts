@@ -433,6 +433,70 @@ describe('SecurityApiService', () => {
       expect(req.request.method).toBe('GET');
       req.flush(mockSummary);
     });
+
+    it('should query /api/v1/security/reconciliation with priority filter', () => {
+      service.getReconciliation({ priority: 'HIGH' }).subscribe(res => {
+        expect(res).toBeTruthy();
+      });
+
+      const req = httpTesting.expectOne(r =>
+        r.url === `${environment.apiBaseUrl}/api/v1/security/reconciliation` &&
+        r.params.get('priority') === 'HIGH'
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0, hasNext: false, hasPrevious: false, summary: {} });
+    });
+
+    it('should query /api/v1/security/reconciliation/{id} for investigation details', () => {
+      const mockInvestigation = {
+        id: 'rec_test_1',
+        httpMethod: 'POST',
+        normalizedRoute: '/api/v1/accounts/secret',
+        pathPattern: '/api/v1/accounts/secret',
+        category: 'OBSERVED_UNDOCUMENTED',
+        priority: 'HIGH',
+        priorityScore: 65,
+        priorityRuleVersion: 'v1.0.0',
+        contributingFactors: [
+          { factorId: 'FACTOR_CATEGORY', factorName: 'Finding Category Base', scoreDelta: 35, rationale: 'Undocumented route' }
+        ],
+        matchingConfidence: 'HIGH',
+        confidenceRationale: 'Exact match',
+        confirmedVulnerability: false,
+        serviceBoundary: 'account-service',
+        specification: null,
+        telemetryEvidence: {
+          totalRequests: 100,
+          firstObservedAt: '2026-10-30T10:00:00Z',
+          lastObservedAt: '2026-10-31T10:00:00Z',
+          statusDistribution: { '2xx': 100 },
+          authFailureCount: 0,
+          anomalyEventCount: 0,
+          distinctStatusCodes: [200]
+        },
+        windowHours: 24,
+        windowStart: '2026-10-30T10:00:00Z',
+        windowEnd: '2026-10-31T10:00:00Z',
+        declaredMethodsForRoute: [],
+        observedMethodsForRoute: ['POST'],
+        linkedIncidents: [],
+        explicitLimitations: ['Telemetry bounded by window'],
+        recommendedSteps: ['Inspect shadow route']
+      };
+
+      service.getReconciliationInvestigation('rec_test_1', { windowHours: 24 }).subscribe(res => {
+        expect(res.id).toBe('rec_test_1');
+        expect(res.priority).toBe('HIGH');
+        expect(res.confirmedVulnerability).toBe(false);
+      });
+
+      const req = httpTesting.expectOne(r =>
+        r.url === `${environment.apiBaseUrl}/api/v1/security/reconciliation/rec_test_1` &&
+        r.params.get('windowHours') === '24'
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush(mockInvestigation);
+    });
   });
 
   describe('Error Handling', () => {
