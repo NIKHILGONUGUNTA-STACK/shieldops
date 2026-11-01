@@ -6,6 +6,8 @@ import { SecurityApiService } from '../../core/services/security-api.service';
 import {
   ApiSpecificationResponse,
   DeclaredOperationResponse,
+  SpecificationDiffResponse,
+  OperationChange,
   ProblemDetail
 } from '../../core/models/security.models';
 
@@ -231,6 +233,7 @@ import {
                     <div class="spec-name-cell">
                       <span class="spec-title-text">{{ spec.name }}</span>
                       <span class="spec-version-badge mono">v{{ spec.version }}</span>
+                      <span class="rev-pill mono">Rev {{ spec.revisionNumber || 1 }}</span>
                     </div>
                     <div *ngIf="spec.description" class="spec-description-text" [title]="spec.description">
                       {{ spec.description }}
@@ -259,6 +262,17 @@ import {
                     <span class="actor-badge">{{ spec.importedBy || 'system' }}</span>
                   </td>
                   <td class="actions-cell">
+                    <button
+                      (click)="openRevisionsModal(spec)"
+                      class="btn btn-secondary btn-xs action-btn"
+                      title="Inspect Revisions & Semantic Diff"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 14 14"></polyline>
+                      </svg>
+                      Revisions
+                    </button>
                     <button
                       (click)="openOperationsDrawer(spec)"
                       class="btn btn-secondary btn-xs action-btn"
@@ -399,6 +413,173 @@ import {
 
                 <div *ngIf="op.tags" class="op-tags-row">
                   <span *ngFor="let tag of getTagList(op.tags)" class="tag-chip mono">{{ tag }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal: Specification Revision Evolution & Semantic Diff -->
+      <div *ngIf="revisionsModalSpec()" class="drawer-backdrop" (click)="closeRevisionsModal()">
+        <div class="drawer-panel rev-panel" (click)="$event.stopPropagation()">
+          <div class="drawer-header">
+            <div class="drawer-title-group">
+              <div class="drawer-pretitle mono">SPECIFICATION EVOLUTION & REVISION HISTORY</div>
+              <h2 class="drawer-title">{{ revisionsModalSpec()?.name }}</h2>
+              <div class="drawer-meta">
+                <span class="spec-version-badge mono">Active: v{{ revisionsModalSpec()?.version }} (Rev {{ revisionsModalSpec()?.revisionNumber || 1 }})</span>
+                <span class="drawer-ops-count mono">{{ revisionsList().length }} recorded revisions</span>
+              </div>
+            </div>
+            <button type="button" class="close-drawer-btn" (click)="closeRevisionsModal()">×</button>
+          </div>
+
+          <!-- Tabs: Revisions List vs Semantic Diff -->
+          <div class="drawer-tabs">
+            <button
+              (click)="revisionsTab.set('history')"
+              class="drawer-tab-btn"
+              [class.active]="revisionsTab() === 'history'"
+            >
+              Revision History ({{ revisionsList().length }})
+            </button>
+            <button
+              (click)="revisionsTab.set('compare')"
+              class="drawer-tab-btn"
+              [class.active]="revisionsTab() === 'compare'"
+            >
+              Semantic Revision Diff
+            </button>
+          </div>
+
+          <div class="drawer-content">
+            <!-- Loading -->
+            <div *ngIf="loadingRevisions()" class="drawer-loading">
+              <span class="spin-icon">⏳</span> Loading revision history...
+            </div>
+
+            <!-- Error -->
+            <div *ngIf="revisionsError()" class="error-banner">
+              <div class="error-detail">{{ revisionsError() }}</div>
+            </div>
+
+            <!-- TAB 1: REVISION HISTORY LIST -->
+            <div *ngIf="!loadingRevisions() && revisionsTab() === 'history'" class="rev-history-tab">
+              <div class="rev-timeline">
+                <div *ngFor="let rev of revisionsList()" class="rev-card" [class.current-rev]="rev.id === revisionsModalSpec()?.id">
+                  <div class="rev-card-head">
+                    <span class="rev-badge-lg mono">Rev {{ rev.revisionNumber || 1 }}</span>
+                    <span class="spec-version-badge mono">v{{ rev.version }}</span>
+                    <span class="format-badge" [ngClass]="rev.format.toLowerCase()">{{ rev.format }}</span>
+                    <span *ngIf="rev.id === revisionsModalSpec()?.id" class="active-badge mono">CURRENT</span>
+                    <span class="rev-time mono">{{ formatTimestamp(rev.importedAt) }}</span>
+                  </div>
+                  <div class="rev-card-body">
+                    <div class="rev-prop mono"><span class="sub-label">Operations:</span> {{ rev.operationCount }} declared</div>
+                    <div class="rev-prop mono"><span class="sub-label">Source File:</span> {{ rev.sourceFilename }}</div>
+                    <div class="rev-prop mono"><span class="sub-label">Hash:</span> {{ truncateHash(rev.contentHash) }}</div>
+                    <div class="rev-prop mono"><span class="sub-label">Imported By:</span> {{ rev.importedBy || 'system' }}</div>
+                  </div>
+                  <div class="rev-card-actions">
+                    <button
+                      (click)="setAsBase(rev.id)"
+                      class="btn btn-secondary btn-xs mono"
+                      [class.btn-active]="baseSpecId() === rev.id"
+                    >
+                      {{ baseSpecId() === rev.id ? '✓ Base Selected' : 'Set as Base' }}
+                    </button>
+                    <button
+                      (click)="setAsTarget(rev.id)"
+                      class="btn btn-secondary btn-xs mono"
+                      [class.btn-active]="targetSpecId() === rev.id"
+                    >
+                      {{ targetSpecId() === rev.id ? '✓ Target Selected' : 'Set as Target' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 2: SEMANTIC DIFF -->
+            <div *ngIf="!loadingRevisions() && revisionsTab() === 'compare'" class="rev-compare-tab">
+              <!-- Selectors Bar -->
+              <div class="compare-selectors-bar">
+                <div class="selector-field">
+                  <label class="filter-label">Base Revision:</label>
+                  <select [ngModel]="baseSpecId()" (ngModelChange)="baseSpecId.set($event)" class="soc-select">
+                    <option *ngFor="let r of revisionsList()" [value]="r.id">
+                      Rev {{ r.revisionNumber || 1 }} (v{{ r.version }}) — {{ formatTimestamp(r.importedAt) }}
+                    </option>
+                  </select>
+                </div>
+                <div class="selector-field">
+                  <label class="filter-label">Target Revision:</label>
+                  <select [ngModel]="targetSpecId()" (ngModelChange)="targetSpecId.set($event)" class="soc-select">
+                    <option *ngFor="let r of revisionsList()" [value]="r.id">
+                      Rev {{ r.revisionNumber || 1 }} (v{{ r.version }}) — {{ formatTimestamp(r.importedAt) }}
+                    </option>
+                  </select>
+                </div>
+                <button
+                  (click)="compareRevisions()"
+                  class="btn btn-secondary btn-sm compare-btn"
+                  [disabled]="!baseSpecId() || !targetSpecId() || loadingDiff()"
+                >
+                  {{ loadingDiff() ? 'Comparing...' : 'Compare Revisions' }}
+                </button>
+              </div>
+
+              <!-- Diff Loading / Error -->
+              <div *ngIf="loadingDiff()" class="drawer-loading">
+                <span class="spin-icon">⏳</span> Computing structural contract diff between revisions...
+              </div>
+
+              <div *ngIf="diffError()" class="error-banner">
+                <div class="error-detail">{{ diffError() }}</div>
+              </div>
+
+              <!-- Diff Results -->
+              <div *ngIf="!loadingDiff() && diffResult() as diff" class="diff-results">
+                <!-- Summary Stats -->
+                <div class="diff-summary-cards">
+                  <div class="diff-card card-added">
+                    <span class="diff-val mono">+{{ diff.addedCount }}</span>
+                    <span class="diff-label">Added</span>
+                  </div>
+                  <div class="diff-card card-removed">
+                    <span class="diff-val mono">-{{ diff.removedCount }}</span>
+                    <span class="diff-label">Removed</span>
+                  </div>
+                  <div class="diff-card card-modified">
+                    <span class="diff-val mono">{{ diff.modifiedCount }}</span>
+                    <span class="diff-label">Modified</span>
+                  </div>
+                  <div class="diff-card card-unchanged">
+                    <span class="diff-val mono">{{ diff.unchangedCount }}</span>
+                    <span class="diff-label">Unchanged</span>
+                  </div>
+                </div>
+
+                <!-- Changes List -->
+                <div class="diff-changes-list">
+                  <div *ngFor="let ch of diff.changes" class="diff-change-item" [ngClass]="'change-' + ch.changeType.toLowerCase()">
+                    <div class="diff-item-head">
+                      <span class="method-badge-sm" [ngClass]="ch.httpMethod.toLowerCase()">{{ ch.httpMethod }}</span>
+                      <span class="diff-path mono">{{ ch.pathPattern }}</span>
+                      <span class="change-badge mono" [ngClass]="getChangeTypeClass(ch.changeType)">{{ ch.changeType }}</span>
+                    </div>
+                    <div *ngIf="ch.operationId" class="diff-op-id mono">
+                      operationId: {{ ch.operationId }}
+                    </div>
+                    <!-- Field Changes -->
+                    <div *ngIf="ch.fieldChanges.length > 0" class="field-changes-box">
+                      <div class="field-changes-title mono">MODIFIED CONTRACT FIELDS:</div>
+                      <ul class="field-changes-list">
+                        <li *ngFor="let fc of ch.fieldChanges" class="mono">{{ fc }}</li>
+                      </ul>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -876,6 +1057,194 @@ import {
     .op-summary-text { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
     .op-tags-row { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
     .tag-chip { font-size: 10px; padding: 1px 6px; border-radius: var(--radius-sm); background: var(--bg-surface); border: 1px solid var(--border-subtle); color: var(--text-muted); }
+
+    .rev-pill {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: var(--radius-sm);
+      background: rgba(0, 210, 255, 0.12);
+      border: 1px solid rgba(0, 210, 255, 0.3);
+      color: #00D2FF;
+    }
+    .rev-panel {
+      width: 680px;
+      max-width: 90vw;
+    }
+    .drawer-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .drawer-tab-btn {
+      flex: 1;
+      padding: 10px 16px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 400;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .drawer-tab-btn.active {
+      color: #00D2FF;
+      border-bottom-color: #00D2FF;
+      background: rgba(0, 210, 255, 0.05);
+    }
+    .rev-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .rev-card {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .rev-card.current-rev {
+      border-color: rgba(0, 210, 255, 0.4);
+      background: rgba(0, 210, 255, 0.03);
+    }
+    .rev-card-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .rev-badge-lg {
+      font-size: 11px;
+      padding: 2px 8px;
+      background: rgba(0, 210, 255, 0.15);
+      color: #00D2FF;
+      border-radius: var(--radius-sm);
+    }
+    .active-badge {
+      font-size: 9px;
+      padding: 1px 5px;
+      background: rgba(0, 230, 153, 0.2);
+      color: #00E699;
+      border-radius: var(--radius-sm);
+    }
+    .rev-time {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-left: auto;
+    }
+    .rev-card-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      font-size: 11px;
+    }
+    .rev-prop { color: var(--text-secondary); }
+    .rev-card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 8px;
+    }
+    .btn-active {
+      background: rgba(0, 210, 255, 0.2) !important;
+      color: #00D2FF !important;
+      border-color: #00D2FF !important;
+    }
+
+    .compare-selectors-bar {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .selector-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+      min-width: 200px;
+    }
+    .compare-btn { height: 32px; white-space: nowrap; }
+
+    .diff-summary-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .diff-card {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .diff-card.card-added { border-color: rgba(0, 230, 153, 0.3); }
+    .diff-card.card-removed { border-color: rgba(255, 77, 77, 0.3); }
+    .diff-card.card-modified { border-color: rgba(255, 170, 0, 0.3); }
+    .diff-card.card-unchanged { border-color: rgba(255, 255, 255, 0.1); }
+    .card-added .diff-val { color: #00E699; }
+    .card-removed .diff-val { color: #FF4D4D; }
+    .card-modified .diff-val { color: #FFAA00; }
+    .card-unchanged .diff-val { color: var(--text-muted); }
+    .diff-val { font-size: 18px; }
+    .diff-label { font-size: 10px; text-transform: uppercase; color: var(--text-muted); }
+
+    .diff-changes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .diff-change-item {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .diff-change-item.change-added { border-left: 3px solid #00E699; }
+    .diff-change-item.change-removed { border-left: 3px solid #FF4D4D; }
+    .diff-change-item.change-modified { border-left: 3px solid #FFAA00; }
+    .diff-change-item.change-unchanged { border-left: 3px solid var(--border-subtle); opacity: 0.7; }
+    .diff-item-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .diff-path { font-size: 12px; color: var(--text-primary); flex: 1; word-break: break-all; }
+    .change-badge {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 2px;
+    }
+    .badge-added { background: rgba(0, 230, 153, 0.15); color: #00E699; }
+    .badge-removed { background: rgba(255, 77, 77, 0.15); color: #FF4D4D; }
+    .badge-modified { background: rgba(255, 170, 0, 0.15); color: #FFAA00; }
+    .badge-unchanged { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); }
+    .diff-op-id { font-size: 11px; color: var(--text-secondary); }
+    .field-changes-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 8px;
+      font-size: 10px;
+    }
+    .field-changes-title { color: var(--text-muted); margin-bottom: 4px; font-size: 9px; }
+    .field-changes-list { margin: 0; padding-left: 16px; color: #FFAA00; }
   `]
 })
 export class ApiSpecsComponent implements OnInit {
@@ -908,6 +1277,18 @@ export class ApiSpecsComponent implements OnInit {
 
   // Deletion State
   readonly deletingId = signal<string | null>(null);
+
+  // Revision History & Evolution Diff State
+  readonly revisionsModalSpec = signal<ApiSpecificationResponse | null>(null);
+  readonly revisionsTab = signal<'history' | 'compare'>('history');
+  readonly revisionsList = signal<ApiSpecificationResponse[]>([]);
+  readonly loadingRevisions = signal<boolean>(false);
+  readonly revisionsError = signal<string | null>(null);
+  readonly baseSpecId = signal<string>('');
+  readonly targetSpecId = signal<string>('');
+  readonly diffResult = signal<SpecificationDiffResponse | null>(null);
+  readonly loadingDiff = signal<boolean>(false);
+  readonly diffError = signal<string | null>(null);
 
   // Operations Drawer State
   readonly selectedSpec = signal<ApiSpecificationResponse | null>(null);
@@ -1122,5 +1503,80 @@ export class ApiSpecsComponent implements OnInit {
     if (lower.includes('account')) return 'service-account';
     if (lower.includes('transaction')) return 'service-transaction';
     return 'service-default';
+  }
+
+  openRevisionsModal(spec: ApiSpecificationResponse): void {
+    this.revisionsModalSpec.set(spec);
+    this.revisionsTab.set('history');
+    this.loadingRevisions.set(true);
+    this.revisionsError.set(null);
+    this.revisionsList.set([]);
+    this.diffResult.set(null);
+    this.diffError.set(null);
+    this.baseSpecId.set(spec.id);
+    this.targetSpecId.set(spec.id);
+
+    this.securityApiService.getSpecificationRevisions(spec.id).subscribe({
+      next: (revs) => {
+        this.revisionsList.set(revs);
+        this.loadingRevisions.set(false);
+        if (revs.length > 1) {
+          this.targetSpecId.set(revs[0].id);
+          this.baseSpecId.set(revs[1].id);
+        } else if (revs.length === 1) {
+          this.baseSpecId.set(revs[0].id);
+          this.targetSpecId.set(revs[0].id);
+        }
+      },
+      error: (err: ProblemDetail) => {
+        this.revisionsError.set(err.detail || 'Failed to load specification revisions.');
+        this.loadingRevisions.set(false);
+      }
+    });
+  }
+
+  closeRevisionsModal(): void {
+    this.revisionsModalSpec.set(null);
+    this.revisionsList.set([]);
+    this.diffResult.set(null);
+    this.diffError.set(null);
+  }
+
+  setAsBase(specId: string): void {
+    this.baseSpecId.set(specId);
+  }
+
+  setAsTarget(specId: string): void {
+    this.targetSpecId.set(specId);
+  }
+
+  compareRevisions(): void {
+    const baseId = this.baseSpecId();
+    const targetId = this.targetSpecId();
+    if (!baseId || !targetId) return;
+
+    this.loadingDiff.set(true);
+    this.diffError.set(null);
+    this.diffResult.set(null);
+
+    this.securityApiService.compareSpecifications(baseId, targetId).subscribe({
+      next: (diff) => {
+        this.diffResult.set(diff);
+        this.loadingDiff.set(false);
+      },
+      error: (err: ProblemDetail) => {
+        this.diffError.set(err.detail || 'Failed to compute specification revision diff.');
+        this.loadingDiff.set(false);
+      }
+    });
+  }
+
+  getChangeTypeClass(changeType: string): string {
+    switch (changeType) {
+      case 'ADDED': return 'badge-added';
+      case 'REMOVED': return 'badge-removed';
+      case 'MODIFIED': return 'badge-modified';
+      default: return 'badge-unchanged';
+    }
   }
 }

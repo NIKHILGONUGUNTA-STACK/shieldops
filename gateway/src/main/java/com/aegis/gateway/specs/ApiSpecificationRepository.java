@@ -16,7 +16,7 @@ import java.time.Instant;
 import java.util.*;
 
 /**
- * Data access repository for OpenAPI specifications and their declared operations.
+ * Data access repository for OpenAPI specifications, revisions, and declared operations.
  * Interacts with security_data.api_specifications and security_data.api_spec_operations.
  */
 @Repository
@@ -39,8 +39,8 @@ public class ApiSpecificationRepository {
 
     public Optional<ApiSpecificationResponse> findByContentHash(String contentHash) {
         String sql = """
-            SELECT id, name, description, version, openapi_version, source_filename,
-                   content_hash, format, status, imported_at, imported_by,
+            SELECT id, name, description, version, COALESCE(revision_number, 1) AS revision_number,
+                   openapi_version, source_filename, content_hash, format, status, imported_at, imported_by,
                    operation_count, path_count, validation_summary
             FROM security_data.api_specifications
             WHERE content_hash = :hash
@@ -53,15 +53,51 @@ public class ApiSpecificationRepository {
             .optional();
     }
 
+    /**
+     * Determines the next sequential revision number for a specification name.
+     */
+    public int findNextRevisionNumberByName(String name) {
+        if (name == null || name.isBlank()) return 1;
+        Integer nextRev = jdbcClient.sql("""
+            SELECT COALESCE(MAX(revision_number), 0) + 1 FROM security_data.api_specifications
+            WHERE LOWER(TRIM(name)) = LOWER(TRIM(:name))
+            """)
+            .param("name", name)
+            .query(Integer.class)
+            .optional()
+            .orElse(1);
+        return (nextRev != null && nextRev > 0) ? nextRev : 1;
+    }
+
+    /**
+     * Finds all revisions for specifications matching the given name, ordered by revision descending.
+     */
+    public List<ApiSpecificationResponse> findRevisionsByName(String name) {
+        if (name == null || name.isBlank()) return Collections.emptyList();
+        String sql = """
+            SELECT id, name, description, version, COALESCE(revision_number, 1) AS revision_number,
+                   openapi_version, source_filename, content_hash, format, status, imported_at, imported_by,
+                   operation_count, path_count, validation_summary
+            FROM security_data.api_specifications
+            WHERE LOWER(TRIM(name)) = LOWER(TRIM(:name))
+            ORDER BY revision_number DESC, imported_at DESC
+            """;
+
+        return jdbcClient.sql(sql)
+            .param("name", name)
+            .query((rs, rowNum) -> mapRowToSpecResponse(rs))
+            .list();
+    }
+
     @Transactional
     public void save(ApiSpecificationResponse spec, List<DeclaredOperationData> operations, String rawContent) {
         String insertSpecSql = """
             INSERT INTO security_data.api_specifications (
-                id, name, description, version, openapi_version, source_filename,
+                id, name, description, version, revision_number, openapi_version, source_filename,
                 content_hash, format, status, imported_at, imported_by,
                 operation_count, path_count, validation_summary, raw_content
             ) VALUES (
-                :id, :name, :description, :version, :openapiVersion, :sourceFilename,
+                :id, :name, :description, :version, :revisionNumber, :openapiVersion, :sourceFilename,
                 :contentHash, :format, :status, :importedAt, :importedBy,
                 :operationCount, :pathCount, :validationSummary, :rawContent
             )
@@ -72,6 +108,7 @@ public class ApiSpecificationRepository {
             .param("name", spec.name())
             .param("description", spec.description())
             .param("version", spec.version())
+            .param("revisionNumber", spec.revisionNumber() > 0 ? spec.revisionNumber() : 1)
             .param("openapiVersion", spec.openapiVersion())
             .param("sourceFilename", spec.sourceFilename())
             .param("contentHash", spec.contentHash())
@@ -114,8 +151,8 @@ public class ApiSpecificationRepository {
 
     public Optional<ApiSpecificationResponse> findById(UUID id) {
         String sql = """
-            SELECT id, name, description, version, openapi_version, source_filename,
-                   content_hash, format, status, imported_at, imported_by,
+            SELECT id, name, description, version, COALESCE(revision_number, 1) AS revision_number,
+                   openapi_version, source_filename, content_hash, format, status, imported_at, imported_by,
                    operation_count, path_count, validation_summary
             FROM security_data.api_specifications
             WHERE id = :id
@@ -168,8 +205,8 @@ public class ApiSpecificationRepository {
         }
 
         if (search != null && !search.isBlank()) {
-            whereClause.append(" AND (LOWER(name) LIKE :search OR LOWER(source_filename) LIKE :search OR LOWER(version) LIKE :search)");
-            params.put("search", "%" + search.toLowerCase().trim() + "%");
+            whereClause.append(" AND (LOWER(name) LIKE :query OR LOWER(description) LIKE :query OR LOWER(source_filename) LIKE :query)");
+            params.put("query", "%" + search.toLowerCase().trim() + "%");
         }
 
         String countSql = "SELECT COUNT(*) FROM security_data.api_specifications" + whereClause;
@@ -177,18 +214,15 @@ public class ApiSpecificationRepository {
         for (var entry : params.entrySet()) {
             countSpec = countSpec.param(entry.getKey(), entry.getValue());
         }
-        Long total = countSpec.query(Long.class).single();
-        long totalElements = total != null ? total : 0L;
+        Long totalElementsLong = countSpec.query(Long.class).single();
+        long totalElements = totalElementsLong != null ? totalElementsLong : 0L;
+
         int totalPages = (int) Math.ceil((double) totalElements / boundedSize);
 
-        String querySql = """
-            SELECT id, name, description, version, openapi_version, source_filename,
-                   content_hash, format, status, imported_at, imported_by,
-                   operation_count, path_count, validation_summary
-            FROM security_data.api_specifications
-            """ + whereClause + " ORDER BY imported_at DESC LIMIT :limit OFFSET :offset";
+        String selectSql = "SELECT id, name, description, version, COALESCE(revision_number, 1) AS revision_number, openapi_version, source_filename, content_hash, format, status, imported_at, imported_by, operation_count, path_count, validation_summary FROM security_data.api_specifications" 
+            + whereClause + " ORDER BY imported_at DESC LIMIT :limit OFFSET :offset";
 
-        var querySpec = jdbcClient.sql(querySql);
+        var querySpec = jdbcClient.sql(selectSql);
         for (var entry : params.entrySet()) {
             querySpec = querySpec.param(entry.getKey(), entry.getValue());
         }
@@ -226,11 +260,18 @@ public class ApiSpecificationRepository {
         Timestamp ts = rs.getTimestamp("imported_at");
         Instant importedAt = ts != null ? ts.toInstant() : Instant.EPOCH;
 
+        int revNum = 1;
+        try {
+            revNum = rs.getInt("revision_number");
+            if (revNum <= 0) revNum = 1;
+        } catch (SQLException ignored) {}
+
         return new ApiSpecificationResponse(
             id,
             rs.getString("name"),
             rs.getString("description"),
             rs.getString("version"),
+            revNum,
             rs.getString("openapi_version"),
             rs.getString("source_filename"),
             rs.getString("content_hash"),
@@ -245,4 +286,3 @@ public class ApiSpecificationRepository {
         );
     }
 }
-

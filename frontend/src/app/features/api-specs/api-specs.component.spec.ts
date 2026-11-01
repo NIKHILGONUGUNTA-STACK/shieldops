@@ -94,11 +94,52 @@ describe('ApiSpecsComponent', () => {
       'getSpecifications',
       'uploadSpecification',
       'getSpecificationOperations',
-      'deleteSpecification'
+      'deleteSpecification',
+      'getSpecificationRevisions',
+      'compareSpecifications'
     ]);
     mockSecurityApi.getSpecifications.and.returnValue(of(mockSpecsPage));
     mockSecurityApi.getSpecificationOperations.and.returnValue(of(mockOperations));
     mockSecurityApi.deleteSpecification.and.returnValue(of(undefined as unknown as void));
+    mockSecurityApi.getSpecificationRevisions.and.returnValue(of([
+      { ...mockSpecsPage.content[0], id: 'spec_1_rev2', revisionNumber: 2, version: '1.3.0' },
+      { ...mockSpecsPage.content[0], id: 'spec_1_rev1', revisionNumber: 1, version: '1.2.0' }
+    ]));
+    mockSecurityApi.compareSpecifications.and.returnValue(of({
+      baseSpecId: 'spec_1_rev1',
+      baseSpecName: 'Customer Service API',
+      baseSpecVersion: '1.2.0',
+      baseRevisionNumber: 1,
+      targetSpecId: 'spec_1_rev2',
+      targetSpecName: 'Customer Service API',
+      targetSpecVersion: '1.3.0',
+      targetRevisionNumber: 2,
+      comparedAt: '2026-11-01T20:00:00Z',
+      addedCount: 1,
+      removedCount: 0,
+      modifiedCount: 1,
+      unchangedCount: 2,
+      changes: [
+        {
+          httpMethod: 'POST',
+          pathPattern: '/api/v1/customers/verify',
+          operationId: 'verifyCustomer',
+          changeType: 'ADDED',
+          fieldChanges: [],
+          baseOperation: null,
+          targetOperation: {}
+        },
+        {
+          httpMethod: 'GET',
+          pathPattern: '/api/v1/customers/{id}',
+          operationId: 'getCustomerById',
+          changeType: 'MODIFIED',
+          fieldChanges: ['summary: Retrieve customer details by ID -> Fetch customer record'],
+          baseOperation: {},
+          targetOperation: {}
+        }
+      ]
+    }));
 
     await TestBed.configureTestingModule({
       imports: [ApiSpecsComponent],
@@ -291,5 +332,30 @@ describe('ApiSpecsComponent', () => {
     component.deleteSpecification(targetSpec);
 
     expect(mockSecurityApi.deleteSpecification).not.toHaveBeenCalled();
+  });
+
+  it('should open revisions modal and compare specification revisions', () => {
+    fixture.detectChanges();
+
+    const targetSpec = mockSpecsPage.content[0];
+    component.openRevisionsModal(targetSpec);
+    fixture.detectChanges();
+
+    expect(mockSecurityApi.getSpecificationRevisions).toHaveBeenCalledWith('spec_1');
+    expect(component.revisionsModalSpec()?.id).toBe('spec_1');
+    expect(component.revisionsList().length).toBe(2);
+
+    // Switch to compare tab and compare
+    component.revisionsTab.set('compare');
+    component.compareRevisions();
+    fixture.detectChanges();
+
+    expect(mockSecurityApi.compareSpecifications).toHaveBeenCalledWith('spec_1_rev1', 'spec_1_rev2');
+    expect(component.diffResult()?.addedCount).toBe(1);
+    expect(component.diffResult()?.modifiedCount).toBe(1);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.card-added .diff-val')?.textContent?.trim()).toBe('+1');
+    expect(compiled.querySelector('.card-modified .diff-val')?.textContent?.trim()).toBe('1');
   });
 });

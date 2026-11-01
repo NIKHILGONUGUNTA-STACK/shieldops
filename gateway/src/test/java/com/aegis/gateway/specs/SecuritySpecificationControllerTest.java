@@ -17,6 +17,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
@@ -273,6 +274,86 @@ class SecuritySpecificationControllerTest {
         // Verify cascading delete removed operations
         Long opCount = jdbcClient.sql("SELECT COUNT(*) FROM security_data.api_spec_operations").query(Long.class).single();
         org.assertj.core.api.Assertions.assertThat(opCount).isEqualTo(0L);
+    }
+
+    @Test
+    @DisplayName("Retrieves revision history and compares specification revisions")
+    void retrievesRevisionsAndComparesDiff() throws Exception {
+        MockMultipartFile file1 = new MockMultipartFile(
+            "file", "customer-v1.json", "application/json", VALID_CUSTOMER_JSON.getBytes(StandardCharsets.UTF_8)
+        );
+
+        String response1 = mockMvc.perform(multipart("/api/v1/security/specs/upload").file(file1)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ADMIN"))))
+            .andExpect(status().isCreated())
+            .andReturn().getResponse().getContentAsString();
+
+        com.fasterxml.jackson.databind.JsonNode root1 = new com.fasterxml.jackson.databind.ObjectMapper().readTree(response1);
+        String specId1 = root1.get("id").asText();
+
+        // Upload revision 2 with an additional operation
+        String v2Json = """
+            {
+              "openapi": "3.0.3",
+              "info": {
+                "title": "Customer Service API",
+                "version": "1.1.0"
+              },
+              "paths": {
+                "/api/v1/customers/{customerId}": {
+                  "get": {
+                    "operationId": "getCustomer",
+                    "summary": "Retrieve customer by ID"
+                  }
+                },
+                "/api/v1/customers/{customerId}/billing": {
+                  "get": {
+                    "operationId": "getCustomerBilling",
+                    "summary": "Retrieve customer billing"
+                  }
+                }
+              }
+            }
+            """;
+        MockMultipartFile file2 = new MockMultipartFile(
+            "file", "customer-v2.json", "application/json", v2Json.getBytes(StandardCharsets.UTF_8)
+        );
+
+        String response2 = mockMvc.perform(multipart("/api/v1/security/specs/upload").file(file2)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ADMIN"))))
+            .andExpect(status().isCreated())
+            .andReturn().getResponse().getContentAsString();
+
+        com.fasterxml.jackson.databind.JsonNode root2 = new com.fasterxml.jackson.databind.ObjectMapper().readTree(response2);
+        String specId2 = root2.get("id").asText();
+
+        // Test GET revisions
+        mockMvc.perform(get("/api/v1/security/specs/" + specId1 + "/revisions")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ANALYST"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$", hasSize(2)))
+            .andExpect(jsonPath("$[0].revisionNumber").value(2))
+            .andExpect(jsonPath("$[1].revisionNumber").value(1));
+
+        // Test GET compare diff
+        mockMvc.perform(get("/api/v1/security/specs/compare?baseId=" + specId1 + "&targetId=" + specId2)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ANALYST"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.addedCount").value(1))
+            .andExpect(jsonPath("$.removedCount").value(1))
+            .andExpect(jsonPath("$.changes", hasSize(greaterThanOrEqualTo(2))));
+
+        // 400 Invalid UUID
+        mockMvc.perform(get("/api/v1/security/specs/compare?baseId=not-a-uuid&targetId=" + specId2)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ANALYST"))))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.title").value("Invalid Identifier"));
+
+        // 404 Spec Not Found
+        mockMvc.perform(get("/api/v1/security/specs/" + UUID.randomUUID() + "/revisions")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ANALYST"))))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.title").value("Not Found"));
     }
 }
 

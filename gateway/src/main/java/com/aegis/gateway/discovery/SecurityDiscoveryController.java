@@ -115,4 +115,137 @@ public class SecurityDiscoveryController {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(problem);
         }
     }
+
+    /**
+     * GET /api/v1/security/discovery/endpoints/{id}/intelligence
+     * Retrieves unified endpoint intelligence including OpenAPI context, reconciliation, prioritization, and incidents.
+     */
+    @GetMapping(
+        value = {"/api/v1/security/discovery/endpoints/{id}/intelligence", "/security/discovery/endpoints/{id}/intelligence"},
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("hasAnyRole('SECURITY_ANALYST', 'SECURITY_ADMIN')")
+    public ResponseEntity<?> getEndpointIntelligence(
+            @PathVariable("id") String id,
+            @RequestParam(name = "windowHours", defaultValue = "24") int windowHours) {
+
+        if (windowHours < 1 || windowHours > 720) {
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, "windowHours must be between 1 and 720: " + windowHours
+            );
+            problem.setTitle("Invalid Parameter");
+            problem.setType(URI.create("https://aegis.dev/errors/invalid-parameter"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem);
+        }
+
+        try {
+            return discoveryService.getEndpointIntelligence(id, windowHours)
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> {
+                    ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                        HttpStatus.NOT_FOUND, "Discovered endpoint not found with identifier: " + id
+                    );
+                    problem.setTitle("Endpoint Not Found");
+                    problem.setType(URI.create("https://aegis.dev/errors/not-found"));
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
+                });
+        } catch (DataAccessException dae) {
+            log.error("Database error retrieving endpoint intelligence for {}: {}", id, dae.getMessage(), dae);
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.SERVICE_UNAVAILABLE, "API discovery telemetry store is currently unavailable"
+            );
+            problem.setTitle("Telemetry Store Unavailable");
+            problem.setType(URI.create("https://aegis.dev/errors/telemetry-unavailable"));
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(problem);
+        }
+    }
+
+    /**
+     * GET /api/v1/security/discovery/endpoints/{id}/history
+     * Retrieves time-bucketed observation history analytics for an endpoint.
+     */
+    @GetMapping(
+        value = {"/api/v1/security/discovery/endpoints/{id}/history", "/security/discovery/endpoints/{id}/history"},
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("hasAnyRole('SECURITY_ANALYST', 'SECURITY_ADMIN')")
+    public ResponseEntity<?> getEndpointObservationHistory(
+            @PathVariable("id") String id,
+            @RequestParam(name = "windowHours", defaultValue = "24") int windowHours,
+            @RequestParam(name = "bucket", required = false) String bucket) {
+
+        if (windowHours < 1 || windowHours > 720) {
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, "windowHours must be between 1 and 720: " + windowHours
+            );
+            problem.setTitle("Invalid Parameter");
+            problem.setType(URI.create("https://aegis.dev/errors/invalid-parameter"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem);
+        }
+
+        try {
+            return discoveryService.getEndpointObservationHistory(id, windowHours, bucket)
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> {
+                    ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                        HttpStatus.NOT_FOUND, "Discovered endpoint not found with identifier: " + id
+                    );
+                    problem.setTitle("Endpoint Not Found");
+                    problem.setType(URI.create("https://aegis.dev/errors/not-found"));
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
+                });
+        } catch (DataAccessException dae) {
+            log.error("Database error retrieving observation history for {}: {}", id, dae.getMessage(), dae);
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.SERVICE_UNAVAILABLE, "API discovery telemetry store is currently unavailable"
+            );
+            problem.setTitle("Telemetry Store Unavailable");
+            problem.setType(URI.create("https://aegis.dev/errors/telemetry-unavailable"));
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(problem);
+        }
+    }
+
+    /**
+     * GET /api/v1/security/discovery/endpoints/{id}/security
+     * Retrieves security observations, anomaly flags, and linked incidents for an endpoint.
+     */
+    @GetMapping(
+        value = {"/api/v1/security/discovery/endpoints/{id}/security", "/security/discovery/endpoints/{id}/security"},
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("hasAnyRole('SECURITY_ANALYST', 'SECURITY_ADMIN')")
+    public ResponseEntity<?> getEndpointSecurityHistory(
+            @PathVariable("id") String id,
+            @RequestParam(name = "windowHours", defaultValue = "24") int windowHours) {
+
+        if (windowHours < 1 || windowHours > 720) {
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, "windowHours must be between 1 and 720: " + windowHours
+            );
+            problem.setTitle("Invalid Parameter");
+            problem.setType(URI.create("https://aegis.dev/errors/invalid-parameter"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem);
+        }
+
+        try {
+            return discoveryService.getEndpointSecurityHistory(id, windowHours)
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> {
+                    ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                        HttpStatus.NOT_FOUND, "Discovered endpoint not found with identifier: " + id
+                    );
+                    problem.setTitle("Endpoint Not Found");
+                    problem.setType(URI.create("https://aegis.dev/errors/not-found"));
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
+                });
+        } catch (DataAccessException dae) {
+            log.error("Database error retrieving security history for {}: {}", id, dae.getMessage(), dae);
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.SERVICE_UNAVAILABLE, "API discovery telemetry store is currently unavailable"
+            );
+            problem.setTitle("Telemetry Store Unavailable");
+            problem.setType(URI.create("https://aegis.dev/errors/telemetry-unavailable"));
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(problem);
+        }
+    }
 }

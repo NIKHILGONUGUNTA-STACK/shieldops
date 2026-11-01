@@ -232,6 +232,7 @@ export interface ApiSpecificationResponse {
   name: string;
   description: string | null;
   version: string;
+  revisionNumber?: number;
   openapiVersion: string;
   sourceFilename: string;
   contentHash: string;
@@ -406,5 +407,151 @@ export interface ReconciliationFilterParams {
   sortBy?: string;
   sortDirection?: 'asc' | 'desc' | 'ASC' | 'DESC';
 }
+
+// ---------------------------------------------------------------------------
+// Phase 6.5: API Endpoint Intelligence, Observation History & Spec Evolution
+// ---------------------------------------------------------------------------
+
+export interface EndpointSpecMetadata {
+  specificationId: string;
+  specificationName: string;
+  specificationVersion: string;
+  specificationRevision: number;
+  declaredPath: string;
+  declaredMethod: string;
+  declaredOperationId: string | null;
+  declaredSummary: string | null;
+}
+
+export interface EndpointReconciliationStatus {
+  status: ReconciliationCategory | string;
+  coveragePercent: number;
+  matchingSpecification: string | null;
+  reconciledAt: string;
+}
+
+export interface EndpointPrioritizationDetail {
+  priorityScore: number;
+  priorityLevel: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  confirmedVulnerability: boolean;
+  primaryReason: string;
+  contributingFactors: Array<{
+    factor: string;
+    scoreImpact: number;
+    explanation: string;
+  }>;
+  evaluatedAt: string;
+}
+
+export interface EndpointLinkedIncident {
+  incidentId: string;
+  title: string;
+  severity: string;
+  status: string;
+  eventType: string;
+  clientIp: string;
+  timestamp: string;
+}
+
+export interface EndpointIntelligenceResponse {
+  endpointId: string;
+  httpMethod: string;
+  normalizedRoute: string;
+  serviceBoundary: string;
+  stableHash: string;
+  firstObservedAt: string;
+  lastObservedAt: string;
+  totalRequests: number;
+  distinctStatusCodes: number[];
+  statusDistribution: Record<string, number>;
+  averageLatencyMs: number | null;
+  minLatencyMs: number | null;
+  maxLatencyMs: number | null;
+  specification: EndpointSpecMetadata | null;
+  reconciliation: EndpointReconciliationStatus | null;
+  discrepancyPrioritization: EndpointPrioritizationDetail | null;
+  relatedIncidents: EndpointLinkedIncident[];
+  inferredService: boolean;
+  confirmedVulnerability: boolean;
+  telemetryWindowHours: number;
+}
+
+export interface ObservationTimeBucket {
+  bucketTimestamp: string;
+  requestCount: number;
+  status2xx: number;
+  status3xx: number;
+  status4xx: number;
+  status5xx: number;
+  avgLatencyMs: number | null;
+  minLatencyMs: number | null;
+  maxLatencyMs: number | null;
+}
+
+export interface EndpointObservationHistoryResponse {
+  endpointId: string;
+  httpMethod: string;
+  normalizedRoute: string;
+  serviceBoundary: string;
+  windowHours: number;
+  bucketIntervalMinutes: number;
+  totalRequestsInWindow: number;
+  retentionLimitHours: number;
+  windowStart: string;
+  windowEnd: string;
+  buckets: ObservationTimeBucket[];
+}
+
+export interface EndpointSecurityEvent {
+  eventId: string;
+  clientIp: string;
+  statusCode: number;
+  anomalyScore: number;
+  blocked: boolean;
+  riskLevel: string;
+  failureReason: string | null;
+  timestamp: string;
+}
+
+export interface EndpointSecurityHistoryResponse {
+  endpointId: string;
+  httpMethod: string;
+  normalizedRoute: string;
+  windowHours: number;
+  totalAuthFailures: number;
+  totalAnomalies: number;
+  totalBlocked: number;
+  confirmedVulnerability: boolean;
+  recentSecurityEvents: EndpointSecurityEvent[];
+  linkedIncidents: EndpointLinkedIncident[];
+}
+
+export interface OperationChange {
+  httpMethod: string;
+  pathPattern: string;
+  operationId: string | null;
+  changeType: 'ADDED' | 'REMOVED' | 'MODIFIED' | 'UNCHANGED';
+  fieldChanges: string[];
+  baseOperation: any | null;
+  targetOperation: any | null;
+}
+
+export interface SpecificationDiffResponse {
+  baseSpecId: string;
+  baseSpecName: string;
+  baseSpecVersion: string;
+  baseRevisionNumber: number;
+  targetSpecId: string;
+  targetSpecName: string;
+  targetSpecVersion: string;
+  targetRevisionNumber: number;
+  comparedAt: string;
+  addedCount: number;
+  removedCount: number;
+  modifiedCount: number;
+  unchangedCount: number;
+  changes: OperationChange[];
+}
+
 
 

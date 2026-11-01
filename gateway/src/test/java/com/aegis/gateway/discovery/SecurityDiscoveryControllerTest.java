@@ -245,4 +245,106 @@ class SecurityDiscoveryControllerTest {
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.title").value("Endpoint Not Found"));
     }
+
+    @Test
+    @DisplayName("Retrieves endpoint intelligence returning unified dossier")
+    void retrievesEndpointIntelligence() throws Exception {
+        Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+        ApiEvent event = new ApiEvent(
+            UUID.randomUUID(), "cid-intel", now, "10.0.0.1", "POST",
+            "/api/v1/transfers", "/api/v1/transfers", 200, 45L, "u1", "ROLE_CUSTOMER",
+            "c1", "agent", "hash", "NONE"
+        );
+        apiEventRepository.save(event);
+
+        String endpointId = RouteNormalizer.generateEndpointId("POST", "/api/v1/transfers");
+
+        // 401 Unauthenticated
+        mockMvc.perform(get("/api/v1/security/discovery/endpoints/" + endpointId + "/intelligence"))
+            .andExpect(status().isUnauthorized());
+
+        // 403 Customer
+        mockMvc.perform(get("/api/v1/security/discovery/endpoints/" + endpointId + "/intelligence")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_CUSTOMER"))))
+            .andExpect(status().isForbidden());
+
+        // 200 Analyst
+        mockMvc.perform(get("/api/v1/security/discovery/endpoints/" + endpointId + "/intelligence?windowHours=24")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ANALYST"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(endpointId))
+            .andExpect(jsonPath("$.httpMethod").value("POST"))
+            .andExpect(jsonPath("$.routeTemplate").value("/api/v1/transfers"))
+            .andExpect(jsonPath("$.serviceBoundary").value("transaction-service"))
+            .andExpect(jsonPath("$.totalRequests").value(1))
+            .andExpect(jsonPath("$.reconciliation.category").exists())
+            .andExpect(jsonPath("$.prioritization.priority").exists())
+            .andExpect(jsonPath("$.prioritization.confirmedVulnerability").value(false));
+
+        // 400 Invalid WindowHours
+        mockMvc.perform(get("/api/v1/security/discovery/endpoints/" + endpointId + "/intelligence?windowHours=999")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ANALYST"))))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.title").value("Invalid Parameter"));
+
+        // 404 Endpoint Not Found
+        mockMvc.perform(get("/api/v1/security/discovery/endpoints/ep_unknown/intelligence")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ANALYST"))))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.title").value("Endpoint Not Found"));
+    }
+
+    @Test
+    @DisplayName("Retrieves endpoint observation history returning time-bucketed analytics")
+    void retrievesEndpointObservationHistory() throws Exception {
+        Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+        ApiEvent event = new ApiEvent(
+            UUID.randomUUID(), "cid-hist", now, "10.0.0.1", "GET",
+            "/api/v1/customers", "/api/v1/customers", 200, 25L, "u1", "ROLE_CUSTOMER",
+            "c1", "agent", "hash", "NONE"
+        );
+        apiEventRepository.save(event);
+
+        String endpointId = RouteNormalizer.generateEndpointId("GET", "/api/v1/customers");
+
+        mockMvc.perform(get("/api/v1/security/discovery/endpoints/" + endpointId + "/history?windowHours=24&bucket=1h")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ANALYST"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.endpointId").value(endpointId))
+            .andExpect(jsonPath("$.windowHours").value(24))
+            .andExpect(jsonPath("$.bucketSize").value("1h"))
+            .andExpect(jsonPath("$.retentionLimitHours").value(720))
+            .andExpect(jsonPath("$.buckets").isArray());
+
+        // 400 Invalid Window
+        mockMvc.perform(get("/api/v1/security/discovery/endpoints/" + endpointId + "/history?windowHours=0")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ANALYST"))))
+            .andExpect(status().isBadRequest());
+
+        // 404 Endpoint Not Found
+        mockMvc.perform(get("/api/v1/security/discovery/endpoints/ep_unknown/history")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ANALYST"))))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Retrieves endpoint security history returning telemetry outcomes and incidents")
+    void retrievesEndpointSecurityHistory() throws Exception {
+        Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+        ApiEvent event = new ApiEvent(
+            UUID.randomUUID(), "cid-sec", now, "10.0.0.1", "POST",
+            "/api/v1/customers", "/api/v1/customers", 401, 15L, "u1", "ROLE_CUSTOMER",
+            "c1", "agent", "hash", "NONE"
+        );
+        apiEventRepository.save(event);
+
+        String endpointId = RouteNormalizer.generateEndpointId("POST", "/api/v1/customers");
+
+        mockMvc.perform(get("/api/v1/security/discovery/endpoints/" + endpointId + "/security?windowHours=24")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ANALYST"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.endpointId").value(endpointId))
+            .andExpect(jsonPath("$.authFailureCount").value(1))
+            .andExpect(jsonPath("$.securityEvents").isArray());
+    }
 }

@@ -291,6 +291,102 @@ public class SecuritySpecificationController {
         }
     }
 
+    /**
+     * GET /api/v1/security/specs/{id}/revisions
+     * Retrieves all historical revisions for a specification family.
+     */
+    @GetMapping(
+        value = {"/api/v1/security/specs/{id}/revisions", "/security/specs/{id}/revisions"},
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("hasAnyRole('SECURITY_ANALYST', 'SECURITY_ADMIN')")
+    public ResponseEntity<?> getSpecificationRevisions(@PathVariable("id") String idStr) {
+        UUID id = parseUuidOrNull(idStr);
+        if (id == null) {
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, "Invalid UUID format: " + idStr
+            );
+            problem.setTitle("Invalid Identifier");
+            problem.setType(URI.create("https://aegis.dev/errors/invalid-parameter"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem);
+        }
+
+        try {
+            List<ApiSpecificationResponse> revisions = specificationService.getSpecificationRevisions(id);
+            return ResponseEntity.ok(revisions);
+        } catch (com.aegis.gateway.security.ResourceNotFoundException rnfe) {
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND, rnfe.getMessage()
+            );
+            problem.setTitle("Not Found");
+            problem.setType(URI.create("https://aegis.dev/errors/not-found"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
+        } catch (DataAccessException dae) {
+            log.error("Database error retrieving revisions for spec {}: {}", id, dae.getMessage(), dae);
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.SERVICE_UNAVAILABLE, "Specification store is currently unavailable"
+            );
+            problem.setTitle("Service Unavailable");
+            problem.setType(URI.create("https://aegis.dev/errors/telemetry-unavailable"));
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(problem);
+        }
+    }
+
+    /**
+     * GET /api/v1/security/specs/compare?baseId={baseId}&targetId={targetId}
+     * Computes a structural operation diff between two specification revisions.
+     */
+    @GetMapping(
+        value = {"/api/v1/security/specs/compare", "/security/specs/compare"},
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("hasAnyRole('SECURITY_ANALYST', 'SECURITY_ADMIN')")
+    public ResponseEntity<?> compareSpecifications(
+            @RequestParam("baseId") String baseIdStr,
+            @RequestParam("targetId") String targetIdStr) {
+
+        UUID baseId = parseUuidOrNull(baseIdStr);
+        if (baseId == null) {
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, "Invalid baseId UUID format: " + baseIdStr
+            );
+            problem.setTitle("Invalid Identifier");
+            problem.setType(URI.create("https://aegis.dev/errors/invalid-parameter"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem);
+        }
+
+        UUID targetId = parseUuidOrNull(targetIdStr);
+        if (targetId == null) {
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, "Invalid targetId UUID format: " + targetIdStr
+            );
+            problem.setTitle("Invalid Identifier");
+            problem.setType(URI.create("https://aegis.dev/errors/invalid-parameter"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem);
+        }
+
+        try {
+            com.aegis.gateway.specs.dto.SpecificationDiffResponse diff =
+                specificationService.compareSpecifications(baseId, targetId);
+            return ResponseEntity.ok(diff);
+        } catch (com.aegis.gateway.security.ResourceNotFoundException rnfe) {
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND, rnfe.getMessage()
+            );
+            problem.setTitle("Not Found");
+            problem.setType(URI.create("https://aegis.dev/errors/not-found"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
+        } catch (DataAccessException dae) {
+            log.error("Database error comparing specs {} and {}: {}", baseId, targetId, dae.getMessage(), dae);
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.SERVICE_UNAVAILABLE, "Specification store is currently unavailable"
+            );
+            problem.setTitle("Service Unavailable");
+            problem.setType(URI.create("https://aegis.dev/errors/telemetry-unavailable"));
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(problem);
+        }
+    }
+
     private UUID parseUuidOrNull(String str) {
         if (str == null || str.isBlank()) return null;
         try {

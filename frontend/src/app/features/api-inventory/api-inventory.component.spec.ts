@@ -49,8 +49,60 @@ describe('ApiInventoryComponent', () => {
   };
 
   beforeEach(async () => {
-    mockSecurityApi = jasmine.createSpyObj('SecurityApiService', ['getDiscoveredEndpoints']);
+    mockSecurityApi = jasmine.createSpyObj('SecurityApiService', [
+      'getDiscoveredEndpoints',
+      'getEndpointIntelligence',
+      'getEndpointObservationHistory',
+      'getEndpointSecurityHistory'
+    ]);
     mockSecurityApi.getDiscoveredEndpoints.and.returnValue(of(mockEndpointsPage));
+    mockSecurityApi.getEndpointIntelligence.and.returnValue(of({
+      endpointId: 'ep_1',
+      httpMethod: 'GET',
+      normalizedRoute: '/api/v1/customers/{customerId}/profile',
+      serviceBoundary: 'customer-service',
+      stableHash: 'hash1',
+      firstObservedAt: '2026-10-28T09:00:00Z',
+      lastObservedAt: '2026-10-28T10:15:00Z',
+      totalRequests: 120,
+      distinctStatusCodes: [200, 403],
+      statusDistribution: { '2xx': 118, '4xx': 2 },
+      averageLatencyMs: 32.5,
+      minLatencyMs: 12.0,
+      maxLatencyMs: 80.0,
+      specification: null,
+      reconciliation: null,
+      discrepancyPrioritization: null,
+      relatedIncidents: [],
+      inferredService: false,
+      confirmedVulnerability: false,
+      telemetryWindowHours: 24
+    }));
+    mockSecurityApi.getEndpointObservationHistory.and.returnValue(of({
+      endpointId: 'ep_1',
+      httpMethod: 'GET',
+      normalizedRoute: '/api/v1/customers/{customerId}/profile',
+      serviceBoundary: 'customer-service',
+      windowHours: 24,
+      bucketIntervalMinutes: 60,
+      totalRequestsInWindow: 120,
+      retentionLimitHours: 720,
+      windowStart: '2026-10-27T10:15:00Z',
+      windowEnd: '2026-10-28T10:15:00Z',
+      buckets: []
+    }));
+    mockSecurityApi.getEndpointSecurityHistory.and.returnValue(of({
+      endpointId: 'ep_1',
+      httpMethod: 'GET',
+      normalizedRoute: '/api/v1/customers/{customerId}/profile',
+      windowHours: 24,
+      totalAuthFailures: 2,
+      totalAnomalies: 0,
+      totalBlocked: 0,
+      confirmedVulnerability: false,
+      recentSecurityEvents: [],
+      linkedIncidents: []
+    }));
 
     await TestBed.configureTestingModule({
       imports: [ApiInventoryComponent],
@@ -174,5 +226,21 @@ describe('ApiInventoryComponent', () => {
     expect(mockSecurityApi.getDiscoveredEndpoints).toHaveBeenCalledWith(jasmine.objectContaining({
       service: 'customer-service'
     }));
+  });
+
+  it('should open intelligence drawer when an endpoint row is selected', () => {
+    fixture.detectChanges();
+
+    const firstRow = fixture.nativeElement.querySelector('.endpoint-row') as HTMLElement;
+    firstRow.click();
+    fixture.detectChanges();
+
+    expect(mockSecurityApi.getEndpointIntelligence).toHaveBeenCalledWith('ep_1', jasmine.any(Object));
+    expect(component.selectedEndpoint()?.id).toBe('ep_1');
+    expect(component.intelligence()?.confirmedVulnerability).toBe(false);
+
+    const drawer = fixture.nativeElement.querySelector('.intelligence-drawer');
+    expect(drawer).toBeTruthy();
+    expect(drawer.textContent).toContain('CONFIRMED VULNERABILITY: NO');
   });
 });

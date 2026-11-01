@@ -1,6 +1,6 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 6.4 Complete (API Discrepancy Prioritization & Forensic Investigation)
+## Current Milestone: Phase 6.5 Complete (API Endpoint Intelligence, Observation History & Specification Evolution)
 
 **Last Updated:** 2026-11-01
 **Active Git Branch:** `main`
@@ -21,8 +21,8 @@
 | `customer-service` | 17 | 0 | 0 | 0 | **SUCCESS** |
 | `account-service` | 26 | 0 | 0 | 0 | **SUCCESS** |
 | `transaction-service` | 28 | 0 | 0 | 0 | **SUCCESS** |
-| `gateway` | 212 | 0 | 0 | 0 | **SUCCESS** |
-| **Total Backend Platform Tests** | **283** | **0** | **0** | **0** | **BUILD SUCCESS** |
+| `gateway` | 222 | 0 | 0 | 0 | **SUCCESS** |
+| **Total Backend Platform Tests** | **293** | **0** | **0** | **0** | **BUILD SUCCESS** |
 
 ### 1.2 Frontend SOC Dashboard (Angular 18 / TypeScript / Node 22)
 - **Framework & Tooling:** Angular 18.2.21 / Node.js 22.20.0 / npm 10.9.3
@@ -34,7 +34,7 @@
 | **App Shell** | `app.component.spec.ts` | 2 | 0 | **SUCCESS** |
 | **Navbar & Search Bar** | `navbar.component.spec.ts` | 6 | 0 | **SUCCESS** |
 | **Sidebar & Nav Registry** | `sidebar.component.spec.ts` | 6 | 0 | **SUCCESS** |
-| **Security API Service** | `security-api.service.spec.ts` | 20 | 0 | **SUCCESS** |
+| **Security API Service** | `security-api.service.spec.ts` | 25 | 0 | **SUCCESS** |
 | **Auth Service** | `auth.service.spec.ts` | 3 | 0 | **SUCCESS** |
 | **Auth Guard** | `auth.guard.spec.ts` | 3 | 0 | **SUCCESS** |
 | **Overview Component** | `overview.component.spec.ts` | 3 | 0 | **SUCCESS** |
@@ -50,11 +50,11 @@
 | **Policy Decisions** | `policy-decisions.component.spec.ts` | 2 | 0 | **SUCCESS** |
 | **Audit History** | `audit-history.component.spec.ts` | 2 | 0 | **SUCCESS** |
 | **System Health** | `system-health.component.spec.ts` | 2 | 0 | **SUCCESS** |
-| **Observed API Inventory** | `api-inventory.component.spec.ts` | 7 | 0 | **SUCCESS** |
-| **API Specifications & Operations** | `api-specs.component.spec.ts` | 10 | 0 | **SUCCESS** |
+| **Observed API Inventory** | `api-inventory.component.spec.ts` | 8 | 0 | **SUCCESS** |
+| **API Specifications & Operations** | `api-specs.component.spec.ts` | 11 | 0 | **SUCCESS** |
 | **Documented vs Observed API Reconciliation** | `api-reconciliation.component.spec.ts` | 12 | 0 | **SUCCESS** |
 | **Settings Component** | `settings.component.spec.ts` | 3 | 0 | **SUCCESS** |
-| **Total Frontend Tests** | — | **118** | **0** | **BUILD SUCCESS** |
+| **Total Frontend Tests** | — | **125** | **0** | **BUILD SUCCESS** |
 
 ---
 
@@ -265,4 +265,41 @@ All 9 platform services running and healthy via Docker Compose (`infrastructure/
   - 212 gateway unit & integration tests passing (`BUILD SUCCESS`).
   - 118 frontend unit tests passing in ChromeHeadless (`TOTAL: 118 SUCCESS`).
   - Angular production build successful with 0 errors and 0 warnings (`ng build`).
+
+---
+
+## 9. Phase 6.5 Deliverables Checklist (API Endpoint Intelligence, Observation History & Specification Evolution)
+
+- [x] **Flyway Migration `V6__api_endpoint_intelligence_and_spec_evolution.sql`:**
+  - Added `revision_number INT NOT NULL DEFAULT 1` to `security_data.api_specifications`.
+  - Added composite indexes: `api_specs_name_imported_idx`, `api_events_history_idx`, `api_events_status_history_idx`.
+- [x] **Unified Endpoint Intelligence Dossier (`GET /api/v1/security/discovery/endpoints/{id}/intelligence`):**
+  - Aggregates endpoint identity, service boundary, first/last seen, total request volume.
+  - Distinct HTTP status codes array and 2xx/3xx/4xx/5xx count distributions.
+  - Latency profiling: average, min, and max latency where available.
+  - Declared OpenAPI contract metadata (name, version, revision, path, method, operationId, summary).
+  - Reconciliation category, coverage percentage, and discrepancy priority score/factors.
+  - Correlated security incidents and defensive safety invariant (`confirmedVulnerability: false`).
+- [x] **Continuous Observation History (`GET /api/v1/security/discovery/endpoints/{id}/history`):**
+  - Continuous time grid across selectable windows (24h, 168h, 720h) with server-side zero-filling for missing intervals.
+  - Explicit retention boundary marker (720h perimeter limit).
+  - Interval-level request counts, HTTP status breakdown, and latency metrics.
+- [x] **Security Telemetry History (`GET /api/v1/security/discovery/endpoints/{id}/security`):**
+  - Total 401/403 authorization failures, anomaly events, and blocked requests.
+  - Recent security event log with client IPs, status codes, and anomaly scores.
+  - Linked incidents stack.
+- [x] **Specification Evolution & Structural Diff Engine:**
+  - Auto-incrementing `revision_number` during specification imports.
+  - Revision history retrieval (`GET /api/v1/security/specs/{id}/revisions`).
+  - Semantic diffing (`GET /api/v1/security/specs/compare?baseId={uuid}&targetId={uuid}`) categorizing operations into `ADDED`, `REMOVED`, `MODIFIED`, and `UNCHANGED` with field-level change details.
+- [x] **Angular SOC Dashboard Integration:**
+  - Endpoint Intelligence Drawer in `/api-inventory` with Overview, Observation History, and Security tabs.
+  - Specification Revision Evolution Drawer and Semantic Diff Explorer in `/api-specs`.
+  - Consistent Wallarm SOC dark theme and strict Inter Regular (`font-weight: 400`) typography.
+- [x] **Automated Verification:**
+  - 10 new backend tests (`ApiEndpointIntelligenceTest`, `SpecificationEvolutionTest`, expanded controller suites).
+  - 222 gateway unit & integration tests passing (`BUILD SUCCESS`).
+  - 125 frontend unit tests passing in ChromeHeadless (`TOTAL: 125 SUCCESS`).
+  - Angular production build successful with 0 errors and 0 warnings (`ng build`).
+
 

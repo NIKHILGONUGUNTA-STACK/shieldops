@@ -499,6 +499,128 @@ describe('SecurityApiService', () => {
     });
   });
 
+  describe('Phase 6.5: Endpoint Intelligence and Spec Evolution', () => {
+    it('should query getEndpointIntelligence with windowHours', () => {
+      const mockIntel = {
+        endpointId: 'ep_123',
+        httpMethod: 'GET',
+        normalizedRoute: '/api/v1/customers',
+        serviceBoundary: 'customer-service',
+        stableHash: 'hash123',
+        firstObservedAt: '2026-10-31T00:00:00Z',
+        lastObservedAt: '2026-11-01T00:00:00Z',
+        totalRequests: 50,
+        distinctStatusCodes: [200, 404],
+        statusDistribution: { '200': 48, '404': 2 },
+        averageLatencyMs: 42.5,
+        minLatencyMs: 10.0,
+        maxLatencyMs: 120.0,
+        specification: null,
+        reconciliation: null,
+        discrepancyPrioritization: null,
+        relatedIncidents: [],
+        inferredService: false,
+        confirmedVulnerability: false,
+        telemetryWindowHours: 24
+      };
+
+      service.getEndpointIntelligence('ep_123', { windowHours: 48 }).subscribe(res => {
+        expect(res.endpointId).toBe('ep_123');
+        expect(res.totalRequests).toBe(50);
+        expect(res.confirmedVulnerability).toBe(false);
+      });
+
+      const req = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/discovery/endpoints/ep_123/intelligence?windowHours=48`);
+      expect(req.request.method).toBe('GET');
+      req.flush(mockIntel);
+    });
+
+    it('should query getEndpointObservationHistory with bucket params', () => {
+      const mockHistory = {
+        endpointId: 'ep_123',
+        httpMethod: 'GET',
+        normalizedRoute: '/api/v1/customers',
+        serviceBoundary: 'customer-service',
+        windowHours: 24,
+        bucketIntervalMinutes: 60,
+        totalRequestsInWindow: 10,
+        retentionLimitHours: 720,
+        windowStart: '2026-10-31T00:00:00Z',
+        windowEnd: '2026-11-01T00:00:00Z',
+        buckets: []
+      };
+
+      service.getEndpointObservationHistory('ep_123', { windowHours: 24, bucketMinutes: 60 }).subscribe(res => {
+        expect(res.endpointId).toBe('ep_123');
+        expect(res.bucketIntervalMinutes).toBe(60);
+      });
+
+      const req = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/discovery/endpoints/ep_123/history?windowHours=24&bucketMinutes=60`);
+      expect(req.request.method).toBe('GET');
+      req.flush(mockHistory);
+    });
+
+    it('should query getEndpointSecurityHistory', () => {
+      const mockSec = {
+        endpointId: 'ep_123',
+        httpMethod: 'GET',
+        normalizedRoute: '/api/v1/customers',
+        windowHours: 24,
+        totalAuthFailures: 2,
+        totalAnomalies: 1,
+        totalBlocked: 0,
+        confirmedVulnerability: false,
+        recentSecurityEvents: [],
+        linkedIncidents: []
+      };
+
+      service.getEndpointSecurityHistory('ep_123', { windowHours: 24 }).subscribe(res => {
+        expect(res.totalAuthFailures).toBe(2);
+        expect(res.confirmedVulnerability).toBe(false);
+      });
+
+      const req = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/discovery/endpoints/ep_123/security?windowHours=24`);
+      expect(req.request.method).toBe('GET');
+      req.flush(mockSec);
+    });
+
+    it('should query getSpecificationRevisions', () => {
+      service.getSpecificationRevisions('spec_uuid').subscribe(res => {
+        expect(res.length).toBe(2);
+      });
+
+      const req = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/specs/spec_uuid/revisions`);
+      expect(req.request.method).toBe('GET');
+      req.flush([{ id: 'rev2', revisionNumber: 2 }, { id: 'rev1', revisionNumber: 1 }]);
+    });
+
+    it('should query compareSpecifications', () => {
+      service.compareSpecifications('spec_1', 'spec_2').subscribe(res => {
+        expect(res.addedCount).toBe(1);
+        expect(res.removedCount).toBe(0);
+      });
+
+      const req = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/specs/compare?baseId=spec_1&targetId=spec_2`);
+      expect(req.request.method).toBe('GET');
+      req.flush({
+        baseSpecId: 'spec_1',
+        baseSpecName: 'Customer API',
+        baseSpecVersion: '1.0.0',
+        baseRevisionNumber: 1,
+        targetSpecId: 'spec_2',
+        targetSpecName: 'Customer API',
+        targetSpecVersion: '1.1.0',
+        targetRevisionNumber: 2,
+        comparedAt: '2026-11-01T00:00:00Z',
+        addedCount: 1,
+        removedCount: 0,
+        modifiedCount: 0,
+        unchangedCount: 2,
+        changes: []
+      });
+    });
+  });
+
   describe('Error Handling', () => {
     it('should map RFC 7807 ProblemDetail from HTTP error', () => {
       service.getOverview(24).subscribe({

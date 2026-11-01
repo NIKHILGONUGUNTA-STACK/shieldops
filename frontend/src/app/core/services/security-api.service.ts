@@ -27,7 +27,11 @@ import {
   ReconciliationSummaryResponse,
   ReconciliationPageResponse,
   ReconciliationFilterParams,
-  ReconciliationInvestigationResponse
+  ReconciliationInvestigationResponse,
+  EndpointIntelligenceResponse,
+  EndpointObservationHistoryResponse,
+  EndpointSecurityHistoryResponse,
+  SpecificationDiffResponse
 } from '../models/security.models';
 
 @Injectable({
@@ -307,6 +311,87 @@ export class SecurityApiService {
 
     return this.http.get<ReconciliationSummaryResponse>(`${this.baseUrl}/api/v1/security/reconciliation/summary`, { params: httpParams })
       .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/discovery/endpoints/{id}/intelligence
+   * Retrieves unified endpoint intelligence dossier.
+   */
+  getEndpointIntelligence(
+    id: string,
+    params: { windowHours?: number } = {}
+  ): Observable<EndpointIntelligenceResponse> {
+    let httpParams = new HttpParams();
+    if (params.windowHours !== undefined) {
+      httpParams = httpParams.set('windowHours', params.windowHours.toString());
+    }
+    return this.http.get<EndpointIntelligenceResponse>(
+      `${this.baseUrl}/api/v1/security/discovery/endpoints/${encodeURIComponent(id)}/intelligence`,
+      { params: httpParams }
+    ).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/discovery/endpoints/{id}/history
+   * Retrieves continuous time-bucketed observation history.
+   */
+  getEndpointObservationHistory(
+    id: string,
+    params: { windowHours?: number; bucketMinutes?: number } = {}
+  ): Observable<EndpointObservationHistoryResponse> {
+    let httpParams = new HttpParams();
+    if (params.windowHours !== undefined) {
+      httpParams = httpParams.set('windowHours', params.windowHours.toString());
+    }
+    if (params.bucketMinutes !== undefined) {
+      httpParams = httpParams.set('bucketMinutes', params.bucketMinutes.toString());
+    }
+    return this.http.get<EndpointObservationHistoryResponse>(
+      `${this.baseUrl}/api/v1/security/discovery/endpoints/${encodeURIComponent(id)}/history`,
+      { params: httpParams }
+    ).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/discovery/endpoints/{id}/security
+   * Retrieves security event history and linked incidents for the endpoint.
+   */
+  getEndpointSecurityHistory(
+    id: string,
+    params: { windowHours?: number } = {}
+  ): Observable<EndpointSecurityHistoryResponse> {
+    let httpParams = new HttpParams();
+    if (params.windowHours !== undefined) {
+      httpParams = httpParams.set('windowHours', params.windowHours.toString());
+    }
+    return this.http.get<EndpointSecurityHistoryResponse>(
+      `${this.baseUrl}/api/v1/security/discovery/endpoints/${encodeURIComponent(id)}/security`,
+      { params: httpParams }
+    ).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/specs/{id}/revisions
+   * Retrieves specification revision history by ID.
+   */
+  getSpecificationRevisions(id: string): Observable<ApiSpecificationResponse[]> {
+    return this.http.get<ApiSpecificationResponse[]>(
+      `${this.baseUrl}/api/v1/security/specs/${encodeURIComponent(id)}/revisions`
+    ).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/specs/compare
+   * Performs semantic diff comparison between base and target revisions.
+   */
+  compareSpecifications(baseId: string, targetId: string): Observable<SpecificationDiffResponse> {
+    const params = new HttpParams()
+      .set('baseId', baseId)
+      .set('targetId', targetId);
+    return this.http.get<SpecificationDiffResponse>(
+      `${this.baseUrl}/api/v1/security/specs/compare`,
+      { params }
+    ).pipe(catchError(this.handleError));
   }
 
   /**
