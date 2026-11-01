@@ -104,6 +104,14 @@ export const NAV_SECTIONS: NavSection[] = [
         description: 'Documented vs. observed contract reconciliation, coverage analysis, and drift detection'
       },
       {
+        id: 'api-posture',
+        label: 'Security Posture',
+        path: '/api-posture',
+        icon: 'shield-check',
+        availability: 'implemented',
+        description: 'Deterministic 6-dimension API security posture assessment, evidence coverage, and gap analysis'
+      },
+      {
         id: 'data-access',
         label: 'Data Access Monitoring',
         path: '/data-access',

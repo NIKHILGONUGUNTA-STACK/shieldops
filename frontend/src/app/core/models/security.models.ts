@@ -553,5 +553,101 @@ export interface SpecificationDiffResponse {
   changes: OperationChange[];
 }
 
+// ==========================================
+// Phase 7.1: API Security Posture Assessment
+// ==========================================
+
+export type AssessmentDimensionType =
+  | 'EXPOSURE'
+  | 'AUTHENTICATION'
+  | 'AUTHORIZATION'
+  | 'DATA_SENSITIVITY'
+  | 'BEHAVIORAL'
+  | 'SPECIFICATION';
+
+export type DimensionStatus = 'VERIFIED' | 'FINDING' | 'UNKNOWN';
+
+export type OverallPosture = 'ADEQUATE' | 'ATTENTION_REQUIRED' | 'INSUFFICIENT_EVIDENCE';
+
+export type EvidenceSourceType =
+  | 'OPENAPI_SPEC'
+  | 'WIRE_TELEMETRY'
+  | 'SECURITY_INCIDENT'
+  | 'GATEWAY_CONFIG'
+  | 'RECONCILIATION_ENGINE';
+
+export interface PostureEvidenceItem {
+  sourceType: EvidenceSourceType;
+  description: string;
+  metricValue: string | null;
+  observedAt: string | null;
+}
+
+export interface DimensionAssessment {
+  dimension: AssessmentDimensionType;
+  status: DimensionStatus;
+  summary: string;
+  evidence: PostureEvidenceItem[];
+  limitations: string;
+  recommendedActions: string[];
+}
+
+export interface EndpointPostureResponse {
+  endpointId: string;
+  httpMethod: string;
+  normalizedRoute: string;
+  serviceBoundary: string;
+  assessmentTimestamp: string;
+  assessmentRuleVersion: string;
+  overallPosture: OverallPosture;
+  evidenceCoveragePercentage: number;
+  dimensions: Record<AssessmentDimensionType, DimensionAssessment>;
+  totalFindingsCount: number;
+  confirmedVulnerability: boolean;
+  overallExplanation: string;
+  recommendedSteps: string[];
+  lastObservedAt: string | null;
+  firstObservedAt: string | null;
+  totalRequests: number;
+}
+
+export interface PostureSummaryResponse {
+  totalAssessedEndpoints: number;
+  adequateCount: number;
+  attentionRequiredCount: number;
+  insufficientEvidenceCount: number;
+  verifiedDimensionsCount: number;
+  findingDimensionsCount: number;
+  unknownDimensionsCount: number;
+  averageEvidenceCoveragePercentage: number;
+  distributionByService: Record<string, number>;
+  distributionByPosture: Record<string, number>;
+  assessmentRuleVersion: string;
+  assessedAt: string;
+}
+
+export interface PosturePageResponse {
+  content: EndpointPostureResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  summary: PostureSummaryResponse;
+}
+
+export interface PostureFilterParams {
+  page?: number;
+  size?: number;
+  service?: string;
+  posture?: string;
+  dimension?: string;
+  dimensionStatus?: string;
+  search?: string;
+  windowHours?: number;
+}
+
+
 
 

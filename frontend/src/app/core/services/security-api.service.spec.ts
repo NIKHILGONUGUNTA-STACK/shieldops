@@ -621,6 +621,73 @@ describe('SecurityApiService', () => {
     });
   });
 
+  describe('Posture Assessment API', () => {
+    it('should query getPosturePage with filter parameters', () => {
+      service.getPosturePage({
+        page: 0,
+        size: 15,
+        service: 'customer-service',
+        posture: 'ADEQUATE',
+        windowHours: 48
+      }).subscribe(res => {
+        expect(res.totalElements).toBe(1);
+        expect(res.content[0].endpointId).toBe('ep_1');
+      });
+
+      const req = httpTesting.expectOne(r => r.url.includes('/api/v1/security/posture'));
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('page')).toBe('0');
+      expect(req.request.params.get('size')).toBe('15');
+      expect(req.request.params.get('service')).toBe('customer-service');
+      expect(req.request.params.get('posture')).toBe('ADEQUATE');
+      expect(req.request.params.get('windowHours')).toBe('48');
+      req.flush({
+        content: [{ endpointId: 'ep_1', httpMethod: 'GET', normalizedRoute: '/test' }],
+        page: 0,
+        size: 15,
+        totalElements: 1,
+        totalPages: 1,
+        hasNext: false,
+        hasPrevious: false,
+        summary: { totalAssessedEndpoints: 1 }
+      });
+    });
+
+    it('should query getEndpointPosture by ID', () => {
+      service.getEndpointPosture('ep_123', { windowHours: 72 }).subscribe(res => {
+        expect(res.endpointId).toBe('ep_123');
+        expect(res.overallPosture).toBe('ADEQUATE');
+      });
+
+      const req = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/posture/ep_123?windowHours=72`);
+      expect(req.request.method).toBe('GET');
+      req.flush({
+        endpointId: 'ep_123',
+        overallPosture: 'ADEQUATE',
+        evidenceCoveragePercentage: 66.7
+      });
+    });
+
+    it('should query getPostureSummary', () => {
+      service.getPostureSummary({ service: 'account-service', windowHours: 24 }).subscribe(res => {
+        expect(res.totalAssessedEndpoints).toBe(5);
+        expect(res.adequateCount).toBe(4);
+      });
+
+      const req = httpTesting.expectOne(r => r.url.includes('/api/v1/security/posture/summary'));
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('service')).toBe('account-service');
+      expect(req.request.params.get('windowHours')).toBe('24');
+      req.flush({
+        totalAssessedEndpoints: 5,
+        adequateCount: 4,
+        attentionRequiredCount: 1,
+        insufficientEvidenceCount: 0,
+        averageEvidenceCoveragePercentage: 75.0
+      });
+    });
+  });
+
   describe('Error Handling', () => {
     it('should map RFC 7807 ProblemDetail from HTTP error', () => {
       service.getOverview(24).subscribe({

@@ -31,7 +31,11 @@ import {
   EndpointIntelligenceResponse,
   EndpointObservationHistoryResponse,
   EndpointSecurityHistoryResponse,
-  SpecificationDiffResponse
+  SpecificationDiffResponse,
+  EndpointPostureResponse,
+  PostureSummaryResponse,
+  PosturePageResponse,
+  PostureFilterParams
 } from '../models/security.models';
 
 @Injectable({
@@ -391,6 +395,57 @@ export class SecurityApiService {
     return this.http.get<SpecificationDiffResponse>(
       `${this.baseUrl}/api/v1/security/specs/compare`,
       { params }
+    ).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/posture
+   * Retrieves paginated security posture assessments across endpoints.
+   */
+  getPosturePage(params?: PostureFilterParams): Observable<PosturePageResponse> {
+    let httpParams = new HttpParams();
+    if (params) {
+      if (params.page !== undefined) httpParams = httpParams.set('page', params.page.toString());
+      if (params.size !== undefined) httpParams = httpParams.set('size', params.size.toString());
+      if (params.service) httpParams = httpParams.set('service', params.service);
+      if (params.posture) httpParams = httpParams.set('posture', params.posture);
+      if (params.dimension) httpParams = httpParams.set('dimension', params.dimension);
+      if (params.dimensionStatus) httpParams = httpParams.set('dimensionStatus', params.dimensionStatus);
+      if (params.search) httpParams = httpParams.set('search', params.search);
+      if (params.windowHours !== undefined) httpParams = httpParams.set('windowHours', params.windowHours.toString());
+    }
+    return this.http.get<PosturePageResponse>(
+      `${this.baseUrl}/api/v1/security/posture`,
+      { params: httpParams }
+    ).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/posture/{id}
+   * Retrieves full security posture assessment dossier for a specific endpoint.
+   */
+  getEndpointPosture(id: string, params?: { windowHours?: number }): Observable<EndpointPostureResponse> {
+    let httpParams = new HttpParams();
+    if (params?.windowHours !== undefined) {
+      httpParams = httpParams.set('windowHours', params.windowHours.toString());
+    }
+    return this.http.get<EndpointPostureResponse>(
+      `${this.baseUrl}/api/v1/security/posture/${id}`,
+      { params: httpParams }
+    ).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/posture/summary
+   * Retrieves high-level API security posture summary metrics across services.
+   */
+  getPostureSummary(params?: { service?: string; windowHours?: number }): Observable<PostureSummaryResponse> {
+    let httpParams = new HttpParams();
+    if (params?.service) httpParams = httpParams.set('service', params.service);
+    if (params?.windowHours !== undefined) httpParams = httpParams.set('windowHours', params.windowHours.toString());
+    return this.http.get<PostureSummaryResponse>(
+      `${this.baseUrl}/api/v1/security/posture/summary`,
+      { params: httpParams }
     ).pipe(catchError(this.handleError));
   }
 

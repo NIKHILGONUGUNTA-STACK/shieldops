@@ -33,7 +33,10 @@
             "styles": [
               "src/styles.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "optimization": {
+              "fonts": false
+            }
           },
           "configurations": {
             "production": {
@@ -96,6 +99,9 @@
               "src/styles.css"
             ],
             "scripts": [],
+            "optimization": {
+              "fonts": false
+            },
             "karmaConfig": "karma.conf.js"
           }
         }

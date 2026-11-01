@@ -60,6 +60,11 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'api-posture',
+    loadComponent: () => import('./features/api-posture/api-posture.component').then(m => m.ApiPostureComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'data-access',
     loadComponent: () => import('./features/data-access/data-access.component').then(m => m.DataAccessComponent),
     canActivate: [authGuard]
