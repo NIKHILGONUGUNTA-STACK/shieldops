@@ -308,3 +308,4 @@ The Angular SOC interface (`ApiReconciliationComponent`) features:
   - Forensic investigation drawer opening, closing, and error states
   - Safety attestation card (`CONFIRMED VULNERABILITY: NO`)
   - Contributing factor breakdown and telemetry evidence verification
+
