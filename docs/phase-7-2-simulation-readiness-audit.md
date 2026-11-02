@@ -518,3 +518,12 @@ aegis/
 6. **Step 6: CLI & Automation Harness**:
    Provide a unified CLI command (e.g. `python -m simulation.cli run --scenario all --verify`) with rich terminal reporting.
 
+---
+
+## 9. Implementation Progress & Milestone Tracking
+
+- **Phase 7.2.1 (Completed — 2026-11-02):** Established authoritative FinTech API Contract Baseline in `simulation/specs/customer-service.yaml`, `simulation/specs/account-service.yaml`, and `simulation/specs/transaction-service.yaml` (12 declared operations). Verified 100% pass via `FintechSpecificationBaselineTest` in gateway. Complete documentation in `docs/phase-7-2-1-api-contract-baseline.md`.
+- **Phase 7.2.2 (Pending):** Multi-Customer Synthetic Identity & Keycloak User Provisioning.
+- **Phase 7.2.3 (Pending):** Realistic Traffic & Adversarial Simulation Engine.
+
+
