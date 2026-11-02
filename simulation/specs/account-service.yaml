@@ -1,0 +1,265 @@
+openapi: 3.0.3
+info:
+  title: Account Service API
+  version: 1.0.0
+  description: OpenAPI specification for the FinTech Account microservice exposed via Aegis Gateway.
+tags:
+  - name: Accounts
+    description: Financial account management and balance inquiry operations
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/accounts:
+    get:
+      summary: List accounts
+      description: Retrieves accounts for the authenticated customer or filters by customerId for privileged security analysts.
+      operationId: listAccounts
+      tags:
+        - Accounts
+      parameters:
+        - name: customerId
+          in: query
+          required: false
+          description: Optional customer ID to filter accounts by
+          schema:
+            type: string
+            format: uuid
+            example: 11111111-1111-1111-1111-111111111111
+      responses:
+        '200':
+          description: List of accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccountView'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: Forbidden - Caller does not have permission to view requested accounts
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+  /api/v1/accounts/{accountId}:
+    get:
+      summary: Retrieve account details by ID
+      description: Retrieves account details including nested customer summary. Enforces customer-level ownership checks.
+      operationId: getAccount
+      tags:
+        - Accounts
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          description: Unique account UUID identifier
+          schema:
+            type: string
+            format: uuid
+            example: 22222222-2222-2222-2222-222222222222
+      responses:
+        '200':
+          description: Account details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountView'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: Forbidden - Caller does not own the requested account
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Account not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '502':
+          description: Bad Gateway - Downstream customer service unavailable
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+  /api/v1/accounts/{accountId}/balance:
+    get:
+      summary: Retrieve account balance
+      description: Retrieves real-time balance and currency for a specific account. Enforces account ownership checks.
+      operationId: getAccountBalance
+      tags:
+        - Accounts
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          description: Unique account UUID identifier
+          schema:
+            type: string
+            format: uuid
+            example: 22222222-2222-2222-2222-222222222222
+      responses:
+        '200':
+          description: Account balance details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: Forbidden - Caller does not own the requested account
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Account not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Keycloak JWT access token with CUSTOMER, SECURITY_ANALYST, or SECURITY_ADMIN role
+  schemas:
+    CustomerSummary:
+      type: object
+      required:
+        - id
+        - customerNumber
+        - firstName
+        - lastName
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 11111111-1111-1111-1111-111111111111
+        customerNumber:
+          type: string
+          example: CUST-1001
+        firstName:
+          type: string
+          example: Jane
+        lastName:
+          type: string
+          example: Doe
+        status:
+          type: string
+          example: ACTIVE
+    AccountView:
+      type: object
+      required:
+        - id
+        - accountNumber
+        - customerId
+        - currency
+        - balance
+        - status
+        - openedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 22222222-2222-2222-2222-222222222222
+        accountNumber:
+          type: string
+          example: ACCT-1001
+        customerId:
+          type: string
+          format: uuid
+          example: 11111111-1111-1111-1111-111111111111
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          example: USD
+        balance:
+          type: number
+          format: double
+          example: 12500.5
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - FROZEN
+            - CLOSED
+          example: ACTIVE
+        openedAt:
+          type: string
+          format: date-time
+          example: '2024-01-15T09:30:00Z'
+        customer:
+          $ref: '#/components/schemas/CustomerSummary'
+    Balance:
+      type: object
+      required:
+        - accountId
+        - currency
+        - availableBalance
+        - status
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          example: 22222222-2222-2222-2222-222222222222
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          example: USD
+        availableBalance:
+          type: number
+          format: double
+          example: 12500.5
+        status:
+          type: string
+          example: ACTIVE
+    ProblemDetail:
+      type: object
+      required:
+        - title
+        - status
+      properties:
+        type:
+          type: string
+          format: uri
+          example: about:blank
+        title:
+          type: string
+          example: Not Found
+        status:
+          type: integer
+          example: 404
+        detail:
+          type: string
+          example: Account not found
+        instance:
+          type: string
+          format: uri
+        timestamp:
+          type: string
+          format: date-time
+          example: '2026-11-02T12:00:00Z'
+        errors:
+          type: object
+          additionalProperties:
+            type: string

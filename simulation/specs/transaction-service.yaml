@@ -1,0 +1,504 @@
+openapi: 3.0.3
+info:
+  title: Transaction Service API
+  version: 1.0.0
+  description: OpenAPI specification for the FinTech Transaction microservice exposed via Aegis Gateway, providing beneficiary management and payment transfers.
+tags:
+  - name: Beneficiaries
+    description: Beneficiary creation, listing, and verification operations
+  - name: Transactions
+    description: Transaction history and payment transfer operations
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/beneficiaries:
+    get:
+      summary: List beneficiaries
+      description: Retrieves beneficiaries for the caller or filters by customerId for privileged analysts.
+      operationId: listBeneficiaries
+      tags:
+        - Beneficiaries
+      parameters:
+        - name: customerId
+          in: query
+          required: false
+          description: Optional customer ID filter
+          schema:
+            type: string
+            format: uuid
+            example: 11111111-1111-1111-1111-111111111111
+      responses:
+        '200':
+          description: List of beneficiaries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BeneficiaryView'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: Forbidden - Access to another customer's beneficiaries is forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+    post:
+      summary: Create a new beneficiary
+      description: Registers a new beneficiary for customer payments. Enforces ownership of customerId.
+      operationId: createBeneficiary
+      tags:
+        - Beneficiaries
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBeneficiary'
+      responses:
+        '201':
+          description: Beneficiary successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BeneficiaryView'
+        '400':
+          description: Bad Request - Validation error in beneficiary payload
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: Forbidden - Operation on another customer's resource is forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+  /api/v1/beneficiaries/{beneficiaryId}:
+    get:
+      summary: Retrieve beneficiary by ID
+      description: Retrieves beneficiary details. Enforces customer-level ownership checks.
+      operationId: getBeneficiary
+      tags:
+        - Beneficiaries
+      parameters:
+        - name: beneficiaryId
+          in: path
+          required: true
+          description: Unique beneficiary UUID identifier
+          schema:
+            type: string
+            format: uuid
+            example: 33333333-3333-3333-3333-333333333333
+      responses:
+        '200':
+          description: Beneficiary details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BeneficiaryView'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: Forbidden - Caller does not own the requested beneficiary
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Beneficiary not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+  /api/v1/beneficiaries/{beneficiaryId}/verify:
+    post:
+      summary: Verify a beneficiary
+      description: Verifies an existing beneficiary, transitioning status from PENDING to VERIFIED.
+      operationId: verifyBeneficiary
+      tags:
+        - Beneficiaries
+      parameters:
+        - name: beneficiaryId
+          in: path
+          required: true
+          description: Unique beneficiary UUID identifier
+          schema:
+            type: string
+            format: uuid
+            example: 33333333-3333-3333-3333-333333333333
+      responses:
+        '200':
+          description: Beneficiary verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BeneficiaryView'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: Forbidden - Caller does not own the requested beneficiary
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Beneficiary not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '409':
+          description: Conflict - Beneficiary already verified or cannot be verified
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+  /api/v1/transactions:
+    get:
+      summary: List transaction history
+      description: Retrieves transaction records for the caller or filters by customerId for privileged analysts.
+      operationId: listTransactions
+      tags:
+        - Transactions
+      parameters:
+        - name: customerId
+          in: query
+          required: false
+          description: Optional customer ID filter
+          schema:
+            type: string
+            format: uuid
+            example: 11111111-1111-1111-1111-111111111111
+      responses:
+        '200':
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransactionView'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: Forbidden - Access to another customer's transactions is forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+  /api/v1/transactions/{transactionId}:
+    get:
+      summary: Retrieve transaction details by ID
+      description: Retrieves transaction details. Enforces customer-level ownership checks.
+      operationId: getTransaction
+      tags:
+        - Transactions
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          description: Unique transaction UUID identifier
+          schema:
+            type: string
+            format: uuid
+            example: 44444444-4444-4444-4444-444444444444
+      responses:
+        '200':
+          description: Transaction details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionView'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: Forbidden - Caller does not own the requested transaction
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Transaction not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+  /api/v1/transfers:
+    post:
+      summary: Execute payment transfer
+      description: Executes a financial transfer from a source account to a verified beneficiary with idempotency support.
+      operationId: executeTransfer
+      tags:
+        - Transactions
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: Optional idempotency key to prevent duplicate transfers
+          schema:
+            type: string
+            maxLength: 128
+            example: idem-key-10023-abc
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+      responses:
+        '201':
+          description: Transfer executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionView'
+        '400':
+          description: Bad Request - Validation error in transfer request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: Forbidden - Caller does not own the customer account or lack required role
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '409':
+          description: Conflict - Insufficient funds, unverified beneficiary, or duplicate transfer
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '502':
+          description: Bad Gateway - Downstream account debit service failure
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Keycloak JWT access token with CUSTOMER, SECURITY_ANALYST, or SECURITY_ADMIN role
+  schemas:
+    CreateBeneficiary:
+      type: object
+      required:
+        - customerId
+        - name
+        - destinationAccountReference
+        - currency
+      properties:
+        customerId:
+          type: string
+          format: uuid
+          example: 11111111-1111-1111-1111-111111111111
+        name:
+          type: string
+          maxLength: 80
+          example: Acme Supplies
+        destinationAccountReference:
+          type: string
+          maxLength: 34
+          example: ACCT-2001
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          example: USD
+    BeneficiaryView:
+      type: object
+      required:
+        - id
+        - customerId
+        - name
+        - destinationAccountReference
+        - currency
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 33333333-3333-3333-3333-333333333333
+        customerId:
+          type: string
+          format: uuid
+          example: 11111111-1111-1111-1111-111111111111
+        name:
+          type: string
+          example: Acme Supplies
+        destinationAccountReference:
+          type: string
+          example: ACCT-2001
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          example: USD
+        status:
+          type: string
+          enum:
+            - PENDING
+            - VERIFIED
+            - REVOKED
+          example: VERIFIED
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:00:00Z'
+    TransferRequest:
+      type: object
+      required:
+        - customerId
+        - sourceAccountId
+        - beneficiaryId
+        - amount
+        - currency
+      properties:
+        customerId:
+          type: string
+          format: uuid
+          example: 11111111-1111-1111-1111-111111111111
+        sourceAccountId:
+          type: string
+          format: uuid
+          example: 22222222-2222-2222-2222-222222222222
+        beneficiaryId:
+          type: string
+          format: uuid
+          example: 33333333-3333-3333-3333-333333333333
+        amount:
+          type: number
+          minimum: 0.0001
+          multipleOf: 0.0001
+          example: 250.75
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          example: USD
+        reference:
+          type: string
+          maxLength: 80
+          example: Invoice #1042
+    TransactionView:
+      type: object
+      required:
+        - id
+        - reference
+        - customerId
+        - sourceAccountId
+        - beneficiaryId
+        - amount
+        - currency
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 44444444-4444-4444-4444-444444444444
+        reference:
+          type: string
+          example: TX-7102
+        customerId:
+          type: string
+          format: uuid
+          example: 11111111-1111-1111-1111-111111111111
+        sourceAccountId:
+          type: string
+          format: uuid
+          example: 22222222-2222-2222-2222-222222222222
+        beneficiaryId:
+          type: string
+          format: uuid
+          example: 33333333-3333-3333-3333-333333333333
+        amount:
+          type: number
+          format: double
+          example: 250.75
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          example: USD
+        status:
+          type: string
+          enum:
+            - COMPLETED
+            - FAILED
+            - PENDING
+          example: COMPLETED
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-15T11:00:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2024-01-15T11:00:02Z'
+    ProblemDetail:
+      type: object
+      required:
+        - title
+        - status
+      properties:
+        type:
+          type: string
+          format: uri
+          example: about:blank
+        title:
+          type: string
+          example: Bad Request
+        status:
+          type: integer
+          example: 400
+        detail:
+          type: string
+          example: Validation failed for request content
+        instance:
+          type: string
+          format: uri
+        timestamp:
+          type: string
+          format: date-time
+          example: '2026-11-02T12:00:00Z'
+        errors:
+          type: object
+          additionalProperties:
+            type: string
