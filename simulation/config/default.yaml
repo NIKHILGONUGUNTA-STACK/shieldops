@@ -1,0 +1,24 @@
+# Aegis Simulation Default Configuration
+gateway:
+  base_url: "http://localhost:8000"
+  timeout_seconds: 10.0
+  max_retries: 2
+  allow_synthetic_source_ip: false
+
+keycloak:
+  base_url: "http://localhost:8080"
+  realm: "aegis-dev"
+  client_id: "aegis-local"
+  token_expiry_buffer_seconds: 30
+
+downstream_health:
+  customer_service_url: "http://localhost:8081"
+  account_service_url: "http://localhost:8082"
+  transaction_service_url: "http://localhost:8083"
+
+execution:
+  environment_id: "local-dev"
+  allow_non_local: false
+  max_concurrency: 5
+  default_report_format: "json"
+
