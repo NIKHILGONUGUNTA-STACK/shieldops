@@ -166,3 +166,4 @@ async def test_explicit_correlation_id_preserved(gateway_config):
         assert resp.correlation_id == "custom-cid-12345"
     finally:
         await client.aclose()
+

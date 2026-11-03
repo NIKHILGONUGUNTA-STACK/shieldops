@@ -176,3 +176,4 @@ def get_default_registry() -> ScenarioRegistry:
         registry.register_metadata(meta)
 
     return registry
+

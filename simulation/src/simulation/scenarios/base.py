@@ -84,3 +84,4 @@ class BaseScenario(ABC):
             summary.finished_at = datetime.now(timezone.utc)
 
         return summary
+

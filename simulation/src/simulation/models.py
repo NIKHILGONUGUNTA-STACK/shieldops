@@ -111,3 +111,4 @@ class ScenarioSummary(BaseModel):
         self.status_distribution[result.status_code] = (
             self.status_distribution.get(result.status_code, 0) + 1
         )
+

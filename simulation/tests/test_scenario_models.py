@@ -202,3 +202,4 @@ def test_scenario_reporter_prevents_token_leak():
     with pytest.raises(ValueError) as exc_info:
         reporter.to_json()
     assert "Safety Violation" in str(exc_info.value)
+

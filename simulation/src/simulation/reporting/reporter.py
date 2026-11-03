@@ -90,3 +90,4 @@ class ScenarioReporter:
         """Returns the report as a native dictionary."""
         self.finalize()
         return json.loads(self.to_json())
+
