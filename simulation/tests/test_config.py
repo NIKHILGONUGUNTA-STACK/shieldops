@@ -109,3 +109,4 @@ execution:
     assert config.keycloak.realm == "test-realm"
     assert config.execution.environment_id == "test-env"
     assert config.execution.max_concurrency == 10
+
