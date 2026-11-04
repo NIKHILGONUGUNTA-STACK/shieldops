@@ -217,7 +217,11 @@ class SimulationConfig(BaseModel):
     def get_password(self, username: str) -> str | None:
         """Safely retrieves a password for an identity without logging or exposing it."""
         norm_key = username.lower().replace(".", "_").replace("-", "_")
-        return self.user_passwords.get(norm_key) or self.user_passwords.get(username)
+        pwd = self.user_passwords.get(norm_key) or self.user_passwords.get(username)
+        if not pwd and self.execution.environment_id == "local-dev":
+            # Default local testbed password provisioned in Keycloak aegis-dev realm
+            return "Password123!"
+        return pwd
 
 
 def load_config(

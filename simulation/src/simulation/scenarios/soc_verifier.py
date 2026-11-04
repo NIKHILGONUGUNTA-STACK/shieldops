@@ -192,3 +192,4 @@ class SocTelemetryVerifier:
         )
 
         return result
+

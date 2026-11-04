@@ -7,6 +7,7 @@ scenario listing, and framework diagnostics using Typer and Rich.
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, timezone
 import sys
 import time
 from typing import Optional
