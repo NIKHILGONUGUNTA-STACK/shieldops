@@ -4,8 +4,8 @@ The Aegis Simulation Framework is a modular Python package designed to generate 
 
 ## Status
 
-**Current Milestone:** Phase 7.2.2 — Python Simulation Framework Foundation  
-**Traffic Generation:** Not active (Planned for Phase 7.2.3)
+**Current Milestone:** Phase 7.2.3.1 — First End-to-End Benign FinTech Customer Journey (`SCEN-BENIGN-01`)  
+**Executable Scenarios:** `SCEN-BENIGN-01` (Implemented & Verified); 8 Adversarial Scenarios Planned (Phase 7.2.3.2+)
 
 ---
 
@@ -32,16 +32,19 @@ simulation/
 │   ├── scenarios/
 │   │   ├── __init__.py
 │   │   ├── base.py             # Abstract BaseScenario with lifecycle error trapping
-│   │   └── registry.py         # ScenarioRegistry with 9 planned attack categories
+│   │   ├── registry.py         # ScenarioRegistry with 9 planned attack categories
+│   │   ├── benign_customer_flow.py # SCEN-BENIGN-01 End-to-end customer journey
+│   │   └── soc_verifier.py     # Independent SOC telemetry verification
 │   └── reporting/
 │       ├── __init__.py
 │       └── reporter.py         # Execution reporting with zero-token leak guarantees
-└── tests/                      # 34 comprehensive Pytest unit tests (100% mocked)
+└── tests/                      # 41 comprehensive Pytest unit tests (100% mocked)
     ├── test_config.py          # Configuration loading, validation, and safeguards
     ├── test_auth.py            # Keycloak token acquisition, caching, and refresh
     ├── test_gateway_client.py  # Correlation ID, safe retries, and synthetic IP safety
     ├── test_scenario_models.py # Scenario models, registry, and report redaction
-    └── test_cli.py             # CLI commands, doctor diagnostic, and error exits
+    ├── test_cli.py             # CLI commands, doctor diagnostic, and error exits
+    └── test_benign_customer_flow.py # SCEN-BENIGN-01 execution, dry-run & SOC verifier
 ```
 
 ---
