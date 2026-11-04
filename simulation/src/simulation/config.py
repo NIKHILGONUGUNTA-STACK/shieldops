@@ -134,6 +134,45 @@ class ExecutionConfig(BaseModel):
         default="json",
         description="Default format for simulation reports",
     )
+    soc_verification_timeout_seconds: float = Field(
+        default=10.0,
+        ge=1.0,
+        le=60.0,
+        description="Max polling duration when waiting for async telemetry ingestion in SOC verification",
+    )
+    soc_verification_interval_seconds: float = Field(
+        default=0.5,
+        ge=0.1,
+        le=5.0,
+        description="Polling interval when verifying SOC telemetry",
+    )
+
+
+class BenignScenarioConfig(BaseModel):
+    """Configuration parameters specific to the benign banking journey (SCEN-BENIGN-01)."""
+
+    transfer_amount: float = Field(
+        default=25.0,
+        ge=0.01,
+        le=1000.0,
+        description="Synthetic transfer amount in USD (bounded to prevent account exhaustion)",
+    )
+    transfer_currency: str = Field(
+        default="USD",
+        description="Currency code for the transfer",
+    )
+    destination_account_reference: str = Field(
+        default="ACCT-00020001",
+        description="Sam Taylor's destination account reference",
+    )
+    alex_customer_id: str = Field(
+        default="10000000-0000-4000-8000-000000000001",
+        description="Alex Morgan's expected customer ID",
+    )
+    sam_customer_id: str = Field(
+        default="10000000-0000-4000-8000-000000000002",
+        description="Sam Taylor's expected customer ID",
+    )
 
 
 class SimulationConfig(BaseModel):
@@ -143,6 +182,7 @@ class SimulationConfig(BaseModel):
     keycloak: KeycloakConfig = Field(default_factory=KeycloakConfig)
     downstream_health: DownstreamHealthConfig = Field(default_factory=DownstreamHealthConfig)
     execution: ExecutionConfig = Field(default_factory=ExecutionConfig)
+    benign_flow: BenignScenarioConfig = Field(default_factory=BenignScenarioConfig)
 
     # Dictionary of user credentials loaded securely from environment variables
     # Key: username/alias, Value: password (never serialized or logged)
@@ -233,6 +273,7 @@ def load_config(
     keycloak_dict = yaml_data.get("keycloak", {})
     health_dict = yaml_data.get("downstream_health", {})
     exec_dict = yaml_data.get("execution", {})
+    benign_dict = yaml_data.get("benign_flow", {})
 
     # 2. Apply environment variable overrides
     if env_val := os.getenv("SIMULATION_GATEWAY_BASE_URL"):
@@ -264,6 +305,8 @@ def load_config(
         exec_dict["allow_non_local"] = env_val.lower() in ("true", "1", "yes")
     if env_val := os.getenv("SIMULATION_MAX_CONCURRENCY"):
         exec_dict["max_concurrency"] = int(env_val)
+    if env_val := os.getenv("SIMULATION_TRANSFER_AMOUNT"):
+        benign_dict["transfer_amount"] = float(env_val)
 
     # 3. Collect user passwords from SIMULATION_USER_*_PASSWORD
     passwords: dict[str, str] = {}
@@ -274,11 +317,26 @@ def load_config(
             user_part = k[len(prefix):-len(suffix)].lower()
             passwords[user_part] = v
 
+    # Fallback to dev testbed passwords when running in local-dev testbeds
+    env_id = exec_dict.get("environment_id", "local-dev")
+    if env_id == "local-dev":
+        dev_defaults = {
+            "alex": "Password123!",
+            "alex_morgan": "Password123!",
+            "sam": "Password123!",
+            "sam_taylor": "Password123!",
+            "analyst": "Password123!",
+            "admin": "Password123!",
+        }
+        for u, p in dev_defaults.items():
+            passwords.setdefault(u, p)
+
     return SimulationConfig(
         gateway=GatewayConfig(**gateway_dict),
         keycloak=KeycloakConfig(**keycloak_dict),
         downstream_health=DownstreamHealthConfig(**health_dict),
         execution=ExecutionConfig(**exec_dict),
+        benign_flow=BenignScenarioConfig(**benign_dict),
         user_passwords=passwords,
     )
 

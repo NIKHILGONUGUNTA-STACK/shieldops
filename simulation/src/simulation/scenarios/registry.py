@@ -11,6 +11,7 @@ from simulation.models import (
     ScenarioMetadata,
 )
 from simulation.scenarios.base import BaseScenario
+from simulation.scenarios.benign_customer_flow import BenignCustomerFlow
 
 log = logging.getLogger(__name__)
 
@@ -52,20 +53,22 @@ def get_default_registry() -> ScenarioRegistry:
     """Constructs the standard Aegis scenario registry with all planned scenarios."""
     registry = ScenarioRegistry()
 
-    standard_scenarios = [
-        ScenarioMetadata(
-            id="SCEN-BENIGN-01",
-            name="Legitimate Customer Banking Journey",
-            description="Authenticates as legitimate customer, checks account profile, views balances, and executes verified transfer.",
-            category=ScenarioCategory.BENIGN,
-            target_services=["customer-service", "account-service", "transaction-service"],
-            expected_outcome=ExpectedOutcome(
-                expected_status_codes=[200, 201],
-                expected_detection_rules=[],
-                expected_incident_severity=None,
-            ),
-            is_implemented=False,
+    benign_meta = ScenarioMetadata(
+        id="SCEN-BENIGN-01",
+        name="Legitimate Customer Banking Journey",
+        description="Authenticates as legitimate customer, checks account profile, views balances, and executes verified transfer.",
+        category=ScenarioCategory.BENIGN,
+        target_services=["customer-service", "account-service", "transaction-service"],
+        expected_outcome=ExpectedOutcome(
+            expected_status_codes=[200, 201],
+            expected_detection_rules=[],
+            expected_incident_severity=None,
         ),
+        is_implemented=True,
+    )
+    registry.register_class(BenignCustomerFlow, benign_meta)
+
+    standard_scenarios = [
         ScenarioMetadata(
             id="SCEN-AUTH-01",
             name="Authentication Failure Burst & Credential Probing",

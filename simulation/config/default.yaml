@@ -21,4 +21,12 @@ execution:
   allow_non_local: false
   max_concurrency: 5
   default_report_format: "json"
+  soc_verification_timeout_seconds: 10.0
+  soc_verification_interval_seconds: 0.5
 
+benign_flow:
+  transfer_amount: 25.0
+  transfer_currency: "USD"
+  destination_account_reference: "ACCT-00020001"
+  alex_customer_id: "10000000-0000-4000-8000-000000000001"
+  sam_customer_id: "10000000-0000-4000-8000-000000000002"

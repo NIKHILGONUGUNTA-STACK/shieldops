@@ -74,8 +74,11 @@ def test_default_registry_all_categories_present():
     }
     assert categories == expected_categories
 
-    # In Phase 7.2.2, all scenarios must be marked as not yet implemented
-    assert all(not s.is_implemented for s in scenarios)
+    # SCEN-BENIGN-01 is implemented, other 8 scenarios remain planned
+    benign = registry.get_metadata("SCEN-BENIGN-01")
+    assert benign is not None and benign.is_implemented is True
+    assert registry.get_class("SCEN-BENIGN-01") is not None
+    assert all(not s.is_implemented for s in scenarios if s.id != "SCEN-BENIGN-01")
 
     # Category lookup
     bola_scenarios = registry.list_by_category(ScenarioCategory.BOLA)
