@@ -4,8 +4,8 @@ The Aegis Simulation Framework is a modular Python package designed to generate 
 
 ## Status
 
-**Current Milestone:** Phase 7.2.3.1 — First End-to-End Benign FinTech Customer Journey (`SCEN-BENIGN-01`)  
-**Executable Scenarios:** `SCEN-BENIGN-01` (Implemented & Verified); 8 Adversarial Scenarios Planned (Phase 7.2.3.2+)
+**Current Milestone:** Phase 7.2.3.1.1 — Live Integration Readiness & Correctness Hardening  
+**Executable Scenarios:** `SCEN-BENIGN-01` (Hardened, Implemented & Verified); 8 Adversarial Scenarios Planned (Phase 7.2.3.2+)
 
 ---
 
@@ -38,13 +38,13 @@ simulation/
 │   └── reporting/
 │       ├── __init__.py
 │       └── reporter.py         # Execution reporting with zero-token leak guarantees
-└── tests/                      # 41 comprehensive Pytest unit tests (100% mocked)
-    ├── test_config.py          # Configuration loading, validation, and safeguards
-    ├── test_auth.py            # Keycloak token acquisition, caching, and refresh
-    ├── test_gateway_client.py  # Correlation ID, safe retries, and synthetic IP safety
-    ├── test_scenario_models.py # Scenario models, registry, and report redaction
-    ├── test_cli.py             # CLI commands, doctor diagnostic, and error exits
-    └── test_benign_customer_flow.py # SCEN-BENIGN-01 execution, dry-run & SOC verifier
+└── tests/                      # 46 comprehensive Pytest unit tests (100% mocked)
+    ├── test_config.py          # Configuration loading, validation, and safeguards (8 tests)
+    ├── test_auth.py            # Keycloak token acquisition, caching, and refresh (7 tests)
+    ├── test_gateway_client.py  # Correlation ID, safe retries, and synthetic IP safety (8 tests)
+    ├── test_scenario_models.py # Scenario models, registry, and report redaction (6 tests)
+    ├── test_cli.py             # CLI commands, doctor diagnostic, and error exits (6 tests)
+    └── test_benign_customer_flow.py # SCEN-BENIGN-01 execution, dry-run, SOC verifier & pagination (11 tests)
 ```
 
 ---

@@ -1,8 +1,8 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 7.2.3.1 Complete (First End-to-End Benign FinTech Customer Journey)
+## Current Milestone: Phase 7.2.3.1.1 Complete (Live Integration Readiness & Correctness Hardening)
 
-**Last Updated:** 2026-11-03
+**Last Updated:** 2026-11-05
 **Active Git Branch:** `main`
 **Git Working Tree:** Clean (Ready for Review)
 **Remote Upstream:** `origin/main` (`https://github.com/NIKHILGONUGUNTA-STACK/shieldops.git`)
@@ -63,13 +63,13 @@
 
 | Test Module | Focus Area | Tests Run | Failures | Status |
 | :--- | :--- | :---: | :---: | :--- |
-| `test_config.py` | Pydantic v2 configuration, local-only safeguards, env parsing | 7 | 0 | **SUCCESS** |
+| `test_config.py` | Pydantic v2 configuration, local-only safeguards, env parsing, explicit credentials | 8 | 0 | **SUCCESS** |
 | `test_auth.py` | Keycloak Direct Access Grants, token cache, refresh, masking | 7 | 0 | **SUCCESS** |
 | `test_gateway_client.py` | Async HTTPX, correlation ID, safe retries, IP safety | 8 | 0 | **SUCCESS** |
 | `test_scenario_models.py` | Scenario models, registry categories, reporter redaction | 6 | 0 | **SUCCESS** |
 | `test_cli.py` | Typer CLI commands (version, validate, scenarios, doctor) | 6 | 0 | **SUCCESS** |
-| `test_benign_customer_flow.py` | SCEN-BENIGN-01 journey, dry-run, live execution, transfer, SOC polling, CLI run | 7 | 0 | **SUCCESS** |
-| **Total Python Simulation Tests** | — | **41** | **0** | **BUILD SUCCESS** |
+| `test_benign_customer_flow.py` | SCEN-BENIGN-01 journey, preflight, dry-run invariants, Decimal balance, SOC pagination & outcomes | 11 | 0 | **SUCCESS** |
+| **Total Python Simulation Tests** | — | **46** | **0** | **BUILD SUCCESS** |
 
 ---
 
@@ -404,6 +404,42 @@ All 9 platform services running and healthy via Docker Compose (`infrastructure/
 - [x] **Architecture Documentation:**
   - Comprehensive guide in `docs/phase-7-2-3-1-benign-customer-journey.md`.
   - Updated `simulation/README.md` and `docs/phase-7-2-simulation-readiness-audit.md`.
+
+---
+
+## 13. Phase 7.2.3.1.1 Deliverables Checklist (Live Integration Readiness & Correctness Hardening)
+
+- [x] **Zero Fallback Credentials:**
+  - Removed hardcoded `Password123!` fallback from `SimulationConfig.get_password()`.
+  - Removed dev testbed password dictionary from `load_config()`.
+  - Implemented `SimulationConfig.require_password()`: enforces explicit configuration before any business requests, failing fast with descriptive guidance while strictly preventing credential leakage in logs or exceptions.
+- [x] **Source Account Preflight Invariants & Schema Validation:**
+  - Enforced strict multi-predicate filtering: customer ownership (`customerId == alex_id`), status (`ACTIVE`), currency match (`USD`), and sufficient balance (`balance >= transfer_amount`).
+  - Completely removed fallback that selected arbitrary active accounts.
+  - Validates `GET /api/v1/accounts/{id}` detail response schema and values.
+  - Validates `GET /api/v1/accounts/{id}/balance` response schema (`availableBalance`).
+- [x] **Financial Workflow Precision & Decimal Arithmetic:**
+  - Used `Decimal` arithmetic for all monetary comparisons and decrement calculations, avoiding IEEE-754 floating-point inaccuracies.
+  - Asserted post-transfer balance decreased by exact transfer amount: `post_balance == initial_balance - transfer_amount`.
+  - Verified beneficiary verification status: asserts returned status is `VERIFIED`.
+  - Preserved financial POST retry prohibition.
+- [x] **Genuinely Non-Mutating Dry-Run Mode:**
+  - Prohibits fake resource ID generation in dry-run mode (no synthetic UUIDs).
+  - Skips mutations (`POST /beneficiaries`, `POST /transfers`, `GET /transactions/{fake_id}`).
+  - Emits an explicit list of `planned_mutations` with preflight balance and projected post-transfer balance.
+- [x] **Independent Run Traceability & Run Manifest:**
+  - Implemented `RunManifest` (`models.py`) containing `run_id`, `scenario_id`, `dry_run`, start/end timestamps, identities used, planned mutations, created resources, and per-request trace records.
+  - Added route normalization (`normalize_gateway_route()`) to map wire URLs to declared route templates (e.g. `/api/v1/customers/{id}`).
+  - Added `ScenarioReporter.save_manifest()` with automated assertion verifying absence of bearer tokens and credentials.
+- [x] **SOC Telemetry & Posture Verifier Hardening:**
+  - Distinguishes categorical verification outcomes: `PASS`, `FAIL`, `INCOMPLETE`, and `UNAVAILABLE`.
+  - Fixed correlation ID deduplication to prevent inflated verification counts.
+  - Run-scoped incident attribution: filters incidents by execution window and verifies correlation ID or entity linkage before attributing to the benign run.
+  - Implemented full pagination for `GET /api/v1/security/posture`, inspecting all pages and asserting `confirmedVulnerability == false` across all discovered endpoints.
+- [x] **Targeted Automated Tests:**
+  - 46 Python simulation tests passing in `31.66s` (100% mocked, zero network dependencies).
+  - 4 backend baseline tests passing in `FintechSpecificationBaselineTest.java` (315 total platform tests passing).
+
 
 
 

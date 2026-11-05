@@ -1,11 +1,12 @@
 # Aegis Phase 7.2.3.1 — First End-to-End Benign FinTech Customer Journey (`SCEN-BENIGN-01`)
+## Includes Phase 7.2.3.1.1 — Live Integration Readiness & Correctness Hardening
 
-**Document Version:** 1.0.0  
-**Status:** Completed & Verified  
-**Date:** 2026-11-04  
+**Document Version:** 1.1.0  
+**Status:** Hardened, Completed & Verified  
+**Date:** 2026-11-05  
 **Scenario ID:** `SCEN-BENIGN-01`  
 **Vector Category:** `BENIGN`  
-**Test Suite:** `simulation/tests/test_benign_customer_flow.py` (41 passing Python unit tests total)
+**Test Suite:** `simulation/tests/test_benign_customer_flow.py` (46 passing Python unit tests total)
 
 ---
 
@@ -19,7 +20,12 @@ The scenario exercises the Customer, Account, and Transaction microservices usin
 - **Legitimate Workflows Only:** No adversary payloads, credential stuffing, injection, or BOLA attacks were included.
 - **Microservice Port Isolation:** All business interactions are routed exclusively through the Aegis Gateway (`http://localhost:8000`).
 - **No Direct Database Writes:** All data mutations (beneficiary creation, transfer, balance debit) occur through the published REST APIs.
-- **Offline Mocked Verification:** Verified 100% pass via 41 mocked unit tests. Live container execution is safely gated behind the `--execute` flag and documented as deferred when Docker services are offline.
+- **Zero Fallback Credentials (Phase 7.2.3.1.1):** Hardcoded fallback passwords removed; explicit environment configuration required per identity.
+- **Strict Account Preflight Invariants (Phase 7.2.3.1.1):** Prohibits fallback to arbitrary accounts. Validates customer ownership, active status, currency match, and balance sufficiency using `Decimal` arithmetic.
+- **Genuinely Non-Mutating Dry-Run (Phase 7.2.3.1.1):** Generates zero fake IDs; emits explicit planned mutations list.
+- **Independent Run Traceability (Phase 7.2.3.1.1):** Persists `RunManifest` tracking per-request correlation IDs, normalized routes, and resource identifiers without credential leakage.
+- **SOC Posture Pagination & Categorical Outcomes (Phase 7.2.3.1.1):** Inspects all pages of posture findings, reporting `PASS`, `FAIL`, `INCOMPLETE`, or `UNAVAILABLE`.
+- **Offline Mocked Verification:** Verified 100% pass via 46 mocked unit tests. Live container execution is safely gated behind the `--execute` flag and documented as deferred when Docker services are offline.
 
 ---
 
@@ -156,13 +162,13 @@ python -m simulation.cli run --scenario SCEN-BENIGN-01 --execute
 
 ### Unit Test Execution
 ```
-simulation/tests/test_auth.py .......                                   [ 17%]
-simulation/tests/test_benign_customer_flow.py .......                   [ 34%]
-simulation/tests/test_cli.py ......                                     [ 48%]
-simulation/tests/test_config.py .......                                 [ 65%]
-simulation/tests/test_gateway_client.py ........                        [ 85%]
+simulation/tests/test_auth.py .......                                   [ 15%]
+simulation/tests/test_benign_customer_flow.py ...........               [ 39%]
+simulation/tests/test_cli.py ......                                     [ 52%]
+simulation/tests/test_config.py ........                                [ 69%]
+simulation/tests/test_gateway_client.py ........                        [ 86%]
 simulation/tests/test_scenario_models.py ......                         [100%]
-============================== 41 passed in 15.50s =============================
+============================== 46 passed in 31.66s =============================
 ```
 
 ### Live Testbed Status
