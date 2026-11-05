@@ -201,15 +201,26 @@ def run_cmd(
 
     console.print(table)
 
+    # 5.1 If dry-run, display Planned Mutations table
+    if dry_run and summary.run_manifest and summary.run_manifest.planned_mutations:
+        mut_table = Table(title="Planned Mutations (Dry-Run Preflight Only)", header_style="bold yellow")
+        mut_table.add_column("Action", style="bold white", width=22)
+        mut_table.add_column("Details", style="cyan")
+        for mut in summary.run_manifest.planned_mutations:
+            action = mut.get("action", "MUTATION")
+            details = ", ".join(f"{k}={v}" for k, v in mut.items() if k != "action")
+            mut_table.add_row(action, details)
+        console.print(mut_table)
+
     # 6. Render SOC Verification Table if executed
     if soc_result:
         soc_table = Table(title="Aegis SOC Telemetry Verification", header_style="bold magenta")
         soc_table.add_column("Assertion", style="bold white", width=34)
-        soc_table.add_column("Outcome", width=14)
+        soc_table.add_column("Outcome", width=16)
         soc_table.add_column("Details", style="dim")
 
         # Telemetry ingestion
-        telemetry_ok = soc_result.events_verified == soc_result.total_expected_events
+        telemetry_ok = soc_result.events_verified == soc_result.total_expected_events and soc_result.total_expected_events > 0
         soc_table.add_row(
             "Gateway Wire Telemetry Ingested",
             "[bold green][OK] PASS[/bold green]" if telemetry_ok else "[bold red][FAIL] FAIL[/bold red]",
@@ -224,24 +235,39 @@ def run_cmd(
             f"{soc_result.new_incidents_count} unexpected incident(s) flagged",
         )
 
-        # Posture safety invariant
-        posture_ok = soc_result.posture_confirmed_vulnerability_false
+        # Posture safety invariant and pagination
+        posture_ok = soc_result.posture_confirmed_vulnerability_false and soc_result.posture_verified
         soc_table.add_row(
             "Posture Invariant (confirmedVuln=false)",
             "[bold green][OK] PASS[/bold green]" if posture_ok else "[bold red][FAIL] FAIL[/bold red]",
-            "Advisory mode verified across endpoints",
+            f"{soc_result.endpoints_inspected_count} endpoints inspected across all pages",
+        )
+
+        # Overall Categorical Outcome
+        outcome_color = {
+            "PASS": "bold green",
+            "FAIL": "bold red",
+            "INCOMPLETE": "bold yellow",
+            "UNAVAILABLE": "bold cyan",
+        }.get(soc_result.outcome.value, "white")
+        soc_table.add_row(
+            "Overall Verification Outcome",
+            f"[{outcome_color}][{soc_result.outcome.value}][/{outcome_color}]",
+            ", ".join(soc_result.diagnostics) if soc_result.diagnostics else "All SOC assertions verified",
         )
 
         console.print(soc_table)
 
-    # 7. Write Report if requested
+    # 7. Write Trace Manifest and Run Report
     reporter = ScenarioReporter(environment_id=config.execution.environment_id)
     reporter.record_scenario(summary)
-    if output_file:
-        report_json = reporter.to_json(indent=2)
-        with open(output_file, "w", encoding="utf-8") as f:
-            f.write(report_json)
-        console.print(f"[dim]Run report saved to {output_file}[/dim]")
+    
+    # Save manifest
+    if summary.run_manifest:
+        ts_slug = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+        target_path = output_file or f"simulation/reports/run-{ts_slug}-{metadata.id.lower()}.json"
+        saved_file = ScenarioReporter.save_manifest(summary.run_manifest, target_path)
+        console.print(f"[dim]Run trace manifest saved to {saved_file}[/dim]")
 
     if summary.status.value != "SUCCESS":
         raise typer.Exit(code=1)

@@ -1,6 +1,7 @@
 """Comprehensive mocked unit tests for SCEN-BENIGN-01 End-to-End Customer Journey."""
 
 from datetime import datetime, timezone
+from decimal import Decimal
 import httpx
 import pytest
 import respx
@@ -13,7 +14,7 @@ from simulation.config import SimulationConfig
 from simulation.models import ExecutionStatus
 from simulation.scenarios.benign_customer_flow import BenignCustomerFlow
 from simulation.scenarios.registry import get_default_registry
-from simulation.scenarios.soc_verifier import SocTelemetryVerifier
+from simulation.scenarios.soc_verifier import SocTelemetryVerifier, VerificationOutcome
 
 
 @pytest.fixture
@@ -28,6 +29,11 @@ def mock_config():
             "alex_customer_id": "10000000-0000-4000-8000-000000000001",
             "sam_customer_id": "10000000-0000-4000-8000-000000000002",
             "destination_account_reference": "ACCT-00020001",
+        },
+        user_passwords={
+            "alex_morgan": "secret-alex",
+            "sam_taylor": "secret-sam",
+            "analyst": "secret-analyst",
         },
     )
 
@@ -51,7 +57,7 @@ def setup_mock_keycloak(respx_mock):
     )
 
 
-def setup_mock_gateway_endpoints(respx_mock, existing_beneficiaries=None):
+def setup_mock_gateway_endpoints(respx_mock, existing_beneficiaries=None, initial_balance=12500.0, post_balance=12475.0):
     """Mocks all business API endpoints invoked during SCEN-BENIGN-01."""
     alex_id = "10000000-0000-4000-8000-000000000001"
     sam_id = "10000000-0000-4000-8000-000000000002"
@@ -73,17 +79,25 @@ def setup_mock_gateway_endpoints(respx_mock, existing_beneficiaries=None):
         side_effect=lambda request: httpx.Response(
             200,
             json=(
-                [{"id": acct1_id, "accountNumber": "ACCT-00010001", "currency": "USD", "balance": 12500.0, "status": "ACTIVE"}]
+                [{"id": acct1_id, "customerId": alex_id, "accountNumber": "ACCT-00010001", "currency": "USD", "balance": initial_balance, "status": "ACTIVE"}]
                 if "Bearer jwt-alex-token" in request.headers.get("Authorization", "")
-                else [{"id": sam_acct_id, "accountNumber": "ACCT-00020001", "currency": "GBP", "balance": 5300.25, "status": "ACTIVE"}]
+                else [{"id": sam_acct_id, "customerId": sam_id, "accountNumber": "ACCT-00020001", "currency": "GBP", "balance": 5300.25, "status": "ACTIVE"}]
             ),
         )
     )
     respx_mock.get(f"http://localhost:8000/api/v1/accounts/{acct1_id}").mock(
-        return_value=httpx.Response(200, json={"id": acct1_id, "accountNumber": "ACCT-00010001", "currency": "USD", "balance": 12500.0, "status": "ACTIVE"})
+        return_value=httpx.Response(200, json={"id": acct1_id, "customerId": alex_id, "accountNumber": "ACCT-00010001", "currency": "USD", "balance": initial_balance, "status": "ACTIVE"})
     )
+
+    bal_call_count = 0
+    def balance_side_effect(request):
+        nonlocal bal_call_count
+        bal_call_count += 1
+        curr = initial_balance if bal_call_count <= 1 else post_balance
+        return httpx.Response(200, json={"accountId": acct1_id, "currency": "USD", "availableBalance": curr, "status": "ACTIVE"})
+
     respx_mock.get(f"http://localhost:8000/api/v1/accounts/{acct1_id}/balance").mock(
-        return_value=httpx.Response(200, json={"accountId": acct1_id, "currency": "USD", "availableBalance": 12500.0, "status": "ACTIVE"})
+        side_effect=balance_side_effect
     )
 
     # Step C: Beneficiaries
@@ -92,7 +106,7 @@ def setup_mock_gateway_endpoints(respx_mock, existing_beneficiaries=None):
         return_value=httpx.Response(200, json=bens)
     )
     respx_mock.post("http://localhost:8000/api/v1/beneficiaries").mock(
-        return_value=httpx.Response(201, json={"id": ben_id, "name": "Sam Taylor", "destinationAccountReference": "ACCT-00020001", "currency": "USD", "status": "PENDING"})
+        return_value=httpx.Response(201, json={"id": ben_id, "customerId": alex_id, "name": "Sam Taylor", "destinationAccountReference": "ACCT-00020001", "currency": "USD", "status": "PENDING"})
     )
     respx_mock.post(f"http://localhost:8000/api/v1/beneficiaries/{ben_id}/verify").mock(
         return_value=httpx.Response(200, json={"id": ben_id, "status": "VERIFIED"})
@@ -100,15 +114,23 @@ def setup_mock_gateway_endpoints(respx_mock, existing_beneficiaries=None):
 
     # Step D: Transfers
     respx_mock.post("http://localhost:8000/api/v1/transfers").mock(
-        return_value=httpx.Response(201, json={"id": tx_id, "status": "COMPLETED", "amount": 25.0, "currency": "USD"})
+        return_value=httpx.Response(200, json={
+            "id": tx_id,
+            "customerId": alex_id,
+            "sourceAccountId": acct1_id,
+            "beneficiaryId": ben_id if not existing_beneficiaries else existing_beneficiaries[0]["id"],
+            "amount": 25.0,
+            "currency": "USD",
+            "status": "COMPLETED",
+        })
     )
 
     # Step E: Transactions
     respx_mock.get("http://localhost:8000/api/v1/transactions").mock(
-        return_value=httpx.Response(200, json=[{"id": tx_id, "status": "COMPLETED", "amount": 25.0}])
+        return_value=httpx.Response(200, json=[{"id": tx_id, "status": "COMPLETED", "amount": 25.0, "currency": "USD"}])
     )
     respx_mock.get(f"http://localhost:8000/api/v1/transactions/{tx_id}").mock(
-        return_value=httpx.Response(200, json={"id": tx_id, "status": "COMPLETED", "amount": 25.0})
+        return_value=httpx.Response(200, json={"id": tx_id, "status": "COMPLETED", "amount": 25.0, "currency": "USD"})
     )
 
     # Step F: Sam's profile & balance
@@ -143,6 +165,14 @@ async def test_benign_flow_dry_run_success(mock_config):
     transfer_calls = [c for c in respx.calls if c.request.url.path == "/api/v1/transfers"]
     assert len(transfer_calls) == 0
 
+    # Assert planned mutations were captured in manifest
+    assert summary.run_manifest is not None
+    assert summary.run_manifest.dry_run is True
+    assert len(summary.run_manifest.planned_mutations) >= 1
+    transfer_plan = next(m for m in summary.run_manifest.planned_mutations if m["action"] == "EXECUTE_TRANSFER")
+    assert transfer_plan["amount"] == "25.0"
+    assert transfer_plan["projectedPostBalance"] == "12475.0"
+
 
 @pytest.mark.asyncio
 @respx.mock
@@ -162,6 +192,7 @@ async def test_benign_flow_live_execute_success(mock_config):
     assert summary.failed_requests == 0
     assert "transaction_id" in flow.created_resources
     assert flow.created_resources["transaction_status"] == "COMPLETED"
+    assert flow.created_resources["post_balance"] == "12475.0"
 
     # Verify POST to transfers occurred with Idempotency-Key
     tx_calls = [c for c in respx.calls if c.request.url.path == "/api/v1/transfers"]
@@ -171,10 +202,87 @@ async def test_benign_flow_live_execute_success(mock_config):
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_missing_credentials_fails_before_gateway_requests(mock_config):
+    # Set empty credentials
+    empty_config = SimulationConfig(
+        gateway={"base_url": "http://localhost:8000"},
+        keycloak={"base_url": "http://localhost:8080"},
+        benign_flow=mock_config.benign_flow.model_dump(),
+        user_passwords={},  # No credentials
+    )
+
+    meta = get_default_registry().get_metadata("SCEN-BENIGN-01")
+    flow = BenignCustomerFlow(meta, empty_config, dry_run=True)
+
+    async with GatewayClient(empty_config.gateway) as gateway:
+        async with KeycloakAuthManager(empty_config.keycloak) as auth:
+            summary = await flow.run(gateway, auth)
+
+    assert summary.status == ExecutionStatus.FAILURE
+    assert any("Missing credentials for identity 'alex.morgan'" in err for err in summary.execution_errors)
+    # Ensure zero HTTP requests were dispatched
+    assert len(respx.calls) == 0
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_insufficient_or_ineligible_account_fails_fast_without_mutations(mock_config):
+    setup_mock_keycloak(respx)
+    alex_id = mock_config.benign_flow.alex_customer_id
+
+    # Return only an inactive or EUR account, or balance < 25.0
+    respx.get(f"http://localhost:8000/api/v1/customers/{alex_id}").mock(
+        return_value=httpx.Response(200, json={"id": alex_id, "status": "ACTIVE"})
+    )
+    respx.get(f"http://localhost:8000/api/v1/customers/{alex_id}/profile").mock(
+        return_value=httpx.Response(200, json={"id": alex_id, "status": "ACTIVE"})
+    )
+    respx.get("http://localhost:8000/api/v1/accounts").mock(
+        return_value=httpx.Response(200, json=[
+            {"id": "20000000-0000-4000-8000-000000000001", "customerId": alex_id, "currency": "USD", "balance": 5.0, "status": "ACTIVE"},
+            {"id": "20000000-0000-4000-8000-000000000002", "customerId": alex_id, "currency": "EUR", "balance": 1000.0, "status": "ACTIVE"},
+            {"id": "20000000-0000-4000-8000-000000000003", "customerId": alex_id, "currency": "USD", "balance": 500.0, "status": "FROZEN"},
+        ])
+    )
+
+    meta = get_default_registry().get_metadata("SCEN-BENIGN-01")
+    flow = BenignCustomerFlow(meta, mock_config, dry_run=False)
+
+    async with GatewayClient(mock_config.gateway) as gateway:
+        async with KeycloakAuthManager(mock_config.keycloak) as auth:
+            summary = await flow.run(gateway, auth)
+
+    assert summary.status == ExecutionStatus.FAILURE
+    assert any("No eligible source account found" in err for err in summary.execution_errors)
+    # Verify no beneficiary or transfer mutations were attempted
+    assert not any(c.request.url.path in ("/api/v1/beneficiaries", "/api/v1/transfers") for c in respx.calls)
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_post_transfer_balance_mismatch_raises_error(mock_config):
+    setup_mock_keycloak(respx)
+    # Simulate post-transfer balance not reflecting debit (e.g. 12500.0 instead of 12475.0)
+    setup_mock_gateway_endpoints(respx, initial_balance=12500.0, post_balance=12500.0)
+
+    meta = get_default_registry().get_metadata("SCEN-BENIGN-01")
+    flow = BenignCustomerFlow(meta, mock_config, dry_run=False)
+
+    async with GatewayClient(mock_config.gateway) as gateway:
+        async with KeycloakAuthManager(mock_config.keycloak) as auth:
+            summary = await flow.run(gateway, auth)
+
+    assert summary.status == ExecutionStatus.FAILURE
+    assert any("Post-transfer balance mismatch" in err for err in summary.execution_errors)
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_benign_flow_reuses_existing_verified_beneficiary(mock_config):
     setup_mock_keycloak(respx)
     existing_bens = [{
         "id": "30000000-0000-4000-8000-000000000099",
+        "customerId": mock_config.benign_flow.alex_customer_id,
         "name": "Sam Taylor",
         "destinationAccountReference": "ACCT-00020001",
         "currency": "USD",
@@ -225,34 +333,97 @@ async def test_token_separation_alex_and_sam(mock_config):
 async def test_soc_verifier_success(mock_config):
     setup_mock_keycloak(respx)
 
-    # Mock SOC endpoints
+    # Mock SOC endpoints with full posture pagination
     respx.get("http://localhost:8000/api/v1/security/events").mock(
         return_value=httpx.Response(200, json={"totalElements": 1, "content": [{"correlationId": "cid-123"}]})
     )
     respx.get("http://localhost:8000/api/v1/security/incidents").mock(
         return_value=httpx.Response(200, json={"totalElements": 0, "content": []})
     )
-    respx.get("http://localhost:8000/api/v1/security/reconciliation").mock(
-        return_value=httpx.Response(200, json={"summary": {"matchedCount": 5, "coveragePercentage": 100.0}})
+    respx.get("http://localhost:8000/api/v1/security/reconciliation/summary").mock(
+        return_value=httpx.Response(200, json={"matchedCount": 5, "coveragePercentage": 100.0})
     )
     respx.get("http://localhost:8000/api/v1/security/posture").mock(
-        return_value=httpx.Response(200, json={"content": [{"normalizedRoute": "/api/v1/customers/{customerId}", "confirmedVulnerability": False}]})
+        return_value=httpx.Response(200, json={
+            "totalElements": 1,
+            "totalPages": 1,
+            "hasNext": False,
+            "content": [{"normalizedRoute": "/api/v1/customers/{customerId}", "confirmedVulnerability": False}],
+        })
     )
 
     async with GatewayClient(mock_config.gateway) as gateway:
         async with KeycloakAuthManager(mock_config.keycloak) as auth:
             verifier = SocTelemetryVerifier(mock_config, gateway, auth)
             result = await verifier.verify_benign_run(
-                correlation_ids=["cid-123"],
+                correlation_ids=["cid-123", "cid-123"],  # Duplicate CID to test deduplication
                 start_time=datetime(2026, 11, 4, 10, 0, 0, tzinfo=timezone.utc),
                 end_time=datetime(2026, 11, 4, 10, 5, 0, tzinfo=timezone.utc),
                 run_id="run-test-1",
             )
 
+    assert result.outcome == VerificationOutcome.PASS
     assert result.verification_passed is True
     assert result.events_verified == 1
+    assert result.total_expected_events == 1
     assert result.new_incidents_count == 0
+    assert result.endpoints_inspected_count == 1
     assert result.posture_confirmed_vulnerability_false is True
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_soc_verifier_distinguishes_unavailable_and_incomplete(mock_config):
+    setup_mock_keycloak(respx)
+
+    # Telemetry times out -> INCOMPLETE
+    respx.get("http://localhost:8000/api/v1/security/events").mock(
+        return_value=httpx.Response(200, json={"totalElements": 0, "content": []})
+    )
+    respx.get("http://localhost:8000/api/v1/security/incidents").mock(
+        return_value=httpx.Response(200, json={"totalElements": 0, "content": []})
+    )
+    respx.get("http://localhost:8000/api/v1/security/reconciliation/summary").mock(
+        return_value=httpx.Response(200, json={})
+    )
+    respx.get("http://localhost:8000/api/v1/security/posture").mock(
+        return_value=httpx.Response(200, json={"totalElements": 0, "hasNext": False, "content": []})
+    )
+
+    async with GatewayClient(mock_config.gateway) as gateway:
+        async with KeycloakAuthManager(mock_config.keycloak) as auth:
+            verifier = SocTelemetryVerifier(mock_config, gateway, auth)
+            result = await verifier.verify_benign_run(
+                correlation_ids=["cid-missing"],
+                start_time=datetime(2026, 11, 4, 10, 0, 0, tzinfo=timezone.utc),
+                end_time=datetime(2026, 11, 4, 10, 5, 0, tzinfo=timezone.utc),
+                run_id="run-test-incomplete",
+            )
+
+    assert result.outcome == VerificationOutcome.INCOMPLETE
+    assert result.verification_passed is False
+    assert "cid-missing" in result.missing_correlation_ids
+
+    # Unconfigured analyst -> UNAVAILABLE
+    no_analyst_cfg = SimulationConfig(
+        gateway=mock_config.gateway.model_dump(),
+        keycloak=mock_config.keycloak.model_dump(),
+        execution=mock_config.execution.model_dump(),
+        benign_flow=mock_config.benign_flow.model_dump(),
+        user_passwords={},  # No analyst password
+    )
+    async with GatewayClient(no_analyst_cfg.gateway) as gateway:
+        async with KeycloakAuthManager(no_analyst_cfg.keycloak) as auth:
+            verifier2 = SocTelemetryVerifier(no_analyst_cfg, gateway, auth)
+            result2 = await verifier2.verify_benign_run(
+                correlation_ids=["cid-any"],
+                start_time=datetime(2026, 11, 4, 10, 0, 0, tzinfo=timezone.utc),
+                end_time=datetime(2026, 11, 4, 10, 5, 0, tzinfo=timezone.utc),
+                run_id="run-test-unavail",
+            )
+
+    assert result2.outcome == VerificationOutcome.UNAVAILABLE
+    assert result2.verification_passed is False
 
 
 @pytest.mark.asyncio
@@ -263,7 +434,7 @@ async def test_soc_verifier_flags_unexpected_incident(mock_config):
     respx.get("http://localhost:8000/api/v1/security/events").mock(
         return_value=httpx.Response(200, json={"totalElements": 1, "content": [{"correlationId": "cid-456"}]})
     )
-    # Incident matching Alex Morgan's customer ID
+    # Incident matching Alex Morgan's customer ID and run correlation ID
     respx.get("http://localhost:8000/api/v1/security/incidents").mock(
         return_value=httpx.Response(200, json={
             "totalElements": 1,
@@ -271,14 +442,15 @@ async def test_soc_verifier_flags_unexpected_incident(mock_config):
                 "id": "inc-1",
                 "ruleId": "RULE-BOLA-01",
                 "targetEntityValue": mock_config.benign_flow.alex_customer_id,
+                "correlationId": "cid-456",
             }],
         })
     )
-    respx.get("http://localhost:8000/api/v1/security/reconciliation").mock(
+    respx.get("http://localhost:8000/api/v1/security/reconciliation/summary").mock(
         return_value=httpx.Response(200, json={"summary": {}})
     )
     respx.get("http://localhost:8000/api/v1/security/posture").mock(
-        return_value=httpx.Response(200, json={"content": []})
+        return_value=httpx.Response(200, json={"totalElements": 0, "hasNext": False, "content": []})
     )
 
     async with GatewayClient(mock_config.gateway) as gateway:
@@ -291,12 +463,15 @@ async def test_soc_verifier_flags_unexpected_incident(mock_config):
                 run_id="run-test-2",
             )
 
+    assert result.outcome == VerificationOutcome.FAIL
     assert result.verification_passed is False
     assert result.new_incidents_count == 1
     assert "RULE-BOLA-01" in str(result.diagnostics)
 
 
-def test_cli_run_dry_run_command():
+def test_cli_run_dry_run_command(monkeypatch):
+    monkeypatch.setenv("SIMULATION_USER_ALEX_MORGAN_PASSWORD", "secret-alex")
+    monkeypatch.setenv("SIMULATION_USER_SAM_TAYLOR_PASSWORD", "secret-sam")
     runner = CliRunner(env={"COLUMNS": "160"})
     with respx.mock(assert_all_called=False) as respx_mock:
         setup_mock_keycloak(respx_mock)
@@ -308,4 +483,4 @@ def test_cli_run_dry_run_command():
         assert "Execution Results: SCEN-BENIGN-01" in result.stdout
         assert "SUCCESS" in result.stdout
         assert "SKIPPED_DRY_RUN" in result.stdout
-
+        assert "Planned Mutations" in result.stdout

@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 from simulation.models import (
     ExecutionStatus,
+    RunManifest,
     ScenarioSummary,
 )
 
@@ -35,6 +36,7 @@ class SimulationRunReport(BaseModel):
     total_failed_requests: int = 0
     overall_status_distribution: dict[int, int] = Field(default_factory=dict)
     scenarios: list[ScenarioSummary] = Field(default_factory=list)
+    manifests: list[RunManifest] = Field(default_factory=list)
 
 
 class ScenarioReporter:
@@ -46,6 +48,8 @@ class ScenarioReporter:
     def record_scenario(self, summary: ScenarioSummary) -> None:
         """Appends a scenario summary and updates run aggregates."""
         self.report.scenarios.append(summary)
+        if summary.run_manifest:
+            self.report.manifests.append(summary.run_manifest)
         self.report.total_scenarios += 1
 
         if summary.status == ExecutionStatus.SUCCESS:
@@ -85,6 +89,23 @@ class ScenarioReporter:
                 )
 
         return raw_json
+
+    @staticmethod
+    def save_manifest(manifest: RunManifest, output_path: str) -> str:
+        """Serializes and saves a RunManifest to disk with strict safety assertions."""
+        from pathlib import Path
+        raw_json = manifest.model_dump_json(indent=2)
+        forbidden_markers = ["bearer ", "eyjh", "password", "client_secret"]
+        lower_json = raw_json.lower()
+        for marker in forbidden_markers:
+            if marker in lower_json:
+                raise ValueError(
+                    f"Safety Violation: Manifest serialization contains forbidden sensitive marker '{marker}'"
+                )
+        path = Path(output_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(raw_json, encoding="utf-8")
+        return str(path)
 
     def to_dict(self) -> dict[str, Any]:
         """Returns the report as a native dictionary."""

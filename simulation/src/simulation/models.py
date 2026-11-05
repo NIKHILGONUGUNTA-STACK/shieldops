@@ -66,6 +66,23 @@ class ScenarioMetadata(BaseModel):
     is_implemented: bool = Field(default=False, description="Whether the executable scenario is implemented")
 
 
+import re
+
+def normalize_gateway_route(url_or_path: str) -> str:
+    """Normalizes a gateway request URL/path to standard Aegis API route template."""
+    # Extract path portion from URL if full URL is given
+    path = url_or_path
+    if "://" in path:
+        path = "/" + path.split("://", 1)[1].split("/", 1)[-1]
+    # Remove query string
+    path = path.split("?")[0]
+
+    # Replace UUIDs with {id}
+    uuid_pattern = r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+    normalized = re.sub(uuid_pattern, "{id}", path)
+    return normalized
+
+
 class RequestResult(BaseModel):
     """Sanitized record of an individual request executed during a scenario.
 
@@ -79,8 +96,33 @@ class RequestResult(BaseModel):
     status_code: int
     duration_ms: float
     is_success: bool
+    identity_label: str = "unknown"
+    normalized_route: str = ""
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     error_message: str | None = None
+
+
+class RunManifest(BaseModel):
+    """Independently traceable record of a simulation scenario run.
+    
+    Contains execution parameters, planned mutations, created resources,
+    and sanitized per-request traces with strict exclusion of credentials and sensitive payloads.
+    """
+
+    run_id: str
+    scenario_id: str
+    dry_run: bool
+    started_at: datetime
+    finished_at: datetime | None = None
+    execution_outcome: str
+    identities_used: list[str] = Field(default_factory=list)
+    created_resources: dict[str, str] = Field(default_factory=dict)
+    planned_mutations: list[dict[str, Any]] = Field(default_factory=list)
+    total_requests: int = 0
+    successful_requests: int = 0
+    failed_requests: int = 0
+    status_distribution: dict[int, int] = Field(default_factory=dict)
+    requests: list[RequestResult] = Field(default_factory=list)
 
 
 class ScenarioSummary(BaseModel):
@@ -89,6 +131,7 @@ class ScenarioSummary(BaseModel):
     scenario_id: str
     category: ScenarioCategory
     status: ExecutionStatus
+    run_id: str | None = None
     started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     finished_at: datetime | None = None
     total_requests: int = 0
@@ -98,6 +141,7 @@ class ScenarioSummary(BaseModel):
     expected_detection_rules: list[str] = Field(default_factory=list)
     execution_errors: list[str] = Field(default_factory=list)
     request_results: list[RequestResult] = Field(default_factory=list, exclude=True)
+    run_manifest: RunManifest | None = Field(default=None, exclude=True)
 
     def record_request(self, result: RequestResult) -> None:
         """Records a request result and updates aggregates."""
