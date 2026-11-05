@@ -81,9 +81,27 @@ def test_env_var_overrides(monkeypatch):
 
     # Password extraction
     assert config.get_password("alex") == "secret123"
+    assert config.get_password("alex.morgan") == "secret123"
+    assert config.get_password("alex_morgan") == "secret123"
+    assert config.require_password("alex.morgan") == "secret123"
     # Passwords should be excluded from standard model dump
     dump = config.model_dump()
     assert "user_passwords" not in dump
+
+
+def test_password_requires_explicit_configuration_and_no_fallback():
+    config = SimulationConfig()
+    # No fallback to Password123! even in local-dev
+    assert config.get_password("alex.morgan") is None
+    assert config.get_password("sam.taylor") is None
+    assert config.get_password("analyst") is None
+
+    with pytest.raises(ValueError) as exc:
+        config.require_password("alex.morgan")
+    assert "Missing credentials for identity 'alex.morgan'" in str(exc.value)
+    assert "SIMULATION_USER_ALEX_MORGAN_PASSWORD" in str(exc.value)
+    # Ensure no credentials/passwords leaked in error
+    assert "Password123!" not in str(exc.value)
 
 
 def test_yaml_config_loading(tmp_path: Path):

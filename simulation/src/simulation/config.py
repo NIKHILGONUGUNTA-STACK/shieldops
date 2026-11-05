@@ -215,12 +215,35 @@ class SimulationConfig(BaseModel):
         return self
 
     def get_password(self, username: str) -> str | None:
-        """Safely retrieves a password for an identity without logging or exposing it."""
+        """Safely retrieves a configured password for an identity without logging or exposing it.
+        
+        Strict Invariant:
+        Returns None if credentials were not explicitly provided in environment or configuration.
+        Never falls back to hardcoded passwords.
+        """
         norm_key = username.lower().replace(".", "_").replace("-", "_")
-        pwd = self.user_passwords.get(norm_key) or self.user_passwords.get(username)
-        if not pwd and self.execution.environment_id == "local-dev":
-            # Default local testbed password provisioned in Keycloak aegis-dev realm
-            return "Password123!"
+        first_part = norm_key.split("_")[0]
+        return (
+            self.user_passwords.get(norm_key)
+            or self.user_passwords.get(username.lower())
+            or self.user_passwords.get(first_part)
+        )
+
+    def require_password(self, username: str) -> str:
+        """Retrieves an explicitly configured password or raises a descriptive error before business execution.
+        
+        Invariant:
+        Fails fast if credentials are not configured.
+        Never logs, echoes, or formats credentials into exceptions.
+        """
+        pwd = self.get_password(username)
+        if not pwd:
+            norm = username.lower().replace(".", "_").replace("-", "_")
+            raise ValueError(
+                f"Missing credentials for identity '{username}'. "
+                f"Credentials must be explicitly provided via SIMULATION_USER_{norm.upper()}_PASSWORD "
+                f"in environment variables or .env file."
+            )
         return pwd
 
 
@@ -320,20 +343,6 @@ def load_config(
         if k.startswith(prefix) and k.endswith(suffix) and len(k) > len(prefix) + len(suffix):
             user_part = k[len(prefix):-len(suffix)].lower()
             passwords[user_part] = v
-
-    # Fallback to dev testbed passwords when running in local-dev testbeds
-    env_id = exec_dict.get("environment_id", "local-dev")
-    if env_id == "local-dev":
-        dev_defaults = {
-            "alex": "Password123!",
-            "alex_morgan": "Password123!",
-            "sam": "Password123!",
-            "sam_taylor": "Password123!",
-            "analyst": "Password123!",
-            "admin": "Password123!",
-        }
-        for u, p in dev_defaults.items():
-            passwords.setdefault(u, p)
 
     return SimulationConfig(
         gateway=GatewayConfig(**gateway_dict),
