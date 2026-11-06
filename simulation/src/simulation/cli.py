@@ -196,6 +196,9 @@ def run_cmd(
     table.add_row("Failed Requests", str(summary.failed_requests))
     table.add_row("Status Codes", ", ".join(f"{code}: {cnt}" for code, cnt in summary.status_distribution.items()) or "none")
 
+    if summary.execution_errors:
+        table.add_row("Execution Errors", f"[bold red]{'; '.join(summary.execution_errors)}[/bold red]")
+
     for k, v in created_resources.items():
         table.add_row(f"Resource ({k})", str(v))
 

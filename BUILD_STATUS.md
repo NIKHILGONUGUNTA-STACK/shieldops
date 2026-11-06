@@ -1,8 +1,8 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 7.2.3.1.1 Complete (Live Integration Readiness & Correctness Hardening)
+## Current Milestone: Phase 7.2.3.2 Complete (Live Testbed Bring-up & Controlled Integration Readiness)
 
-**Last Updated:** 2026-11-05
+**Last Updated:** 2026-11-06
 **Active Git Branch:** `main`
 **Git Working Tree:** Clean (Ready for Review)
 **Remote Upstream:** `origin/main` (`https://github.com/NIKHILGONUGUNTA-STACK/shieldops.git`)
@@ -73,21 +73,30 @@
 
 ---
 
-## 2. Containerized Runtime Environment Status
+## 2. Containerized Runtime Environment & Live Integration Status
 
-All 9 platform services running and healthy via Docker Compose (`infrastructure/docker/compose.yml`) with `config/dev.env`:
+### 2.1 Verification Mode Distinction
+- **Offline Mocked Verification:** **100% SUCCESS**
+  - Backend Platform Services: 315 tests passing (`mvn test`).
+  - Frontend Angular SOC Dashboard: 134 tests passing (`ng test --watch=false`).
+  - Python Simulation Framework: 46 tests passing (`pytest`).
+- **Live Local Integration Status:** **AWAITING DOCKER ENGINE BRING-UP**
+  - Docker Desktop Linux daemon (`//./pipe/dockerDesktopLinuxEngine`) is currently stopped on the host.
+  - Container compose stack defined in `infrastructure/docker/compose.yml` with `config/dev.env`.
+  - All database volumes (`postgres-data`, `redis-data`) and persistent schemas are preserved.
+  - Live execution command (`--execute`) is safely gated behind the authorization boundary.
 
-| Container Name | Service | Local Port | Health Check | Status |
+| Container Name | Service | Local Port | Health Check | Current State |
 | :--- | :--- | :--- | :--- | :--- |
-| `aegis-gateway-1` | Gateway + Threat Detection & SOC Backend APIs | `127.0.0.1:8000` | `/actuator/health/readiness` | **Healthy** |
-| `aegis-postgres-1` | PostgreSQL 17 (Flyway V3) | `127.0.0.1:5433->5432` | `pg_isready` | **Healthy** |
-| `aegis-redis-1` | Redis 7 (Stream + Sliding Window) | `127.0.0.1:6379->6379` | `redis-cli ping` | **Healthy** |
-| `aegis-keycloak-1` | Keycloak 26 | `127.0.0.1:8080`, `9000` | Port 9000 probe | **Healthy** |
-| `aegis-customer-service-1` | Customer API | `127.0.0.1:8081` | `/actuator/health/readiness` | **Healthy** |
-| `aegis-account-service-1` | Account API | `127.0.0.1:8082` | `/actuator/health/readiness` | **Healthy** |
-| `aegis-transaction-service-1` | Transaction API | `127.0.0.1:8083` | `/actuator/health/readiness` | **Healthy** |
-| `aegis-prometheus-1` | Prometheus 2.54 | `127.0.0.1:9090` | `/healthy` probe | **Healthy** |
-| `aegis-grafana-1` | Grafana 11.2 | `127.0.0.1:3000` | `/api/health` | **Healthy** |
+| `aegis-gateway-1` | Gateway + Threat Detection & SOC Backend APIs | `127.0.0.1:8000` | `/actuator/health/readiness` | Daemon Stopped (Offline) |
+| `aegis-postgres-1` | PostgreSQL 17 (Flyway V1–V6) | `127.0.0.1:5433->5432` | `pg_isready` | Daemon Stopped (Offline) |
+| `aegis-redis-1` | Redis 7 (Stream + Sliding Window) | `127.0.0.1:6379->6379` | `redis-cli ping` | Daemon Stopped (Offline) |
+| `aegis-keycloak-1` | Keycloak 26 | `127.0.0.1:8080`, `9000` | Port 9000 probe | Daemon Stopped (Offline) |
+| `aegis-customer-service-1` | Customer API | `127.0.0.1:8081` | `/actuator/health/readiness` | Daemon Stopped (Offline) |
+| `aegis-account-service-1` | Account API | `127.0.0.1:8082` | `/actuator/health/readiness` | Daemon Stopped (Offline) |
+| `aegis-transaction-service-1` | Transaction API | `127.0.0.1:8083` | `/actuator/health/readiness` | Daemon Stopped (Offline) |
+| `aegis-prometheus-1` | Prometheus 2.54 | `127.0.0.1:9090` | `/healthy` probe | Daemon Stopped (Offline) |
+| `aegis-grafana-1` | Grafana 11.2 | `127.0.0.1:3000` | `/api/health` | Daemon Stopped (Offline) |
 
 ---
 
@@ -439,6 +448,39 @@ All 9 platform services running and healthy via Docker Compose (`infrastructure/
 - [x] **Targeted Automated Tests:**
   - 46 Python simulation tests passing in `31.66s` (100% mocked, zero network dependencies).
   - 4 backend baseline tests passing in `FintechSpecificationBaselineTest.java` (315 total platform tests passing).
+
+---
+
+## 14. Phase 7.2.3.2 Deliverables Checklist (Live Testbed Bring-up & Controlled Integration Readiness)
+
+- [x] **Local Testbed & Infrastructure Inspection:**
+  - Verified Docker Compose service topology in `infrastructure/docker/compose.yml` (9 services: postgres, redis, keycloak, customer-service, account-service, transaction-service, gateway, prometheus, grafana).
+  - Preserved database volumes (`postgres-data`, `redis-data`).
+  - Verified Flyway database seed records for Customer (`customer_data`), Account (`account_data`), Transaction (`transaction_data`), and Gateway (`security_data`).
+  - Verified Keycloak realm definition in `keycloak/realm/aegis-dev-realm.json` (`aegis-dev`, public client `aegis-local`, custom mappers for `customerId` and `customerNumber`).
+- [x] **Configuration & Isolation Safeguards Validation:**
+  - Ran `aegis-sim config validate` verifying all target hosts resolve to `localhost` and business traffic strictly targets Gateway port `8000`.
+  - Confirmed microservice direct ports (8081, 8082, 8083) are prohibited from business requests.
+  - Confirmed explicit credentials requirement for `alex.morgan`, `sam.taylor`, and `analyst`.
+  - Confirmed zero credentials, tokens, or JWTs leaked into logs or version control.
+- [x] **Preflight & Live Service Probing:**
+  - Executed `aegis-sim doctor`: accurately diagnosed that Docker Desktop Linux daemon (`npipe:////./pipe/dockerDesktopLinuxEngine`) is currently stopped.
+  - Executed `aegis-sim run --scenario SCEN-BENIGN-01 --dry-run`: halted safely at Step 0 with descriptive authentication error; zero downstream HTTP calls or mutations dispatched.
+- [x] **Financial Safety & Reconciliation Invariants:**
+  - Confirmed source account ownership (Alex Morgan, `1000...0001`).
+  - Confirmed active status and currency match (USD).
+  - Confirmed available balance ($12,500.00) exceeds bounded transfer amount ($25.00).
+  - Confirmed destination reference (`ACCT-00020001`) corresponds to Sam Taylor's seed account.
+  - Confirmed unique RFC 4122 v4 UUID `Idempotency-Key` and unique transaction reference.
+  - Verified that POST operations are non-retryable and reconcile safely upon uncertainty.
+- [x] **Authorization Boundary Enforcement:**
+  - Prepared exact execution command (`python -m simulation.cli run --scenario SCEN-BENIGN-01 --execute`).
+  - Held execution strictly at the boundary (did not invoke `--execute`).
+  - Reported exact planned mutations and current blocker (Docker daemon bring-up).
+- [x] **Documentation & Architecture Tracking:**
+  - Created `docs/phase-7-2-3-2-live-testbed-readiness.md`.
+  - Updated `BUILD_STATUS.md` with explicit distinction between offline mocked verification and live integration status.
+
 
 
 
