@@ -80,23 +80,25 @@
   - Backend Platform Services: 315 tests passing (`mvn test`).
   - Frontend Angular SOC Dashboard: 134 tests passing (`ng test --watch=false`).
   - Python Simulation Framework: 46 tests passing (`pytest`).
-- **Live Local Integration Status:** **AWAITING DOCKER ENGINE BRING-UP**
-  - Docker Desktop Linux daemon (`//./pipe/dockerDesktopLinuxEngine`) is currently stopped on the host.
-  - Container compose stack defined in `infrastructure/docker/compose.yml` with `config/dev.env`.
+- **Live Local Integration Status:** **ONLINE & VERIFIED (Dry-Run 10/10 PASS)**
+  - Docker Desktop Linux daemon (`//./pipe/dockerDesktopLinuxEngine`) is running.
+  - Container compose stack running via `infrastructure/docker/compose.yml` with `config/dev.env`.
+  - All 9 platform containers are running and healthy.
   - All database volumes (`postgres-data`, `redis-data`) and persistent schemas are preserved.
+  - Dry-run preflight passed 10/10 requests against live Gateway (:8000) and Keycloak (:8080).
   - Live execution command (`--execute`) is safely gated behind the authorization boundary.
 
 | Container Name | Service | Local Port | Health Check | Current State |
 | :--- | :--- | :--- | :--- | :--- |
-| `aegis-gateway-1` | Gateway + Threat Detection & SOC Backend APIs | `127.0.0.1:8000` | `/actuator/health/readiness` | Daemon Stopped (Offline) |
-| `aegis-postgres-1` | PostgreSQL 17 (Flyway V1–V6) | `127.0.0.1:5433->5432` | `pg_isready` | Daemon Stopped (Offline) |
-| `aegis-redis-1` | Redis 7 (Stream + Sliding Window) | `127.0.0.1:6379->6379` | `redis-cli ping` | Daemon Stopped (Offline) |
-| `aegis-keycloak-1` | Keycloak 26 | `127.0.0.1:8080`, `9000` | Port 9000 probe | Daemon Stopped (Offline) |
-| `aegis-customer-service-1` | Customer API | `127.0.0.1:8081` | `/actuator/health/readiness` | Daemon Stopped (Offline) |
-| `aegis-account-service-1` | Account API | `127.0.0.1:8082` | `/actuator/health/readiness` | Daemon Stopped (Offline) |
-| `aegis-transaction-service-1` | Transaction API | `127.0.0.1:8083` | `/actuator/health/readiness` | Daemon Stopped (Offline) |
-| `aegis-prometheus-1` | Prometheus 2.54 | `127.0.0.1:9090` | `/healthy` probe | Daemon Stopped (Offline) |
-| `aegis-grafana-1` | Grafana 11.2 | `127.0.0.1:3000` | `/api/health` | Daemon Stopped (Offline) |
+| `aegis-gateway-1` | Gateway + Threat Detection & SOC Backend APIs | `127.0.0.1:8000` | `/actuator/health/readiness` | **Healthy (Up)** |
+| `aegis-postgres-1` | PostgreSQL 17 (Flyway V1–V6) | `127.0.0.1:5433->5432` | `pg_isready` | **Healthy (Up)** |
+| `aegis-redis-1` | Redis 7 (Stream + Sliding Window) | `127.0.0.1:6379->6379` | `redis-cli ping` | **Healthy (Up)** |
+| `aegis-keycloak-1` | Keycloak 26 | `127.0.0.1:8080`, `9000` | Port 9000 probe | **Healthy (Up)** |
+| `aegis-customer-service-1` | Customer API | `127.0.0.1:8081` | `/actuator/health/readiness` | **Healthy (Up)** |
+| `aegis-account-service-1` | Account API | `127.0.0.1:8082` | `/actuator/health/readiness` | **Healthy (Up)** |
+| `aegis-transaction-service-1` | Transaction API | `127.0.0.1:8083` | `/actuator/health/readiness` | **Healthy (Up)** |
+| `aegis-prometheus-1` | Prometheus 2.54 | `127.0.0.1:9090` | `/healthy` probe | **Healthy (Up)** |
+| `aegis-grafana-1` | Grafana 11.2 | `127.0.0.1:3000` | `/api/health` | **Up** |
 
 ---
 

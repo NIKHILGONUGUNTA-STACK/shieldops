@@ -113,6 +113,23 @@ Executing `python -m simulation.cli config validate` verifies the defensive conf
 
 ## 4. Live Service Probes & Preflight Diagnostics
 
+### 4.1 Live Container Status (`docker compose ps`)
+Executing `docker compose -f infrastructure/docker/compose.yml --env-file config/dev.env ps`:
+
+```
+NAME                          IMAGE                              COMMAND                  SERVICE               STATUS                    PORTS
+aegis-account-service-1       aegis-account-service              "java -XX:MaxRAMPerc…"   account-service       Up 3 minutes (healthy)    127.0.0.1:8082->8082/tcp
+aegis-customer-service-1      aegis-customer-service             "java -XX:MaxRAMPerc…"   customer-service      Up 3 minutes (healthy)    127.0.0.1:8081->8081/tcp
+aegis-gateway-1               aegis-gateway                      "java -XX:MaxRAMPerc…"   gateway               Up 1 minute (healthy)     127.0.0.1:8000->8000/tcp
+aegis-grafana-1               grafana/grafana:11.2.0             "/run.sh"                grafana               Up 3 minutes              127.0.0.1:3000->3000/tcp
+aegis-keycloak-1              quay.io/keycloak/keycloak:26.4.2   "/opt/keycloak/bin/k…"   keycloak              Up 3 minutes (healthy)    127.0.0.1:8080->8080/tcp, 127.0.0.1:9000->9000/tcp
+aegis-postgres-1              postgres:17-alpine                 "docker-entrypoint.s…"   postgres              Up 3 minutes (healthy)    127.0.0.1:5433->5432/tcp
+aegis-prometheus-1            prom/prometheus:v2.54.1            "/bin/prometheus --c…"   prometheus            Up 3 minutes (healthy)    127.0.0.1:9090->9090/tcp
+aegis-redis-1                 redis:7-alpine                     "docker-entrypoint.s…"   redis                 Up 3 minutes (healthy)    127.0.0.1:6379->6379/tcp
+aegis-transaction-service-1   aegis-transaction-service          "java -XX:MaxRAMPerc…"   transaction-service   Up 3 minutes (healthy)    127.0.0.1:8083->8083/tcp
+```
+
+### 4.2 Non-Mutating Diagnostic Probes (`python -m simulation.cli doctor`)
 Executing `python -m simulation.cli doctor`:
 
 ```
@@ -120,20 +137,59 @@ Executing `python -m simulation.cli doctor`:
 ┌──────────────────┬──────────────────────────────────────┬────────┬──────────┐
 │ Service          │ Probe Target                         │ Status │  Latency │
 ├──────────────────┼──────────────────────────────────────┼────────┼──────────┤
-│ Aegis Gateway    │ http://localhost:8000/actuator/read… │ [FAIL] │  2453 ms │
-│ Keycloak IdP     │ http://localhost:8080/realms/aegis…  │ [FAIL] │  2332 ms │
-│ Customer Service │ http://localhost:8081/actuator/read… │ [FAIL] │  2331 ms │
-│ Account Service  │ http://localhost:8082/actuator/read… │ [FAIL] │  2330 ms │
-│ Transaction      │ http://localhost:8083/actuator/read… │ [FAIL] │  2327 ms │
+│ Aegis Gateway    │ http://localhost:8000/actuator/read… │ [OK]   │   443 ms │
+│                  │                                      │ UP     │          │
+│ Keycloak IdP     │ http://localhost:8080/realms/aegis…  │ [OK]   │  1039 ms │
+│                  │                                      │ UP     │          │
+│ Customer Service │ http://localhost:8081/actuator/read… │ [OK]   │   320 ms │
+│                  │                                      │ UP     │          │
+│ Account Service  │ http://localhost:8082/actuator/read… │ [OK]   │   317 ms │
+│                  │                                      │ UP     │          │
+│ Transaction      │ http://localhost:8083/actuator/read… │ [OK]   │   318 ms │
+│ Service          │                                      │ UP     │          │
 └──────────────────┴──────────────────────────────────────┴────────┴──────────┘
-[WARN] Some testbed services are unreachable. Ensure containers are running with 'docker compose up -d'.
+[OK] All Aegis FinTech testbed services are reachable and healthy.
 ```
 
-### Dry-Run Execution Attempt:
+### 4.3 Live Dry-Run Preflight (`python -m simulation.cli run --scenario SCEN-BENIGN-01 --dry-run`)
 Executing `python -m simulation.cli run --scenario SCEN-BENIGN-01 --dry-run`:
-- **Result:** Stopped safely at Step 0.
-- **Diagnostic:** `AuthenticationError: Keycloak connection error during token acquisition for 'alex.morgan': All connection attempts failed`.
-- **Safety Invariant Maintained:** Zero HTTP requests were dispatched to downstream services. Zero records were modified.
+
+```
+                  Execution Results: SCEN-BENIGN-01                  
+┌────────────────────────────┬──────────────────────────────────────┐
+│ Metric                     │ Value                                │
+├────────────────────────────┼──────────────────────────────────────┤
+│ Execution Status           │ SUCCESS                              │
+│ Total Requests             │ 10                                   │
+│ Successful Requests        │ 10                                   │
+│ Failed Requests            │ 0                                    │
+│ Status Codes               │ 200: 10                              │
+│ Resource                   │ 20000000-0000-4000-8000-000000000001 │
+│ (selected_account_id)      │                                      │
+│ Resource                   │ 12383.74                             │
+│ (preflight_source_balance) │                                      │
+│ Resource (transfer_status) │ SKIPPED_DRY_RUN                      │
+└────────────────────────────┴──────────────────────────────────────┘
+                  Planned Mutations (Dry-Run Preflight Only)                   
+┌────────────────────┬────────────────────────────────────────────────────────┐
+│ Action             │ Details                                                │
+├────────────────────┼────────────────────────────────────────────────────────┤
+│ CREATE_BENEFICIARY │ customerId=10000000-0000-4000-8000-000000000001,       │
+│                    │ name=Sam Taylor,                                       │
+│                    │ destinationAccountReference=ACCT-00020001,             │
+│                    │ currency=USD                                           │
+│ VERIFY_BENEFICIARY │ destinationAccountReference=ACCT-00020001              │
+│ EXECUTE_TRANSFER   │ customerId=10000000-0000-4000-8000-000000000001,       │
+│                    │ sourceAccountId=20000000-0000-4000-8000-000000000001,  │
+│                    │ beneficiaryReference=ACCT-00020001, amount=25.0,       │
+│                    │ currency=USD, preflightSourceBalance=12383.74,         │
+│                    │ projectedPostBalance=12358.74                          │
+└────────────────────┴────────────────────────────────────────────────────────┘
+```
+- **Live Preflight Outcome:** All 10 read-only requests succeeded through the live Gateway (`http://localhost:8000`).
+- **Authentication Verified:** Acquired live JWTs for both `alex.morgan` and `sam.taylor`.
+- **Account Selection Verified:** Source account `20000000-0000-4000-8000-000000000001` selected with live balance `$12,383.74 USD`.
+- **Zero Mutations Executed:** No beneficiary created, no transfer submitted, no accounts debited.
 
 ---
 
@@ -151,7 +207,24 @@ Prior to live execution, all financial safety invariants were verified:
 | **Transfer Amount** | Bounded amount ($\le \$1000.00$) | Configured transfer amount is `$25.00` | **VERIFIED** |
 | **Idempotency Key** | Unique per transfer attempt | Generated via UUIDv4 (`Idempotency-Key` header) | **VERIFIED** |
 | **Uncertain Result Handling** | No blind automatic retries | POST retries disabled; idempotent replay supported | **VERIFIED** |
-| **Arithmetic Precision** | Exact balance decrement | `Decimal('12500.00') - Decimal('25.00') = Decimal('12475.00')` | **VERIFIED** |
+| **Arithmetic Precision** | Exact balance decrement | `Decimal('12383.74') - Decimal('25.00') = Decimal('12358.74')` | **VERIFIED** |
+| **Cross-Currency Verification** | Transaction service currency validation rules | Verified: Transaction service validates `source.currency == transfer.currency` and `beneficiary.currency == transfer.currency`. Destination account reference is treated as an external clearing identifier; transaction service does not query or validate the receiving account's ledger currency. | **VERIFIED** |
+
+### 5.1 Currency-Conversion & Multi-Currency Architecture Note
+The seed data provisions Sam Taylor's primary account (`20000000-0000-4000-8000-000000000003`) in `GBP`. 
+Inspection of `TransactionService.java` reveals the exact validation invariants:
+```java
+// TransactionService.java: lines 110-112
+if (!source.currency().equals(request.currency()) || !beneficiary.getCurrency().equals(request.currency())) {
+    throw new ResponseStatusException(HttpStatus.CONFLICT, "Currency mismatch");
+}
+```
+1. `source.currency` is `USD`.
+2. `beneficiary.currency` is declared as `USD` during beneficiary creation.
+3. `request.currency` is `USD`.
+4. `account-service.debit` requires `account.getCurrency().equals(currency)` (`USD == USD`).
+
+Because `TransactionService` does not execute cross-currency FX conversion or inspect the receiving account's underlying currency (treating `destinationAccountReference` as an outbound clearing instruction), the transfer operates strictly in **USD** end-to-end without triggering a currency mismatch conflict.
 
 ---
 
@@ -178,16 +251,13 @@ python -m simulation.cli run --scenario SCEN-BENIGN-01 --execute
    - Assert transaction `status == "COMPLETED"`
 
 ### Remaining Blocker:
-- The Docker Desktop engine (`npipe:////./pipe/dockerDesktopLinuxEngine`) is currently stopped on the host OS.
-- To execute live traffic, the developer must start Docker Desktop and bring up the container stack:
-  ```powershell
-  docker compose -f infrastructure/docker/compose.yml --env-file config/dev.env up -d
-  ```
-- All code, configuration, models, and safety invariants are 100% prepared and verified offline.
+- **None for Testbed Infrastructure:** All 9 containers are running and healthy. All 5 application endpoints respond with HTTP 200.
+- **Authorization Decision:** Awaiting operator confirmation to proceed with the first live `--execute` run.
 
 ---
 
 ## 7. Status Distinction: Mocked vs. Live
 
 - **Mocked Verification Status:** **100% SUCCESS** (46 Python unit tests passing, 4 backend platform contract baseline tests passing).
-- **Live Integration Status:** **AWAITING DOCKER ENGINE BRING-UP** (Configuration validated, safety invariants locked, execution gated behind authorization boundary).
+- **Live Integration Status:** **TESTBED ONLINE & HEALTHY; DRY-RUN VERIFIED** (All 9 containers healthy, preflight passed 10/10 requests, authorization boundary holding prior to live mutation).
+
