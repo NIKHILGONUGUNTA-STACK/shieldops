@@ -1,6 +1,6 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 7.2.3.2 Complete (Live Testbed Bring-up & Controlled Integration Readiness)
+## Current Milestone: Phase 7.2.3.3 Complete (Final Transaction Baseline Verification)
 
 **Last Updated:** 2026-11-06
 **Active Git Branch:** `main`
@@ -482,6 +482,29 @@
 - [x] **Documentation & Architecture Tracking:**
   - Created `docs/phase-7-2-3-2-live-testbed-readiness.md`.
   - Updated `BUILD_STATUS.md` with explicit distinction between offline mocked verification and live integration status.
+
+---
+
+## 15. Phase 7.2.3.3 Deliverables Checklist (Final Transaction Baseline Verification)
+
+- [x] **Source Account Audit & Exact Debit Reconciliation:**
+  - Audited Alex Morgan's source account `20000000-0000-4000-8000-000000000001` via Gateway (`GET /api/v1/accounts/{id}/balance`).
+  - Confirmed active status, USD currency, and verified current available balance of **`$12,383.74 USD`** (**`₹1,040,234.16 INR`**).
+  - Investigated and completely reconciled the `$116.26 USD` (`₹9,765.84 INR`) difference from the original `$12,500.00 USD` seed balance against 20 historical `COMPLETED` transactions in `transaction_data.transactions` (Phase 2, 3, 4 testing).
+- [x] **Destination Reference & Outbound Clearing Semantics:**
+  - Audited Sam Taylor's destination account `ACCT-00020001` (`20000000-0000-4000-8000-000000000003`) via Gateway (`GET /api/v1/accounts`).
+  - Confirmed ownership (Sam Taylor `1000...0002`), active status, and GBP balance (`£5,300.25 GBP` / `₹575,077.13 INR`).
+  - Documented that `TransactionService` models outbound wire/ACH instructions: validates `source.currency == beneficiary.currency == transfer.currency == USD` and debits source account without inspecting or crediting the receiver's ledger currency.
+- [x] **Beneficiary State Audit:**
+  - Retrieved Alex's beneficiary list (`GET /api/v1/beneficiaries`), finding 5 test records but none for `ACCT-00020001`.
+  - Confirmed that Step C of `SCEN-BENIGN-01` will execute `POST /api/v1/beneficiaries` and `POST /verify` cleanly during live execution.
+- [x] **Transaction Idempotency & Uncertain-Result Safety:**
+  - Audited `TransactionService.java` (lines 67–89), confirming that repeated submissions with the identical `Idempotency-Key` return the existing `COMPLETED` record without duplicate debits.
+  - Reconfirmed `GatewayClient` prohibition of automatic retries on financial POST operations.
+- [x] **Financial Multi-Currency Reporting (Including Rupees ₹):**
+  - Added comprehensive INR (₹) representation across all financial baseline metrics and transaction histories.
+  - Published findings in `docs/phase-7-2-3-3-transaction-baseline-verification.md`.
+
 
 
 
