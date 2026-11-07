@@ -164,8 +164,8 @@ import { LayoutService } from '../../../core/services/layout.service';
                 <!-- Label with Inter Regular Font -->
                 <span class="nav-label" *ngIf="!layout.isSidebarCollapsed()">{{ item.label }}</span>
 
-                <!-- Badge for Planned Capabilities -->
-                <span class="badge-planned nav-badge" *ngIf="!layout.isSidebarCollapsed() && item.badge">
+                <!-- Badge for Item -->
+                <span [class.badge-planned]="item.availability === 'planned'" [class.badge-feature]="item.availability === 'implemented'" class="nav-badge" *ngIf="!layout.isSidebarCollapsed() && item.badge">
                   {{ item.badge }}
                 </span>
               </a>

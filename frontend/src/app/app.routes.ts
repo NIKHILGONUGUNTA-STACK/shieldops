@@ -69,6 +69,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/data-access/data-access.component').then(m => m.DataAccessComponent),
     canActivate: [authGuard]
   },
+  {
+    path: 'financial-portfolio',
+    loadComponent: () => import('./features/financial-portfolio/financial-portfolio.component').then(m => m.FinancialPortfolioComponent),
+    canActivate: [authGuard]
+  },
   // DETECTION & RESPONSE
   {
     path: 'detection-rules',

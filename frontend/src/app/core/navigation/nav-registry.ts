@@ -118,6 +118,15 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: 'database',
         availability: 'implemented',
         description: 'Privacy-conscious telemetry model, token redaction, PII protection invariants, and payload inspection'
+      },
+      {
+        id: 'financial-portfolio',
+        label: 'Financial Portfolio',
+        path: '/financial-portfolio',
+        icon: 'credit-card',
+        availability: 'implemented',
+        badge: 'INR',
+        description: 'Multi-currency account inventory, transaction activity, and customer balances with INR preferred presentation'
       }
     ]
   },

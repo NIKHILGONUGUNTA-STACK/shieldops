@@ -133,6 +133,12 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
             <div class="kpi-value mono text-amber">{{ calculateAnomalyRatio(data) }}%</div>
             <div class="kpi-subtext text-muted">Telemetry anomaly density</div>
           </div>
+
+          <a routerLink="/financial-portfolio" class="kpi-card soc-card fintech-card" title="View FinTech Account & Transaction Portfolio with INR presentation">
+            <div class="kpi-label">FINTECH ASSETS (INR)</div>
+            <div class="kpi-value mono text-teal">₹16.15L <span class="ref-badge-xs">REF</span></div>
+            <div class="kpi-subtext text-muted">₹16,15,311.29 across 2 accounts</div>
+          </a>
         </div>
 
         <!-- Top Row: Bot & Attack Activity Spline Chart (Left) + Top Attackers (Right) -->
@@ -504,6 +510,32 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
 
     .kpi-card.critical::before {
       background: var(--sev-critical);
+    }
+
+    .kpi-card.fintech-card {
+      text-decoration: none;
+      transition: all 0.15s ease-in-out;
+      cursor: pointer;
+    }
+
+    .kpi-card.fintech-card:hover {
+      border-color: #4A6CFF;
+      background: rgba(74, 108, 255, 0.05);
+    }
+
+    .kpi-card.fintech-card::before {
+      background: #00d1b2;
+    }
+
+    .ref-badge-xs {
+      font-size: 8px;
+      font-weight: 700;
+      background: #4A6CFF;
+      color: #ffffff;
+      padding: 1px 4px;
+      border-radius: 3px;
+      vertical-align: middle;
+      letter-spacing: 0.5px;
     }
 
     .kpi-label {

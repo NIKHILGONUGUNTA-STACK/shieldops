@@ -99,4 +99,18 @@ describe('OverviewComponent', () => {
     expect(component.selectedWindow()).toBe(48);
     expect(apiSpy.getOverview).toHaveBeenCalledWith(48);
   });
+
+  it('should render the FinTech Assets INR presentation link card', () => {
+    apiSpy.getOverview.and.returnValue(of(mockOverviewData));
+    fixture = TestBed.createComponent(OverviewComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const fintechCard = compiled.querySelector('.fintech-card');
+    expect(fintechCard).toBeTruthy();
+    expect(fintechCard?.textContent).toContain('FINTECH ASSETS (INR)');
+    expect(fintechCard?.textContent).toContain('₹16.15L');
+    expect(fintechCard?.textContent).toContain('REF');
+  });
 });
