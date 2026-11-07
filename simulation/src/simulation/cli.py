@@ -24,6 +24,12 @@ from simulation.config import SimulationConfig, load_config
 from simulation.reporting.reporter import ScenarioReporter
 from simulation.scenarios.registry import get_default_registry
 from simulation.scenarios.soc_verifier import SocTelemetryVerifier
+from simulation.currency import (
+    calculate_inr_equivalent,
+    format_dual_presentation,
+    format_inr,
+    DEMONSTRATION_DISCLAIMER,
+)
 
 app = typer.Typer(
     name="aegis-sim",
@@ -161,6 +167,11 @@ def run_cmd(
 
     # 4. Display Preflight Plan
     mode_str = "[bold yellow][DRY RUN — NON-MUTATING PREFLIGHT][/bold yellow]" if dry_run else "[bold green][LIVE LOCAL EXECUTION][/bold green]"
+    planned_transfer_str = format_dual_presentation(
+        config.benign_flow.transfer_amount,
+        config.benign_flow.transfer_currency,
+    )
+
     console.print(
         Panel(
             f"[bold white]Aegis FinTech Simulation Runner[/bold white]\n"
@@ -168,8 +179,8 @@ def run_cmd(
             f"Mode: {mode_str}\n"
             f"Target Gateway: [cyan]{config.gateway.base_url}[/cyan]\n"
             f"Identities: [green]Alex Morgan (Source)[/green] -> [yellow]Sam Taylor (Destination)[/yellow]\n"
-            f"Planned Transfer: [bold white]${config.benign_flow.transfer_amount:.2f} {config.benign_flow.transfer_currency}[/bold white] "
-            f"to destination ref [dim]{config.benign_flow.destination_account_reference}[/dim]\n"
+            f"Planned Transfer: [bold white]{planned_transfer_str}[/bold white]\n"
+            f"Destination Ref: [dim]{config.benign_flow.destination_account_reference}[/dim]\n"
             f"Permitted Mutations: [dim]Beneficiary creation (if needed), Account debit, Transaction record[/dim]",
             title="Execution Manifest",
             border_style="cyan",
@@ -211,9 +222,27 @@ def run_cmd(
         mut_table.add_column("Details", style="cyan")
         for mut in summary.run_manifest.planned_mutations:
             action = mut.get("action", "MUTATION")
-            details = ", ".join(f"{k}={v}" for k, v in mut.items() if k != "action")
+            curr = mut.get("currency", "USD")
+            formatted_parts = []
+            for k, v in mut.items():
+                if k == "action":
+                    continue
+                if k in ("amount", "preflightSourceBalance", "projectedPostBalance"):
+                    equiv = calculate_inr_equivalent(v, curr)
+                    if equiv:
+                        formatted_parts.append(f"{k}={v} {curr} (≈ {format_inr(equiv[0])} INR)")
+                    else:
+                        formatted_parts.append(f"{k}={v} {curr}")
+                else:
+                    formatted_parts.append(f"{k}={v}")
+            details = ", ".join(formatted_parts)
             mut_table.add_row(action, details)
         console.print(mut_table)
+        console.print(
+            "[dim]* INR values are demonstration reference equivalents calculated at fixed demonstration rates "
+            "(1 USD = 84.00 INR, 1 GBP = 108.50 INR) using Indian numbering system ('en-IN'). "
+            "Not actual ledger balances or executed conversions.[/dim]"
+        )
 
     # 6. Render SOC Verification Table if executed
     if soc_result:
