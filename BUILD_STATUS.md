@@ -1,8 +1,8 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 7.2.3.3 Complete (Final Transaction Baseline Verification)
+## Current Milestone: Phase 7.2.3.4 Complete (INR-Aware Financial Presentation Implementation)
 
-**Last Updated:** 2026-11-06
+**Last Updated:** 2026-11-07
 **Active Git Branch:** `main`
 **Git Working Tree:** Clean (Ready for Review)
 **Remote Upstream:** `origin/main` (`https://github.com/NIKHILGONUGUNTA-STACK/shieldops.git`)
@@ -27,7 +27,7 @@
 ### 1.2 Frontend SOC Dashboard (Angular 18 / TypeScript / Node 22)
 - **Framework & Tooling:** Angular 18.2.21 / Node.js 22.20.0 / npm 10.9.3
 - **Test Runner:** Karma 6.4 / Jasmine 5.2 / ChromeHeadless
-- **Production Build:** `dist/aegis-frontend` (374.23 kB initial bundle, 103.08 kB transfer, 0 warnings, 0 errors)
+- **Production Build:** `dist/aegis-frontend` (374.80 kB initial bundle, 103.42 kB transfer, 0 warnings, 0 errors, build time: 10.598s)
 
 | Test Suite | Spec File | Tests Run | Failures | Status |
 | :--- | :--- | :---: | :---: | :--- |
@@ -37,7 +37,7 @@
 | **Security API Service** | `security-api.service.spec.ts` | 28 | 0 | **SUCCESS** |
 | **Auth Service** | `auth.service.spec.ts` | 3 | 0 | **SUCCESS** |
 | **Auth Guard** | `auth.guard.spec.ts` | 3 | 0 | **SUCCESS** |
-| **Overview Component** | `overview.component.spec.ts` | 3 | 0 | **SUCCESS** |
+| **Overview Component** | `overview.component.spec.ts` | 4 | 0 | **SUCCESS** |
 | **Badge Components** | `badge.component.spec.ts` | 1 | 0 | **SUCCESS** |
 | **Incidents Queue** | `incidents-list.component.spec.ts` | 5 | 0 | **SUCCESS** |
 | **Incident Detail** | `incident-detail.component.spec.ts` | 6 | 0 | **SUCCESS** |
@@ -55,7 +55,10 @@
 | **Documented vs Observed API Reconciliation** | `api-reconciliation.component.spec.ts` | 12 | 0 | **SUCCESS** |
 | **API Security Posture Assessment** | `api-posture.component.spec.ts` | 6 | 0 | **SUCCESS** |
 | **Settings Component** | `settings.component.spec.ts` | 3 | 0 | **SUCCESS** |
-| **Total Frontend Tests** | — | **134** | **0** | **BUILD SUCCESS** |
+| **Currency Service (Phase 7.2.3.4)** | `currency.service.spec.ts` | 23 | 0 | **SUCCESS** |
+| **Financial Amount Component (Phase 7.2.3.4)** | `financial-amount.component.spec.ts` | 6 | 0 | **SUCCESS** |
+| **Financial Portfolio Explorer (Phase 7.2.3.4)** | `financial-portfolio.component.spec.ts` | 4 | 0 | **SUCCESS** |
+| **Total Frontend Tests** | — | **169** | **0** | **BUILD SUCCESS** |
 
 ### 1.3 Python Simulation Test Suite (pytest / pytest-asyncio / respx)
 - **Framework & Tooling:** Python 3.14.0 / pytest 9.2.0 / pytest-asyncio 1.4.1 / respx 0.23.1
@@ -69,7 +72,8 @@
 | `test_scenario_models.py` | Scenario models, registry categories, reporter redaction | 6 | 0 | **SUCCESS** |
 | `test_cli.py` | Typer CLI commands (version, validate, scenarios, doctor) | 6 | 0 | **SUCCESS** |
 | `test_benign_customer_flow.py` | SCEN-BENIGN-01 journey, preflight, dry-run invariants, Decimal balance, SOC pagination & outcomes | 11 | 0 | **SUCCESS** |
-| **Total Python Simulation Tests** | — | **46** | **0** | **BUILD SUCCESS** |
+| `test_currency.py` (Phase 7.2.3.4) | Indian digit grouping (`en-IN`), fixed demonstration rates (84.00 USD, 108.50 GBP), precision rounding, dual presentation | 18 | 0 | **SUCCESS** |
+| **Total Python Simulation Tests** | — | **64** | **0** | **BUILD SUCCESS** |
 
 ---
 
