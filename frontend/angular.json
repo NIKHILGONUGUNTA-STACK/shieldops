@@ -99,9 +99,6 @@
               "src/styles.css"
             ],
             "scripts": [],
-            "optimization": {
-              "fonts": false
-            },
             "karmaConfig": "karma.conf.js"
           }
         }
