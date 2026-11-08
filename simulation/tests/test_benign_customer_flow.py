@@ -469,6 +469,85 @@ async def test_soc_verifier_flags_unexpected_incident(mock_config):
     assert "RULE-BOLA-01" in str(result.diagnostics)
 
 
+@pytest.mark.asyncio
+@respx.mock
+async def test_transfer_uncertain_504_triggers_safe_reconciliation_success(mock_config):
+    """Verifies that an uncertain HTTP 504 from Gateway triggers safe reconciliation and recovers."""
+    setup_mock_keycloak(respx)
+    setup_mock_gateway_endpoints(respx)
+
+    alex_id = "10000000-0000-4000-8000-000000000001"
+    acct1_id = "20000000-0000-4000-8000-000000000001"
+    tx_id = "40000000-0000-4000-8000-000000000099"
+
+    meta = get_default_registry().get_metadata("SCEN-BENIGN-01")
+    flow = BenignCustomerFlow(meta, mock_config, dry_run=False)
+
+    # Simulate initial transfer POST returning transient 504 Gateway Timeout
+    respx.post("http://localhost:8000/api/v1/transfers").mock(
+        return_value=httpx.Response(504, text="Gateway Timeout")
+    )
+
+    # But subsequent reconciliation GET /transactions confirms backend completed it
+    def tx_reconcile_side_effect(request):
+        return httpx.Response(200, json=[{
+            "id": tx_id,
+            "customerId": alex_id,
+            "sourceAccountId": acct1_id,
+            "beneficiaryId": "30000000-0000-4000-8000-000000000001",
+            "amount": 25.0,
+            "currency": "USD",
+            "reference": flow.created_resources.get("transaction_reference"),
+            "status": "COMPLETED",
+        }])
+
+    respx.get("http://localhost:8000/api/v1/transactions").mock(
+        side_effect=tx_reconcile_side_effect
+    )
+    respx.get(f"http://localhost:8000/api/v1/transactions/{tx_id}").mock(
+        return_value=httpx.Response(200, json={"id": tx_id, "status": "COMPLETED", "amount": 25.0, "currency": "USD"})
+    )
+
+    async with GatewayClient(mock_config.gateway) as gateway:
+        async with KeycloakAuthManager(mock_config.keycloak) as auth:
+            summary = await flow.run(gateway, auth)
+
+    assert summary.status == ExecutionStatus.SUCCESS
+    assert flow.created_resources["transaction_status"] == "COMPLETED"
+    assert flow.created_resources["transaction_id"] == tx_id
+    assert "idempotency_key" in flow.created_resources
+    assert "transaction_reference" in flow.created_resources
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_transfer_unconfirmed_uncertainty_retains_idempotency_key_and_fails_safely(mock_config):
+    """Verifies that an unconfirmed 504 preserves idempotency key in manifest and halts without blind retry."""
+    setup_mock_keycloak(respx)
+    setup_mock_gateway_endpoints(respx)
+
+    meta = get_default_registry().get_metadata("SCEN-BENIGN-01")
+    flow = BenignCustomerFlow(meta, mock_config, dry_run=False)
+
+    # Transfer returns 504
+    respx.post("http://localhost:8000/api/v1/transfers").mock(
+        return_value=httpx.Response(504, text="Gateway Timeout")
+    )
+    # Reconciliation returns empty list (transaction not found)
+    respx.get("http://localhost:8000/api/v1/transactions").mock(
+        return_value=httpx.Response(200, json=[])
+    )
+
+    async with GatewayClient(mock_config.gateway) as gateway:
+        async with KeycloakAuthManager(mock_config.keycloak) as auth:
+            summary = await flow.run(gateway, auth)
+
+    assert summary.status == ExecutionStatus.FAILURE
+    assert any("could not confirm completion" in err for err in summary.execution_errors)
+    assert flow.created_resources.get("idempotency_key") is not None
+    assert flow.created_resources.get("transaction_reference") is not None
+
+
 def test_cli_run_dry_run_command(monkeypatch):
     monkeypatch.setenv("SIMULATION_USER_ALEX_MORGAN_PASSWORD", "secret-alex")
     monkeypatch.setenv("SIMULATION_USER_SAM_TAYLOR_PASSWORD", "secret-sam")

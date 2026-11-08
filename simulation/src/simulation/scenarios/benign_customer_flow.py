@@ -19,7 +19,12 @@ from typing import Any
 import uuid
 
 from simulation.auth.keycloak import KeycloakAuthManager
-from simulation.clients.gateway import GatewayClient, GatewayResponse
+from simulation.clients.gateway import (
+    GatewayClient,
+    GatewayConnectionError,
+    GatewayResponse,
+    GatewayTimeoutError,
+)
 from simulation.config import SimulationConfig
 from simulation.models import (
     ExecutionStatus,
@@ -355,6 +360,9 @@ class BenignCustomerFlow(BaseScenario):
 
                 ref = f"BENIGN-TX-{uuid.uuid4().hex[:12].upper()}"
                 idem_key = str(uuid.uuid4())
+                self.created_resources["idempotency_key"] = idem_key
+                self.created_resources["transaction_reference"] = ref
+
                 transfer_body = {
                     "customerId": alex_id,
                     "sourceAccountId": account_id,
@@ -365,21 +373,71 @@ class BenignCustomerFlow(BaseScenario):
                 }
 
                 log.info(
-                    "[%s] Step D: Executing transfer of %s %s from %s to %s [Ref: %s]",
-                    self.metadata.id, transfer_amt, flow_cfg.transfer_currency, account_id, beneficiary_id, ref,
+                    "[%s] Step D: Executing transfer of %s %s from %s to %s [Ref: %s, IdemKey: %s]",
+                    self.metadata.id, transfer_amt, flow_cfg.transfer_currency, account_id, beneficiary_id, ref, idem_key,
                 )
 
-                resp_tx = await gateway.post(
-                    "/api/v1/transfers",
-                    token=alex_token,
-                    json=transfer_body,
-                    headers={"Idempotency-Key": idem_key},
-                )
-                self._record_response(summary, resp_tx, "alex.morgan")
-                if not resp_tx.is_success:
-                    raise RuntimeError(f"Step D failed: Transfer failed (HTTP {resp_tx.status_code}): {resp_tx.text}")
+                tx_data: dict[str, Any] | None = None
+                try:
+                    resp_tx = await gateway.post(
+                        "/api/v1/transfers",
+                        token=alex_token,
+                        json=transfer_body,
+                        headers={"Idempotency-Key": idem_key},
+                    )
+                    self._record_response(summary, resp_tx, "alex.morgan")
 
-                tx_data = resp_tx.json()
+                    if resp_tx.is_success:
+                        tx_data = resp_tx.json()
+                    elif resp_tx.status_code in (502, 503, 504):
+                        # Uncertain network/gateway response: initiate safe reconciliation instead of blind retry
+                        log.warning(
+                            "[%s] Uncertain transfer response (HTTP %d). Reconciling against transactions...",
+                            self.metadata.id, resp_tx.status_code,
+                        )
+                        resp_tx_recon = await gateway.get("/api/v1/transactions", token=alex_token)
+                        self._record_response(summary, resp_tx_recon, "alex.morgan")
+                        if resp_tx_recon.is_success:
+                            matching_tx = next((t for t in resp_tx_recon.json() if t.get("reference") == ref), None)
+                            if matching_tx and matching_tx.get("status") == "COMPLETED":
+                                log.info("[%s] Safe reconciliation confirmed completed transfer %s", self.metadata.id, matching_tx.get("id"))
+                                tx_data = matching_tx
+                            elif matching_tx and matching_tx.get("status") in ("PENDING", "AUTHORIZED"):
+                                # Re-submit with the exact same Idempotency-Key
+                                log.info("[%s] Safe reconciliation: Retrying with identical Idempotency-Key %s", self.metadata.id, idem_key)
+                                resp_retry = await gateway.post(
+                                    "/api/v1/transfers",
+                                    token=alex_token,
+                                    json=transfer_body,
+                                    headers={"Idempotency-Key": idem_key},
+                                )
+                                self._record_response(summary, resp_retry, "alex.morgan")
+                                if resp_retry.is_success:
+                                    tx_data = resp_retry.json()
+                        if not tx_data:
+                            raise RuntimeError(
+                                f"Step D failed: Transfer outcome uncertain (HTTP {resp_tx.status_code}) "
+                                f"and safe reconciliation could not confirm completion for reference {ref}"
+                            )
+                    else:
+                        raise RuntimeError(f"Step D failed: Transfer failed (HTTP {resp_tx.status_code}): {resp_tx.text}")
+
+                except (GatewayTimeoutError, GatewayConnectionError) as e:
+                    # Catch gateway network timeout: perform safe reconciliation using existing idempotency reference
+                    log.warning("[%s] Gateway network timeout during transfer (%s). Initiating reconciliation...", self.metadata.id, e)
+                    resp_tx_recon = await gateway.get("/api/v1/transactions", token=alex_token)
+                    self._record_response(summary, resp_tx_recon, "alex.morgan")
+                    if resp_tx_recon.is_success:
+                        matching_tx = next((t for t in resp_tx_recon.json() if t.get("reference") == ref), None)
+                        if matching_tx and matching_tx.get("status") == "COMPLETED":
+                            log.info("[%s] Safe reconciliation confirmed completed transfer %s after timeout", self.metadata.id, matching_tx.get("id"))
+                            tx_data = matching_tx
+                    if not tx_data:
+                        raise RuntimeError(
+                            f"Step D failed: Network timeout occurred and reconciliation did not confirm "
+                            f"completion for reference {ref}. Retained Idempotency-Key: {idem_key}"
+                        ) from e
+
                 tx_id = str(tx_data["id"])
                 self.created_resources["transaction_id"] = tx_id
                 self.created_resources["transaction_reference"] = ref
