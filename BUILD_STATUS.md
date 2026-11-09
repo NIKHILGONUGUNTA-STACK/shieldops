@@ -1,6 +1,6 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 7.2.3.6 Complete (Controlled Live Benign Customer Journey)
+## Current Milestone: Phase 7.2.3.7 Complete (Runtime Alignment and SOC Integration Verification)
 
 **Last Updated:** 2026-11-09
 **Active Git Branch:** `main`
@@ -27,7 +27,7 @@
 ### 1.2 Frontend SOC Dashboard (Angular 18 / TypeScript / Node 22)
 - **Framework & Tooling:** Angular 18.2.21 / Node.js 22.20.0 / npm 10.9.3
 - **Test Runner:** Karma 6.4 / Jasmine 5.2 / ChromeHeadless
-- **Production Build:** `dist/aegis-frontend` (374.80 kB initial bundle, 103.42 kB transfer, 0 warnings, 0 errors, build time: 10.598s)
+- **Production Build:** `dist/aegis-frontend` (374.80 kB initial bundle, 103.42 kB transfer, 0 warnings, 0 errors, build time: 16.048s)
 
 | Test Suite | Spec File | Tests Run | Failures | Status |
 | :--- | :--- | :---: | :---: | :--- |
@@ -71,9 +71,9 @@
 | `test_gateway_client.py` | Async HTTPX, correlation ID, safe retries, IP safety | 8 | 0 | **SUCCESS** |
 | `test_scenario_models.py` | Scenario models, registry categories, reporter redaction | 6 | 0 | **SUCCESS** |
 | `test_cli.py` | Typer CLI commands (version, validate, scenarios, doctor) | 6 | 0 | **SUCCESS** |
-| `test_benign_customer_flow.py` | SCEN-BENIGN-01 journey, preflight, dry-run invariants, Decimal balance, SOC pagination, idempotency recovery & uncertain transfer reconciliation | 13 | 0 | **SUCCESS** |
+| `test_benign_customer_flow.py` | SCEN-BENIGN-01 journey, preflight, dry-run invariants, Decimal balance, SOC multi-page pagination & reconciliation summary | 14 | 0 | **SUCCESS** |
 | `test_currency.py` (Phase 7.2.3.4) | Indian digit grouping (`en-IN`), fixed demonstration rates (84.00 USD, 108.50 GBP), precision rounding, dual presentation | 18 | 0 | **SUCCESS** |
-| **Total Python Simulation Tests** | — | **66** | **0** | **BUILD SUCCESS** |
+| **Total Python Simulation Tests** | — | **67** | **0** | **BUILD SUCCESS** |
 
 ---
 
@@ -83,25 +83,24 @@
 - **Offline Mocked Verification:** **100% SUCCESS**
   - Backend Platform Services: 315 tests passing (`mvn test`).
   - Frontend Angular SOC Dashboard: 169 tests passing (`ng test --watch=false`).
-  - Python Simulation Framework: 66 tests passing (`pytest simulation/tests`).
-- **Live Local Integration Status:** **FIRST AUTHORIZED LIVE RUN COMPLETE (`SCEN-BENIGN-01`)**
+  - Python Simulation Framework: 67 tests passing (`pytest simulation/tests`).
+- **Live Local Integration Status:** **RUNTIME ALIGNED & SOC VERIFIED (`READY_FOR_DATA_LEAKAGE_SIMULATION`)**
+  - Verification Report: `docs/phase-7-2-3-7-runtime-soc-integration-verification.md`.
   - Live Journey Report: `docs/phase-7-2-3-6-live-benign-journey.md`.
   - Safety Gate Audit: `docs/phase-7-2-3-5-live-transaction-safety-gate.md`.
-  - Execution Result: **`SUCCESS`** (15/15 requests successful through Gateway).
-  - Business Transfer: Exactly 1 outbound transfer of **$25.00 USD** (≈ ₹2,100.00 INR demonstration equivalent).
-  - Transaction Reference: `BENIGN-TX-D326FF5EAC26` | Idempotency Key: `2720bdd4-a41b-42f9-b928-f81ff5aa04ce`.
-  - Transaction ID: `5a9be0d7-b99a-4922-b66b-4a04b40e7d24` (Status: `COMPLETED`).
-  - Source Balance Debit: `$12,383.74 USD` $\rightarrow$ **`$12,358.74 USD`** (exact $25.00 decrement verified in PostgreSQL).
-  - Destination Ledger: Sam Taylor's GBP balance remained untouched at `£5,300.25 GBP`.
-  - Wire Telemetry: **15/15** correlation IDs ingested into Redis/Security Events stream.
-  - Zero False Positive Incidents: **0** incidents flagged.
-  - Trace Manifest: `simulation/reports/run-20261108-163419-scen-benign-01.json`.
+  - Gateway Rebuild: `aegis-gateway:latest` aligned with source (`sha256:7cd989396b90ac5debe068f21569ed1bd6482d1b70317dfb08571bb6df4cd054`).
+  - Container State: Recreated and healthy via `docker compose up -d --no-deps gateway`.
+  - Volume Preservation: `postgres-data` and `redis-data` 100% preserved; zero database migrations or seeders re-run.
+  - Financial Ledger Audit: Alex source balance remains **`$12,358.74 USD`**, Sam destination balance remains **`£5,300.25 GBP`**.
+  - Benign Evidence Retrievability: **15/15** correlation IDs and transaction `5a9be0d7-b99a-4922-b66b-4a04b40e7d24` confirmed intact with 0 duplicate debits.
+  - SOC Endpoint Matrix: 10/10 endpoints responding `200 OK` for Analyst, `401` for Unauth, `403` for Customer.
+  - Posture & Reconciliation: Posture reports 38 assessed endpoints with `confirmedVulnerability == false`; Reconciliation reports 24 evaluated discrepancy items.
 
 | Container Name | Service | Local Port | Health Check | Current State |
 | :--- | :--- | :--- | :--- | :--- |
-| `aegis-gateway-1` | Gateway + Threat Detection & SOC Backend APIs | `127.0.0.1:8000` | `/actuator/health/readiness` | **Healthy (Up)** |
-| `aegis-postgres-1` | PostgreSQL 17 (Flyway V1–V6) | `127.0.0.1:5433->5432` | `pg_isready` | **Healthy (Up)** |
-| `aegis-redis-1` | Redis 7 (Stream + Sliding Window) | `127.0.0.1:6379->6379` | `redis-cli ping` | **Healthy (Up)** |
+| `aegis-gateway-1` | Gateway + Threat Detection & SOC Backend APIs | `127.0.0.1:8000` | `/actuator/health/readiness` | **Healthy (Up, Aligned)** |
+| `aegis-postgres-1` | PostgreSQL 17 (Flyway V1–V6) | `127.0.0.1:5433->5432` | `pg_isready` | **Healthy (Up, Preserved)** |
+| `aegis-redis-1` | Redis 7 (Stream + Sliding Window) | `127.0.0.1:6379->6379` | `redis-cli ping` | **Healthy (Up, Preserved)** |
 | `aegis-keycloak-1` | Keycloak 26 | `127.0.0.1:8080`, `9000` | Port 9000 probe | **Healthy (Up)** |
 | `aegis-customer-service-1` | Customer API | `127.0.0.1:8081` | `/actuator/health/readiness` | **Healthy (Up)** |
 | `aegis-account-service-1` | Account API | `127.0.0.1:8082` | `/actuator/health/readiness` | **Healthy (Up)** |
