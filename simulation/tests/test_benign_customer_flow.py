@@ -471,6 +471,62 @@ async def test_soc_verifier_flags_unexpected_incident(mock_config):
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_soc_verifier_posture_multipage_pagination_and_reconciliation(mock_config):
+    """Verifies that SocTelemetryVerifier paginates multiple posture pages and extracts reconciliation summary."""
+    setup_mock_keycloak(respx)
+
+    respx.get("http://localhost:8000/api/v1/security/events").mock(
+        return_value=httpx.Response(200, json={"totalElements": 1, "content": [{"correlationId": "cid-multi"}]})
+    )
+    respx.get("http://localhost:8000/api/v1/security/incidents").mock(
+        return_value=httpx.Response(200, json={"totalElements": 0, "content": []})
+    )
+    respx.get("http://localhost:8000/api/v1/security/reconciliation/summary").mock(
+        return_value=httpx.Response(200, json={
+            "matchedCount": 10,
+            "observedUndocumentedCount": 2,
+            "documentedUnobservedCount": 1,
+            "coveragePercentage": 76.9,
+        })
+    )
+    # Page 0 hasNext=True
+    respx.get("http://localhost:8000/api/v1/security/posture", params={"page": 0, "size": 20, "windowHours": 24}).mock(
+        return_value=httpx.Response(200, json={
+            "totalElements": 2,
+            "hasNext": True,
+            "content": [{"normalizedRoute": "/api/v1/customers", "confirmedVulnerability": False}],
+        })
+    )
+    # Page 1 hasNext=False
+    respx.get("http://localhost:8000/api/v1/security/posture", params={"page": 1, "size": 20, "windowHours": 24}).mock(
+        return_value=httpx.Response(200, json={
+            "totalElements": 2,
+            "hasNext": False,
+            "content": [{"normalizedRoute": "/api/v1/transfers", "confirmedVulnerability": False}],
+        })
+    )
+
+    async with GatewayClient(mock_config.gateway) as gateway:
+        async with KeycloakAuthManager(mock_config.keycloak) as auth:
+            verifier = SocTelemetryVerifier(mock_config, gateway, auth)
+            result = await verifier.verify_benign_run(
+                correlation_ids=["cid-multi"],
+                start_time=datetime(2026, 11, 4, 10, 0, 0, tzinfo=timezone.utc),
+                end_time=datetime(2026, 11, 4, 10, 5, 0, tzinfo=timezone.utc),
+                run_id="run-test-multipage",
+            )
+
+    assert result.outcome == VerificationOutcome.PASS
+    assert result.verification_passed is True
+    assert result.events_verified == 1
+    assert result.endpoints_inspected_count == 2
+    assert result.posture_verified is True
+    assert result.reconciliation_verified is True
+    assert result.reconciliation_summary.get("matchedCount") == 10
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_transfer_uncertain_504_triggers_safe_reconciliation_success(mock_config):
     """Verifies that an uncertain HTTP 504 from Gateway triggers safe reconciliation and recovers."""
     setup_mock_keycloak(respx)
