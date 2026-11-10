@@ -648,6 +648,90 @@ export interface PostureFilterParams {
   windowHours?: number;
 }
 
+// ============================================================================
+// Phase 7.2.4.1 — Sensitive Data Classification Models
+// ============================================================================
+
+export type DataSensitivityLevel = 'PUBLIC' | 'INTERNAL' | 'CONFIDENTIAL' | 'RESTRICTED';
+
+export type ResourceOwnershipRequirement = 'NONE' | 'OWNER_CUSTOMER' | 'INTERNAL_SERVICE' | 'ANALYST_ROLE';
+
+export type ClassificationConfidence = 'CONFIRMED' | 'PROVISIONAL' | 'UNKNOWN';
+
+export interface FieldClassification {
+  serviceBoundary: string;
+  httpMethod: string;
+  routeTemplate: string;
+  fieldPath: string;
+  dataClassification: DataSensitivityLevel;
+  classificationRationale: string;
+  approvedAccessRoles: string[];
+  resourceOwnershipRequirements: ResourceOwnershipRequirement;
+  schemaSource: string;
+  confidence: ClassificationConfidence;
+  policyVersion: string;
+  manualReviewRequired: boolean;
+}
+
+export interface EndpointDataClassification {
+  endpointId: string;
+  serviceBoundary: string;
+  httpMethod: string;
+  routeTemplate: string;
+  highestSensitivity: DataSensitivityLevel;
+  totalFields: number;
+  classifiedFieldsCount: number;
+  unclassifiedFieldsCount: number;
+  manualReviewRequiredCount: number;
+  fields: FieldClassification[];
+  lastEvaluatedAt: string;
+}
+
+export interface ServiceClassificationSummary {
+  serviceBoundary: string;
+  totalEndpoints: number;
+  totalFields: number;
+  classifiedFields: number;
+  unclassifiedFields: number;
+  coveragePercentage: number;
+  manualReviewRequiredCount: number;
+  sensitivityBreakdown: Record<DataSensitivityLevel, number>;
+}
+
+export interface SensitiveDataInventorySummary {
+  totalMonitoredEndpoints: number;
+  totalDiscoveredFields: number;
+  totalClassifiedFields: number;
+  totalUnclassifiedFields: number;
+  overallCoveragePercentage: number;
+  totalManualReviewRequired: number;
+  sensitivityBreakdown: Record<DataSensitivityLevel, number>;
+  services: ServiceClassificationSummary[];
+  generatedAt: string;
+}
+
+export interface SensitiveDataInventoryPageResponse {
+  endpoints: EndpointDataClassification[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+  summary: SensitiveDataInventorySummary;
+}
+
+export interface SensitiveDataFilterParams {
+  page?: number;
+  size?: number;
+  service?: string;
+  sensitivity?: DataSensitivityLevel | string;
+  manualReviewRequired?: boolean;
+  search?: string;
+  sortBy?: string;
+  sortDirection?: string;
+}
+
 
 
 

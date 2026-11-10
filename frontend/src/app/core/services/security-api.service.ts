@@ -35,7 +35,11 @@ import {
   EndpointPostureResponse,
   PostureSummaryResponse,
   PosturePageResponse,
-  PostureFilterParams
+  PostureFilterParams,
+  SensitiveDataInventoryPageResponse,
+  SensitiveDataInventorySummary,
+  EndpointDataClassification,
+  SensitiveDataFilterParams
 } from '../models/security.models';
 
 @Injectable({
@@ -446,6 +450,53 @@ export class SecurityApiService {
     return this.http.get<PostureSummaryResponse>(
       `${this.baseUrl}/api/v1/security/posture/summary`,
       { params: httpParams }
+    ).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/classification/inventory
+   * Retrieves paginated endpoint sensitive data classification inventory.
+   */
+  getSensitiveDataInventory(filterParams?: SensitiveDataFilterParams): Observable<SensitiveDataInventoryPageResponse> {
+    let httpParams = new HttpParams();
+    if (filterParams) {
+      if (filterParams.page !== undefined) httpParams = httpParams.set('page', filterParams.page.toString());
+      if (filterParams.size !== undefined) httpParams = httpParams.set('size', filterParams.size.toString());
+      if (filterParams.service) httpParams = httpParams.set('service', filterParams.service);
+      if (filterParams.sensitivity) httpParams = httpParams.set('sensitivity', filterParams.sensitivity);
+      if (filterParams.manualReviewRequired !== undefined) {
+        httpParams = httpParams.set('manualReviewRequired', filterParams.manualReviewRequired.toString());
+      }
+      if (filterParams.search) httpParams = httpParams.set('search', filterParams.search);
+      if (filterParams.sortBy) httpParams = httpParams.set('sortBy', filterParams.sortBy);
+      if (filterParams.sortDirection) httpParams = httpParams.set('sortDirection', filterParams.sortDirection);
+    }
+    return this.http.get<SensitiveDataInventoryPageResponse>(
+      `${this.baseUrl}/api/v1/security/classification/inventory`,
+      { params: httpParams }
+    ).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/classification/summary
+   * Retrieves top-level sensitive data inventory summary across services.
+   */
+  getSensitiveDataSummary(service?: string): Observable<SensitiveDataInventorySummary> {
+    let httpParams = new HttpParams();
+    if (service) httpParams = httpParams.set('service', service);
+    return this.http.get<SensitiveDataInventorySummary>(
+      `${this.baseUrl}/api/v1/security/classification/summary`,
+      { params: httpParams }
+    ).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/classification/endpoints/{id}
+   * Retrieves single endpoint classification dossier with all field mappings.
+   */
+  getEndpointClassificationDetails(id: string): Observable<EndpointDataClassification> {
+    return this.http.get<EndpointDataClassification>(
+      `${this.baseUrl}/api/v1/security/classification/endpoints/${encodeURIComponent(id)}`
     ).pipe(catchError(this.handleError));
   }
 

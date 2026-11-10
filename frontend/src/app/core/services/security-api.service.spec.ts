@@ -688,6 +688,98 @@ describe('SecurityApiService', () => {
     });
   });
 
+  describe('Sensitive Data Classification APIs', () => {
+    it('should query getSensitiveDataInventory with filters', () => {
+      service.getSensitiveDataInventory({
+        page: 0,
+        size: 10,
+        service: 'customer-service',
+        sensitivity: 'CONFIDENTIAL',
+        manualReviewRequired: false,
+        search: 'email'
+      }).subscribe(res => {
+        expect(res.totalElements).toBe(1);
+        expect(res.endpoints.length).toBe(1);
+      });
+
+      const req = httpTesting.expectOne(r => r.url.includes('/api/v1/security/classification/inventory'));
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('service')).toBe('customer-service');
+      expect(req.request.params.get('sensitivity')).toBe('CONFIDENTIAL');
+      expect(req.request.params.get('manualReviewRequired')).toBe('false');
+      expect(req.request.params.get('search')).toBe('email');
+
+      req.flush({
+        endpoints: [{
+          endpointId: 'ep_1',
+          serviceBoundary: 'customer-service',
+          httpMethod: 'GET',
+          routeTemplate: '/api/v1/customers/{id}',
+          highestSensitivity: 'CONFIDENTIAL',
+          totalFields: 5,
+          classifiedFieldsCount: 5,
+          unclassifiedFieldsCount: 0,
+          manualReviewRequiredCount: 0,
+          fields: [],
+          lastEvaluatedAt: '2026-11-10T12:00:00Z'
+        }],
+        page: 0,
+        size: 10,
+        totalElements: 1,
+        totalPages: 1,
+        first: true,
+        last: true
+      });
+    });
+
+    it('should query getSensitiveDataSummary', () => {
+      service.getSensitiveDataSummary('account-service').subscribe(res => {
+        expect(res.totalMonitoredEndpoints).toBe(5);
+        expect(res.overallCoveragePercentage).toBe(100.0);
+      });
+
+      const req = httpTesting.expectOne(r => r.url.includes('/api/v1/security/classification/summary'));
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('service')).toBe('account-service');
+
+      req.flush({
+        totalMonitoredEndpoints: 5,
+        totalDiscoveredFields: 18,
+        totalClassifiedFields: 18,
+        totalUnclassifiedFields: 0,
+        overallCoveragePercentage: 100.0,
+        totalManualReviewRequired: 0,
+        sensitivityBreakdown: { RESTRICTED: 0, CONFIDENTIAL: 10, INTERNAL: 5, PUBLIC: 3 },
+        services: [],
+        generatedAt: '2026-11-10T12:00:00Z'
+      });
+    });
+
+    it('should query getEndpointClassificationDetails', () => {
+      service.getEndpointClassificationDetails('ep_cust_view').subscribe(res => {
+        expect(res.endpointId).toBe('ep_cust_view');
+        expect(res.highestSensitivity).toBe('CONFIDENTIAL');
+      });
+
+      const req = httpTesting.expectOne(r => r.url.includes('/api/v1/security/classification/endpoints/ep_cust_view'));
+      expect(req.request.method).toBe('GET');
+
+      req.flush({
+        endpointId: 'ep_cust_view',
+        serviceBoundary: 'customer-service',
+        httpMethod: 'GET',
+        routeTemplate: '/api/v1/customers/{id}',
+        highestSensitivity: 'CONFIDENTIAL',
+        totalFields: 3,
+        classifiedFieldsCount: 3,
+        unclassifiedFieldsCount: 0,
+        manualReviewRequiredCount: 0,
+        fields: [],
+        lastEvaluatedAt: '2026-11-10T12:00:00Z'
+      });
+    });
+  });
+
   describe('Error Handling', () => {
     it('should map RFC 7807 ProblemDetail from HTTP error', () => {
       service.getOverview(24).subscribe({

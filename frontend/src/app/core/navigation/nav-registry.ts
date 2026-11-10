@@ -112,6 +112,14 @@ export const NAV_SECTIONS: NavSection[] = [
         description: 'Deterministic 6-dimension API security posture assessment, evidence coverage, and gap analysis'
       },
       {
+        id: 'sensitive-data',
+        label: 'Sensitive Data Inventory',
+        path: '/sensitive-data',
+        icon: 'lock',
+        availability: 'implemented',
+        description: 'Deterministic field-level data sensitivity classification, schema confidence, and access policy inventory'
+      },
+      {
         id: 'data-access',
         label: 'Data Access Monitoring',
         path: '/data-access',

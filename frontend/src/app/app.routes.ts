@@ -65,6 +65,11 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'sensitive-data',
+    loadComponent: () => import('./features/sensitive-data/sensitive-data.component').then(m => m.SensitiveDataComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'data-access',
     loadComponent: () => import('./features/data-access/data-access.component').then(m => m.DataAccessComponent),
     canActivate: [authGuard]
