@@ -120,6 +120,14 @@ export const NAV_SECTIONS: NavSection[] = [
         description: 'Deterministic field-level data sensitivity classification, schema confidence, and access policy inventory'
       },
       {
+        id: 'data-leakage',
+        label: 'Data Leakage & BOLA',
+        path: '/data-leakage',
+        icon: 'shield-alert',
+        availability: 'implemented',
+        description: 'Telemetry-driven data leakage detection, BOLA correlation, sensitive exposure, and bulk extraction analytics'
+      },
+      {
         id: 'data-access',
         label: 'Data Access Monitoring',
         path: '/data-access',

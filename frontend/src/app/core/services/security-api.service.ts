@@ -39,7 +39,10 @@ import {
   SensitiveDataInventoryPageResponse,
   SensitiveDataInventorySummary,
   EndpointDataClassification,
-  SensitiveDataFilterParams
+  SensitiveDataFilterParams,
+  DataLeakageSummaryResponse,
+  DataLeakageRuleInfoResponse,
+  DataLeakageFilterParams
 } from '../models/security.models';
 
 @Injectable({
@@ -497,6 +500,56 @@ export class SecurityApiService {
   getEndpointClassificationDetails(id: string): Observable<EndpointDataClassification> {
     return this.http.get<EndpointDataClassification>(
       `${this.baseUrl}/api/v1/security/classification/endpoints/${encodeURIComponent(id)}`
+    ).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/leakage/summary
+   * Retrieves summary metrics on data leakage, BOLA, and exfiltration incidents.
+   */
+  getDataLeakageSummary(): Observable<DataLeakageSummaryResponse> {
+    return this.http.get<DataLeakageSummaryResponse>(
+      `${this.baseUrl}/api/v1/security/leakage/summary`
+    ).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/leakage/incidents
+   * Retrieves paginated data leakage detection incidents.
+   */
+  getDataLeakageIncidents(filterParams?: DataLeakageFilterParams): Observable<IncidentPageResponse> {
+    let httpParams = new HttpParams();
+    if (filterParams) {
+      if (filterParams.page !== undefined) httpParams = httpParams.set('page', filterParams.page.toString());
+      if (filterParams.size !== undefined) httpParams = httpParams.set('size', filterParams.size.toString());
+      if (filterParams.category) httpParams = httpParams.set('category', filterParams.category);
+      if (filterParams.severity) httpParams = httpParams.set('severity', filterParams.severity);
+      if (filterParams.status) httpParams = httpParams.set('status', filterParams.status);
+      if (filterParams.search) httpParams = httpParams.set('search', filterParams.search);
+    }
+    return this.http.get<IncidentPageResponse>(
+      `${this.baseUrl}/api/v1/security/leakage/incidents`,
+      { params: httpParams }
+    ).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/leakage/incidents/{id}/evidence
+   * Retrieves full forensic evidence chain for a specific leakage incident.
+   */
+  getDataLeakageEvidence(id: string): Observable<EvidenceResponse[]> {
+    return this.http.get<EvidenceResponse[]>(
+      `${this.baseUrl}/api/v1/security/leakage/incidents/${encodeURIComponent(id)}/evidence`
+    ).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/leakage/rules
+   * Retrieves all data leakage and BOLA detection rules metadata.
+   */
+  getDataLeakageRules(): Observable<DataLeakageRuleInfoResponse[]> {
+    return this.http.get<DataLeakageRuleInfoResponse[]>(
+      `${this.baseUrl}/api/v1/security/leakage/rules`
     ).pipe(catchError(this.handleError));
   }
 

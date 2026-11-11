@@ -62,6 +62,7 @@ export interface IncidentResponse {
 
 export interface IncidentPageResponse {
   incidents: IncidentResponse[];
+  content?: IncidentResponse[];
   page: number;
   size: number;
   totalElements: number;
@@ -730,6 +731,51 @@ export interface SensitiveDataFilterParams {
   search?: string;
   sortBy?: string;
   sortDirection?: string;
+}
+
+// ============================================================================
+// Phase 7.2.4.2 — Data Leakage & BOLA Detection Models
+// ============================================================================
+
+export type DataLeakageCategory =
+  | 'BOLA_CONFIRMED_LEAK'
+  | 'BOLA_ATTEMPT'
+  | 'BOLA_PROBE_CAMPAIGN'
+  | 'SENSITIVE_DATA_EXPOSURE'
+  | 'EXCESSIVE_DATA_EXTRACTION'
+  | 'DATA_EXFILTRATION_CAMPAIGN';
+
+export interface DataLeakageSummaryResponse {
+  totalLeakageIncidents: number;
+  confirmedBolaLeaks: number;
+  deniedBolaAttempts: number;
+  sensitiveDataExposures: number;
+  bulkExtractionEvents: number;
+  multiStageCampaigns: number;
+  incidentsBySeverity: Record<string, number>;
+  incidentsByStatus: Record<string, number>;
+  recentIncidents: IncidentResponse[];
+  generatedAt: string;
+}
+
+export interface DataLeakageRuleInfoResponse {
+  ruleId: string;
+  ruleVersion: string;
+  name: string;
+  description: string;
+  threatCategory: string;
+  defaultSeverity: string;
+  enabled: boolean;
+  triggerConditionExplanation: string;
+}
+
+export interface DataLeakageFilterParams {
+  page?: number;
+  size?: number;
+  category?: string;
+  severity?: string;
+  status?: string;
+  search?: string;
 }
 
 

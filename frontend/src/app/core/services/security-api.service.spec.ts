@@ -778,6 +778,83 @@ describe('SecurityApiService', () => {
         lastEvaluatedAt: '2026-11-10T12:00:00Z'
       });
     });
+
+    it('should query getDataLeakageSummary', () => {
+      service.getDataLeakageSummary().subscribe(res => {
+        expect(res.totalLeakageIncidents).toBe(4);
+        expect(res.confirmedBolaLeaks).toBe(1);
+      });
+
+      const req = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/leakage/summary`);
+      expect(req.request.method).toBe('GET');
+      req.flush({
+        totalLeakageIncidents: 4,
+        confirmedBolaLeaks: 1,
+        deniedBolaAttempts: 2,
+        sensitiveDataExposures: 1,
+        excessiveDataExtractions: 0,
+        dataExfiltrationCampaigns: 0,
+        activeCampaigns: 0,
+        byCategory: { BOLA_CONFIRMED_LEAK: 1, BOLA_ATTEMPT: 2, SENSITIVE_DATA_EXPOSURE: 1 },
+        bySeverity: { CRITICAL: 1, HIGH: 3 },
+        generatedAt: '2026-11-11T12:00:00Z'
+      });
+    });
+
+    it('should query getDataLeakageIncidents with filters', () => {
+      service.getDataLeakageIncidents({ category: 'BOLA_CONFIRMED_LEAK', page: 1, size: 25 }).subscribe(res => {
+        expect(res.totalElements).toBe(1);
+      });
+
+      const req = httpTesting.expectOne(r =>
+        r.url === `${environment.apiBaseUrl}/api/v1/security/leakage/incidents` &&
+        r.params.get('category') === 'BOLA_CONFIRMED_LEAK' &&
+        r.params.get('page') === '1' &&
+        r.params.get('size') === '25'
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush({
+        content: [],
+        page: 1,
+        size: 25,
+        totalElements: 1,
+        totalPages: 1,
+        first: true,
+        last: true
+      });
+    });
+
+    it('should query getDataLeakageEvidence', () => {
+      service.getDataLeakageEvidence('inc-100').subscribe(evidence => {
+        expect(evidence.length).toBe(1);
+      });
+
+      const req = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/leakage/incidents/inc-100/evidence`);
+      expect(req.request.method).toBe('GET');
+      req.flush([{
+        id: 'ev-1',
+        incidentId: 'inc-100',
+        evidenceType: 'TRIGGER_EVENT',
+        category: 'BOLA_CONFIRMED_LEAK',
+        severity: 'CRITICAL',
+        confidenceScore: 0.95,
+        description: 'BOLA leak detected',
+        capturedAt: '2026-11-11T12:00:00Z',
+        metadata: {}
+      }]);
+    });
+
+    it('should query getDataLeakageRules', () => {
+      service.getDataLeakageRules().subscribe(rules => {
+        expect(rules.length).toBe(4);
+      });
+
+      const req = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/leakage/rules`);
+      expect(req.request.method).toBe('GET');
+      req.flush([
+        { ruleId: 'RULE-BOLA-CONFIRMED-01', ruleName: 'BOLA Confirmed Leak', category: 'BOLA_CONFIRMED_LEAK', defaultSeverity: 'CRITICAL', description: '', windowSeconds: 60, threshold: 1, status: 'ACTIVE' }
+      ]);
+    });
   });
 
   describe('Error Handling', () => {

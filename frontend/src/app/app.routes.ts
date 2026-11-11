@@ -70,6 +70,11 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'data-leakage',
+    loadComponent: () => import('./features/data-leakage/data-leakage.component').then(m => m.DataLeakageComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'data-access',
     loadComponent: () => import('./features/data-access/data-access.component').then(m => m.DataAccessComponent),
     canActivate: [authGuard]
