@@ -20,6 +20,8 @@ public class InMemoryDetectionStateStore implements DetectionStateStore {
     private final Map<String, List<SlidingWindowEvent>> rateStore = new ConcurrentHashMap<>();
     private final Map<String, List<ProbeRecord>> probeStore = new ConcurrentHashMap<>();
     private final Map<String, List<SlidingWindowEvent>> injStore = new ConcurrentHashMap<>();
+    private final Map<String, List<com.aegis.gateway.detection.model.SensitiveAccessRecord>> sensitiveStore = new ConcurrentHashMap<>();
+    private final Map<String, List<ProbeRecord>> bolaProbeStore = new ConcurrentHashMap<>();
 
     @Override
     public void recordBolaAttempt(String customerId, UUID eventId, String resourceId, Instant timestamp) {
@@ -95,6 +97,30 @@ public class InMemoryDetectionStateStore implements DetectionStateStore {
     @Override
     public List<SlidingWindowEvent> getRecentInjectionAttempts(String entityKey, Instant since) {
         List<SlidingWindowEvent> records = injStore.getOrDefault(entityKey.trim(), Collections.emptyList());
+        return records.stream().filter(r -> !r.timestamp().isBefore(since)).toList();
+    }
+
+    @Override
+    public void recordSensitiveAccess(String customerId, UUID eventId, String resourceId, String routeTemplate, int recordCount, long responseSizeBytes, Instant timestamp) {
+        sensitiveStore.computeIfAbsent(customerId.trim(), k -> new CopyOnWriteArrayList<>())
+            .add(new com.aegis.gateway.detection.model.SensitiveAccessRecord(eventId, resourceId, routeTemplate, recordCount, responseSizeBytes, timestamp));
+    }
+
+    @Override
+    public List<com.aegis.gateway.detection.model.SensitiveAccessRecord> getRecentSensitiveAccess(String customerId, Instant since) {
+        List<com.aegis.gateway.detection.model.SensitiveAccessRecord> records = sensitiveStore.getOrDefault(customerId.trim(), Collections.emptyList());
+        return records.stream().filter(r -> !r.timestamp().isBefore(since)).toList();
+    }
+
+    @Override
+    public void recordBolaProbe(String customerId, UUID eventId, String resourceId, int statusCode, Instant timestamp) {
+        bolaProbeStore.computeIfAbsent(customerId.trim(), k -> new CopyOnWriteArrayList<>())
+            .add(new ProbeRecord(eventId, resourceId, "", statusCode, timestamp));
+    }
+
+    @Override
+    public List<ProbeRecord> getRecentBolaProbes(String customerId, Instant since) {
+        List<ProbeRecord> records = bolaProbeStore.getOrDefault(customerId.trim(), Collections.emptyList());
         return records.stream().filter(r -> !r.timestamp().isBefore(since)).toList();
     }
 

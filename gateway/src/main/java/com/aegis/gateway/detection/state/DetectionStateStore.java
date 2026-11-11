@@ -39,6 +39,14 @@ public interface DetectionStateStore {
     void recordInjectionAttempt(String entityKey, UUID eventId, String patternType, Instant timestamp);
     List<SlidingWindowEvent> getRecentInjectionAttempts(String entityKey, Instant since);
 
+    // RULE-BULK-EXTRACT-01: Sensitive resource access tracking
+    void recordSensitiveAccess(String customerId, UUID eventId, String resourceId, String routeTemplate, int recordCount, long responseSizeBytes, Instant timestamp);
+    List<com.aegis.gateway.detection.model.SensitiveAccessRecord> getRecentSensitiveAccess(String customerId, Instant since);
+
+    // RULE-BOLA-02: BOLA probing campaign tracking
+    void recordBolaProbe(String customerId, UUID eventId, String resourceId, int statusCode, Instant timestamp);
+    List<ProbeRecord> getRecentBolaProbes(String customerId, Instant since);
+
     // Generic key cleanup
     void clearKey(String prefix, String entityKey);
 }

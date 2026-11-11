@@ -29,6 +29,8 @@ public class RedisDetectionStateStore implements DetectionStateStore {
     public static final String KEY_PREFIX_RATE = "aegis:state:rate:";
     public static final String KEY_PREFIX_PROBE = "aegis:state:probe:";
     public static final String KEY_PREFIX_INJ = "aegis:state:inj:";
+    public static final String KEY_PREFIX_SENSITIVE = "aegis:state:sensitive:";
+    public static final String KEY_PREFIX_BOLA_PROBE = "aegis:state:bolaprobe:";
 
     private static final Duration DEFAULT_TTL = Duration.ofHours(1);
     private static final int MAX_FALLBACK_SIZE = 500;
@@ -42,6 +44,8 @@ public class RedisDetectionStateStore implements DetectionStateStore {
     private final Map<String, Map<UUID, SlidingWindowEvent>> rateFallback = new ConcurrentHashMap<>();
     private final Map<String, Map<UUID, ProbeRecord>> probeFallback = new ConcurrentHashMap<>();
     private final Map<String, Map<UUID, SlidingWindowEvent>> injFallback = new ConcurrentHashMap<>();
+    private final Map<String, Map<UUID, com.aegis.gateway.detection.model.SensitiveAccessRecord>> sensitiveFallback = new ConcurrentHashMap<>();
+    private final Map<String, Map<UUID, ProbeRecord>> bolaProbeFallback = new ConcurrentHashMap<>();
 
     public RedisDetectionStateStore(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
@@ -420,6 +424,150 @@ public class RedisDetectionStateStore implements DetectionStateStore {
             if (map.size() > MAX_FALLBACK_SIZE) {
                 List<DataVolumeRecord> sorted = new ArrayList<>(map.values());
                 sorted.sort(Comparator.comparing(DataVolumeRecord::timestamp));
+                int toRemove = map.size() - MAX_FALLBACK_SIZE;
+                for (int i = 0; i < toRemove && i < sorted.size(); i++) {
+                    map.remove(sorted.get(i).eventId());
+                }
+            }
+        }
+    }
+
+    // ==========================================
+    // 7. RULE-BULK-EXTRACT-01 (Sensitive Resource Access)
+    // ==========================================
+
+    @Override
+    public void recordSensitiveAccess(String customerId, UUID eventId, String resourceId, String routeTemplate, int recordCount, long responseSizeBytes, Instant timestamp) {
+        if (customerId == null || customerId.isBlank() || eventId == null) return;
+        String key = KEY_PREFIX_SENSITIVE + customerId.trim();
+        String member = eventId + ":" + (resourceId != null ? resourceId.trim() : "UNKNOWN") + ":" + recordCount + ":" + responseSizeBytes;
+        double score = timestamp.toEpochMilli();
+
+        try {
+            redisTemplate.opsForZSet().add(key, member, score);
+            redisTemplate.expire(key, DEFAULT_TTL);
+        } catch (Exception e) {
+            log.debug("Redis state store unavailable, using sensitive access fallback: {}", e.getMessage());
+            Map<UUID, com.aegis.gateway.detection.model.SensitiveAccessRecord> customerAccess = sensitiveFallback.computeIfAbsent(customerId.trim(), k -> new ConcurrentHashMap<>());
+            customerAccess.put(eventId, new com.aegis.gateway.detection.model.SensitiveAccessRecord(eventId, resourceId, routeTemplate, recordCount, responseSizeBytes, timestamp));
+            pruneSensitiveFallback(customerAccess, timestamp);
+        }
+    }
+
+    @Override
+    public List<com.aegis.gateway.detection.model.SensitiveAccessRecord> getRecentSensitiveAccess(String customerId, Instant since) {
+        if (customerId == null || customerId.isBlank()) return Collections.emptyList();
+        String key = KEY_PREFIX_SENSITIVE + customerId.trim();
+        double minScore = since.toEpochMilli();
+
+        try {
+            redisTemplate.opsForZSet().removeRangeByScore(key, 0, minScore - 1);
+            Set<ZSetOperations.TypedTuple<String>> tuples = redisTemplate.opsForZSet()
+                .rangeByScoreWithScores(key, minScore, Double.POSITIVE_INFINITY);
+
+            if (tuples == null || tuples.isEmpty()) return Collections.emptyList();
+
+            List<com.aegis.gateway.detection.model.SensitiveAccessRecord> results = new ArrayList<>();
+            for (ZSetOperations.TypedTuple<String> tuple : tuples) {
+                String val = tuple.getValue();
+                if (val != null) {
+                    String[] parts = val.split(":");
+                    if (parts.length >= 4) {
+                        try {
+                            UUID eventId = UUID.fromString(parts[0]);
+                            String resourceId = parts[1];
+                            int recCount = Integer.parseInt(parts[2]);
+                            long bytes = Long.parseLong(parts[3]);
+                            Instant ts = Instant.ofEpochMilli(tuple.getScore().longValue());
+                            results.add(new com.aegis.gateway.detection.model.SensitiveAccessRecord(eventId, resourceId, "", recCount, bytes, ts));
+                        } catch (Exception ignored) {}
+                    }
+                }
+            }
+            return results;
+        } catch (Exception e) {
+            log.debug("Redis state store unavailable, reading sensitive access from fallback: {}", e.getMessage());
+            Map<UUID, com.aegis.gateway.detection.model.SensitiveAccessRecord> customerAccess = sensitiveFallback.get(customerId.trim());
+            if (customerAccess == null || customerAccess.isEmpty()) return Collections.emptyList();
+
+            return customerAccess.values().stream()
+                .filter(r -> !r.timestamp().isBefore(since))
+                .sorted(Comparator.comparing(com.aegis.gateway.detection.model.SensitiveAccessRecord::timestamp))
+                .toList();
+        }
+    }
+
+    // ==========================================
+    // 8. RULE-BOLA-02 (BOLA Probing Campaign)
+    // ==========================================
+
+    @Override
+    public void recordBolaProbe(String customerId, UUID eventId, String resourceId, int statusCode, Instant timestamp) {
+        if (customerId == null || customerId.isBlank() || eventId == null) return;
+        String key = KEY_PREFIX_BOLA_PROBE + customerId.trim();
+        String member = eventId + ":" + (resourceId != null ? resourceId.trim() : "UNKNOWN") + ":" + statusCode;
+        double score = timestamp.toEpochMilli();
+
+        try {
+            redisTemplate.opsForZSet().add(key, member, score);
+            redisTemplate.expire(key, DEFAULT_TTL);
+        } catch (Exception e) {
+            log.debug("Redis state store unavailable, using bola probe fallback: {}", e.getMessage());
+            Map<UUID, ProbeRecord> customerProbes = bolaProbeFallback.computeIfAbsent(customerId.trim(), k -> new ConcurrentHashMap<>());
+            customerProbes.put(eventId, new ProbeRecord(eventId, resourceId, "", statusCode, timestamp));
+            pruneProbeFallback(customerProbes, timestamp);
+        }
+    }
+
+    @Override
+    public List<ProbeRecord> getRecentBolaProbes(String customerId, Instant since) {
+        if (customerId == null || customerId.isBlank()) return Collections.emptyList();
+        String key = KEY_PREFIX_BOLA_PROBE + customerId.trim();
+        double minScore = since.toEpochMilli();
+
+        try {
+            redisTemplate.opsForZSet().removeRangeByScore(key, 0, minScore - 1);
+            Set<ZSetOperations.TypedTuple<String>> tuples = redisTemplate.opsForZSet()
+                .rangeByScoreWithScores(key, minScore, Double.POSITIVE_INFINITY);
+
+            if (tuples == null || tuples.isEmpty()) return Collections.emptyList();
+
+            List<ProbeRecord> results = new ArrayList<>();
+            for (ZSetOperations.TypedTuple<String> tuple : tuples) {
+                String val = tuple.getValue();
+                if (val != null) {
+                    String[] parts = val.split(":");
+                    if (parts.length >= 3) {
+                        try {
+                            UUID eventId = UUID.fromString(parts[0]);
+                            String resourceId = parts[1];
+                            int code = Integer.parseInt(parts[2]);
+                            Instant ts = Instant.ofEpochMilli(tuple.getScore().longValue());
+                            results.add(new ProbeRecord(eventId, resourceId, "", code, ts));
+                        } catch (Exception ignored) {}
+                    }
+                }
+            }
+            return results;
+        } catch (Exception e) {
+            log.debug("Redis state store unavailable, reading bola probes from fallback: {}", e.getMessage());
+            Map<UUID, ProbeRecord> customerProbes = bolaProbeFallback.get(customerId.trim());
+            if (customerProbes == null || customerProbes.isEmpty()) return Collections.emptyList();
+
+            return customerProbes.values().stream()
+                .filter(r -> !r.timestamp().isBefore(since))
+                .sorted(Comparator.comparing(ProbeRecord::timestamp))
+                .toList();
+        }
+    }
+
+    private void pruneSensitiveFallback(Map<UUID, com.aegis.gateway.detection.model.SensitiveAccessRecord> map, Instant timestamp) {
+        if (map.size() > MAX_FALLBACK_SIZE) {
+            Instant cutoff = timestamp.minusSeconds(3600);
+            map.values().removeIf(r -> r.timestamp().isBefore(cutoff));
+            if (map.size() > MAX_FALLBACK_SIZE) {
+                List<com.aegis.gateway.detection.model.SensitiveAccessRecord> sorted = new ArrayList<>(map.values());
+                sorted.sort(Comparator.comparing(com.aegis.gateway.detection.model.SensitiveAccessRecord::timestamp));
                 int toRemove = map.size() - MAX_FALLBACK_SIZE;
                 for (int i = 0; i < toRemove && i < sorted.size(); i++) {
                     map.remove(sorted.get(i).eventId());

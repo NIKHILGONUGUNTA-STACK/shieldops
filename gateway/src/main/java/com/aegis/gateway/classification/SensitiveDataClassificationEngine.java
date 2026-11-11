@@ -129,6 +129,15 @@ public class SensitiveDataClassificationEngine {
     }
 
     /**
+     * Convenience method to classify an endpoint by method and route template.
+     */
+    public EndpointDataClassification classifyEndpoint(String httpMethod, String routeTemplate) {
+        String epId = com.aegis.gateway.discovery.RouteNormalizer.generateEndpointId(httpMethod, routeTemplate);
+        String service = com.aegis.gateway.discovery.RouteNormalizer.resolveService(routeTemplate);
+        return classifyEndpoint(epId, httpMethod, routeTemplate, service);
+    }
+
+    /**
      * Produces an endpoint-level consolidated classification dossier.
      */
     public EndpointDataClassification classifyEndpoint(String endpointId, String httpMethod, String routeTemplate, String serviceBoundary) {
