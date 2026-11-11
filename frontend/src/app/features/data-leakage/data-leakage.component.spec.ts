@@ -15,72 +15,71 @@ describe('DataLeakageComponent', () => {
   let fixture: ComponentFixture<DataLeakageComponent>;
   let mockSecurityApi: jasmine.SpyObj<SecurityApiService>;
 
-  const mockSummary: DataLeakageSummaryResponse = {
-    totalLeakageIncidents: 6,
-    confirmedBolaLeaks: 2,
-    deniedBolaAttempts: 2,
-    sensitiveDataExposures: 1,
-    excessiveDataExtractions: 1,
-    dataExfiltrationCampaigns: 0,
-    activeCampaigns: 0,
-    byCategory: {
-      BOLA_CONFIRMED_LEAK: 2,
-      BOLA_ATTEMPT: 2,
-      SENSITIVE_DATA_EXPOSURE: 1,
-      EXCESSIVE_DATA_EXTRACTION: 1
-    },
-    bySeverity: {
-      CRITICAL: 2,
-      HIGH: 4
-    },
-    generatedAt: '2026-11-11T12:00:00Z'
-  };
-
   const mockIncidents: IncidentResponse[] = [
     {
       id: 'inc-leak-001',
-      title: 'BOLA Confirmed Leak: Customer Cross-Owner Access',
-      description: 'Unauthorized access to customer account details',
-      category: 'BOLA_CONFIRMED_LEAK',
+      incidentFingerprint: 'fp-12345',
+      ruleId: 'RULE-BOLA-CONFIRMED-01',
+      ruleVersion: '1.0.0',
+      threatCategory: 'BOLA_CONFIRMED_LEAK',
       severity: 'CRITICAL',
       status: 'OPEN',
-      targetService: 'customer-service',
-      targetEndpoint: '/api/v1/customers/{customerId}',
-      sourceIp: '10.0.0.50',
-      evidenceCount: 3,
+      targetEntityType: 'CUSTOMER',
+      targetEntityValue: 'cust-victim-001',
+      firstDetectedAt: '2026-11-11T10:00:00Z',
+      lastEventAt: '2026-11-11T10:00:00Z',
+      eventCount: 3,
+      summary: 'BOLA Confirmed Leak: Customer Cross-Owner Access',
       createdAt: '2026-11-11T10:00:00Z',
       updatedAt: '2026-11-11T10:00:00Z'
     }
   ];
 
+  const mockSummary: DataLeakageSummaryResponse = {
+    totalLeakageIncidents: 6,
+    confirmedBolaLeaks: 2,
+    deniedBolaAttempts: 2,
+    sensitiveDataExposures: 1,
+    bulkExtractionEvents: 1,
+    multiStageCampaigns: 0,
+    incidentsBySeverity: {
+      CRITICAL: 2,
+      HIGH: 4
+    },
+    incidentsByStatus: {
+      OPEN: 6
+    },
+    recentIncidents: mockIncidents,
+    generatedAt: '2026-11-11T12:00:00Z'
+  };
+
   const mockEvidence: EvidenceResponse[] = [
     {
       id: 'ev-01',
       incidentId: 'inc-leak-001',
-      evidenceType: 'TRIGGER_EVENT',
-      category: 'BOLA_CONFIRMED_LEAK',
-      severity: 'CRITICAL',
+      ruleId: 'RULE-BOLA-CONFIRMED-01',
+      ruleVersion: '1.0.0',
+      evaluatedAt: '2026-11-11T10:00:00Z',
       confidenceScore: 0.95,
-      description: 'HTTP 200 returned on cross-owner customer resource',
-      capturedAt: '2026-11-11T10:00:00Z',
-      metadata: {
-        resourceId: 'cust-victim-001',
-        authenticatedSubject: 'cust-attacker-002',
-        routeTemplate: '/api/v1/customers/{customerId}'
-      }
+      severity: 'CRITICAL',
+      triggerCondition: 'HTTP 200 returned on cross-owner customer resource',
+      distinctResourcesCount: 1,
+      contributingEventIds: ['evt-1', 'evt-2'],
+      mitreTechnique: 'T1530',
+      createdAt: '2026-11-11T10:00:00Z'
     }
   ];
 
   const mockRules: DataLeakageRuleInfoResponse[] = [
     {
       ruleId: 'RULE-BOLA-CONFIRMED-01',
-      ruleName: 'BOLA Confirmed Leak Detection',
-      category: 'BOLA_CONFIRMED_LEAK',
-      defaultSeverity: 'CRITICAL',
+      ruleVersion: '1.0.0',
+      name: 'BOLA Confirmed Leak Detection',
       description: 'Detects successful cross-owner customer or account access',
-      windowSeconds: 60,
-      threshold: 1,
-      status: 'ACTIVE'
+      threatCategory: 'BOLA_CONFIRMED_LEAK',
+      defaultSeverity: 'CRITICAL',
+      enabled: true,
+      triggerConditionExplanation: 'Cross-owner request succeeded with HTTP 200'
     }
   ];
 
@@ -94,6 +93,7 @@ describe('DataLeakageComponent', () => {
 
     mockSecurityApi.getDataLeakageSummary.and.returnValue(of(mockSummary));
     mockSecurityApi.getDataLeakageIncidents.and.returnValue(of({
+      incidents: mockIncidents,
       content: mockIncidents,
       page: 1,
       size: 25,
