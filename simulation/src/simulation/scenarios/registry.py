@@ -12,6 +12,16 @@ from simulation.models import (
 )
 from simulation.scenarios.base import BaseScenario
 from simulation.scenarios.benign_customer_flow import BenignCustomerFlow
+from simulation.scenarios.bola_scenarios import (
+    BolaAttemptScenario,
+    BolaProbeCampaignScenario,
+)
+from simulation.scenarios.data_leak_scenarios import (
+    DataLeakScenario,
+    BulkExtractScenario,
+    MultiStageExfilScenario,
+)
+from simulation.scenarios.benign_repeated_reads_scenario import BenignRepeatedReadsScenario
 
 log = logging.getLogger(__name__)
 
@@ -53,6 +63,7 @@ def get_default_registry() -> ScenarioRegistry:
     """Constructs the standard Aegis scenario registry with all planned scenarios."""
     registry = ScenarioRegistry()
 
+    # 1. SCEN-BENIGN-01: Legitimate Customer Banking Journey
     benign_meta = ScenarioMetadata(
         id="SCEN-BENIGN-01",
         name="Legitimate Customer Banking Journey",
@@ -67,6 +78,102 @@ def get_default_registry() -> ScenarioRegistry:
         is_implemented=True,
     )
     registry.register_class(BenignCustomerFlow, benign_meta)
+
+    # 2. SCEN-BOLA-01: Single Cross-Customer Unauthorized Access Attempt
+    bola_01_meta = ScenarioMetadata(
+        id="SCEN-BOLA-01",
+        name="Broken Object Level Authorization (BOLA) Cross-Customer Access",
+        description="Customer attempts to retrieve and debit accounts belonging to a different customer ID.",
+        category=ScenarioCategory.BOLA,
+        target_services=["customer-service", "account-service"],
+        expected_outcome=ExpectedOutcome(
+            expected_status_codes=[403],
+            expected_detection_rules=["RULE-BOLA-01"],
+            expected_incident_severity="HIGH",
+        ),
+        is_implemented=True,
+    )
+    registry.register_class(BolaAttemptScenario, bola_01_meta)
+
+    # 3. SCEN-BOLA-02: Multi-Target BOLA Probing Campaign
+    bola_02_meta = ScenarioMetadata(
+        id="SCEN-BOLA-02",
+        name="BOLA Probing Campaign Across Multiple Accounts",
+        description="Customer sends sequential cross-owner requests targeting distinct account resources.",
+        category=ScenarioCategory.BOLA,
+        target_services=["account-service"],
+        expected_outcome=ExpectedOutcome(
+            expected_status_codes=[403],
+            expected_detection_rules=["RULE-BOLA-02"],
+            expected_incident_severity="HIGH",
+        ),
+        is_implemented=True,
+    )
+    registry.register_class(BolaProbeCampaignScenario, bola_02_meta)
+
+    # 4. SCEN-DATA-LEAK-01: Sensitive Data Exposure
+    data_leak_meta = ScenarioMetadata(
+        id="SCEN-DATA-LEAK-01",
+        name="Unexpected Sensitive Field Data Leakage",
+        description="Non-analyst caller requests endpoints containing CONFIDENTIAL and RESTRICTED fields.",
+        category=ScenarioCategory.DATA_ACCESS,
+        target_services=["customer-service", "account-service"],
+        expected_outcome=ExpectedOutcome(
+            expected_status_codes=[403, 200],
+            expected_detection_rules=["RULE-DATA-LEAK-01"],
+            expected_incident_severity="HIGH",
+        ),
+        is_implemented=True,
+    )
+    registry.register_class(DataLeakScenario, data_leak_meta)
+
+    # 5. SCEN-BULK-EXTRACT-01: Excessive Data Access and Extraction
+    bulk_extract_meta = ScenarioMetadata(
+        id="SCEN-BULK-EXTRACT-01",
+        name="Excessive Bulk Data Access and Extraction",
+        description="High-frequency iterative reads across >= 3 distinct customer/account resources.",
+        category=ScenarioCategory.DATA_ACCESS,
+        target_services=["customer-service"],
+        expected_outcome=ExpectedOutcome(
+            expected_status_codes=[200, 403],
+            expected_detection_rules=["RULE-BULK-EXTRACT-01"],
+            expected_incident_severity="HIGH",
+        ),
+        is_implemented=True,
+    )
+    registry.register_class(BulkExtractScenario, bulk_extract_meta)
+
+    # 6. SCEN-EXFIL-01: Multi-Stage Exfiltration Campaign
+    exfil_meta = ScenarioMetadata(
+        id="SCEN-EXFIL-01",
+        name="Multi-Stage Exfiltration Campaign",
+        description="Correlated multi-stage attack: Reconnaissance -> BOLA Probing -> Data Extraction.",
+        category=ScenarioCategory.MULTI_VECTOR,
+        target_services=["security-gateway", "account-service", "customer-service"],
+        expected_outcome=ExpectedOutcome(
+            expected_status_codes=[401, 403, 404],
+            expected_detection_rules=["RULE-PROBE-01", "RULE-BOLA-01", "DATA_EXFILTRATION_CAMPAIGN"],
+            expected_incident_severity="CRITICAL",
+        ),
+        is_implemented=True,
+    )
+    registry.register_class(MultiStageExfilScenario, exfil_meta)
+
+    # 7. SCEN-BENIGN-02: Legitimate Repeated Reads
+    benign_02_meta = ScenarioMetadata(
+        id="SCEN-BENIGN-02",
+        name="Legitimate Repeated Reads (False Positive Benchmark)",
+        description="High-frequency legitimate reads of owned resources to verify zero false positives.",
+        category=ScenarioCategory.BENIGN,
+        target_services=["customer-service", "account-service"],
+        expected_outcome=ExpectedOutcome(
+            expected_status_codes=[200],
+            expected_detection_rules=[],
+            expected_incident_severity=None,
+        ),
+        is_implemented=True,
+    )
+    registry.register_class(BenignRepeatedReadsScenario, benign_02_meta)
 
     standard_scenarios = [
         ScenarioMetadata(
@@ -92,19 +199,6 @@ def get_default_registry() -> ScenarioRegistry:
                 expected_status_codes=[403],
                 expected_detection_rules=["RULE-AUTH-01"],
                 expected_incident_severity="MEDIUM",
-            ),
-            is_implemented=False,
-        ),
-        ScenarioMetadata(
-            id="SCEN-BOLA-01",
-            name="Broken Object Level Authorization (BOLA) Cross-Customer Access",
-            description="Customer attempts to retrieve and debit accounts belonging to a different customer ID.",
-            category=ScenarioCategory.BOLA,
-            target_services=["customer-service", "account-service"],
-            expected_outcome=ExpectedOutcome(
-                expected_status_codes=[403],
-                expected_detection_rules=["RULE-BOLA-01"],
-                expected_incident_severity="HIGH",
             ),
             is_implemented=False,
         ),

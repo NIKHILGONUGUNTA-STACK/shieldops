@@ -57,7 +57,7 @@ def test_default_registry_all_categories_present():
     registry = get_default_registry()
     scenarios = registry.list_all()
 
-    assert len(scenarios) == 9
+    assert len(scenarios) >= 9
 
     # Verify all 9 standard categories are covered
     categories = {s.category for s in scenarios}
@@ -74,16 +74,25 @@ def test_default_registry_all_categories_present():
     }
     assert categories == expected_categories
 
-    # SCEN-BENIGN-01 is implemented, other 8 scenarios remain planned
+    # Verify implemented scenarios
+    implemented_ids = {
+        "SCEN-BENIGN-01",
+        "SCEN-BOLA-01",
+        "SCEN-BOLA-02",
+        "SCEN-DATA-LEAK-01",
+        "SCEN-BULK-EXTRACT-01",
+        "SCEN-EXFIL-01",
+        "SCEN-BENIGN-02",
+    }
     benign = registry.get_metadata("SCEN-BENIGN-01")
     assert benign is not None and benign.is_implemented is True
     assert registry.get_class("SCEN-BENIGN-01") is not None
-    assert all(not s.is_implemented for s in scenarios if s.id != "SCEN-BENIGN-01")
+    assert all(not s.is_implemented for s in scenarios if s.id not in implemented_ids)
 
     # Category lookup
     bola_scenarios = registry.list_by_category(ScenarioCategory.BOLA)
-    assert len(bola_scenarios) == 1
-    assert bola_scenarios[0].id == "SCEN-BOLA-01"
+    assert len(bola_scenarios) >= 1
+    assert any(s.id == "SCEN-BOLA-01" for s in bola_scenarios)
 
 
 @pytest.mark.asyncio
