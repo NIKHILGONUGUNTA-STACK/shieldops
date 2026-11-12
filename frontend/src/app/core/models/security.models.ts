@@ -778,6 +778,48 @@ export interface DataLeakageFilterParams {
   search?: string;
 }
 
+// ============================================================================
+// Phase 7.2.4.3 — Detection Robustness & Research Evaluation Models
+// ============================================================================
+
+export interface ModeBenchmarkMetrics {
+  mode: string;
+  totalScenarios: number;
+  totalBenign: number;
+  totalMalicious: number;
+  truePositives: number;
+  falsePositives: number;
+  trueNegatives: number;
+  falseNegatives: number;
+  precision: number;
+  recall: number;
+  f1Score: number;
+  accuracy: number;
+  falsePositiveRate: number;
+  specificity: number;
+  medianLatencyMs: number;
+  p95LatencyMs: number;
+  processingOverheadMs: number;
+}
+
+export interface RobustnessFindingResponse {
+  testCase: string;
+  category: string;
+  expectedBehavior: string;
+  observedBehavior: string;
+  passed: boolean;
+  details: string;
+}
+
+export interface ComparativeBenchmarkResponse {
+  datasetSize: number;
+  isolatedRules: ModeBenchmarkMetrics;
+  contextualCorrelation: ModeBenchmarkMetrics;
+  robustnessFindings: RobustnessFindingResponse[];
+  generatedAt: string;
+}
+
+
 
 
 

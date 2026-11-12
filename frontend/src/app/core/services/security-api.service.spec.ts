@@ -846,7 +846,7 @@ describe('SecurityApiService', () => {
 
     it('should query getDataLeakageRules', () => {
       service.getDataLeakageRules().subscribe(rules => {
-        expect(rules.length).toBe(4);
+        expect(rules.length).toBe(1);
       });
 
       const req = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/leakage/rules`);
@@ -854,6 +854,23 @@ describe('SecurityApiService', () => {
       req.flush([
         { ruleId: 'RULE-BOLA-CONFIRMED-01', ruleName: 'BOLA Confirmed Leak', category: 'BOLA_CONFIRMED_LEAK', defaultSeverity: 'CRITICAL', description: '', windowSeconds: 60, threshold: 1, status: 'ACTIVE' }
       ]);
+    });
+
+    it('should query getComparativeBenchmark', () => {
+      service.getComparativeBenchmark().subscribe(res => {
+        expect(res.datasetSize).toBe(23);
+        expect(res.contextualCorrelation.precision).toBe(1.0);
+      });
+
+      const req = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/leakage/evaluation/benchmark`);
+      expect(req.request.method).toBe('GET');
+      req.flush({
+        datasetSize: 23,
+        isolatedRules: { mode: 'ISOLATED_RULES', precision: 0.8333 },
+        contextualCorrelation: { mode: 'CONTEXTUAL_CORRELATION', precision: 1.0 },
+        robustnessFindings: [],
+        generatedAt: '2026-11-12T12:00:00Z'
+      });
     });
   });
 

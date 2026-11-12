@@ -88,8 +88,19 @@ describe('DataLeakageComponent', () => {
       'getDataLeakageSummary',
       'getDataLeakageIncidents',
       'getDataLeakageEvidence',
-      'getDataLeakageRules'
+      'getDataLeakageRules',
+      'getComparativeBenchmark'
     ]);
+
+    const mockBenchmark = {
+      datasetSize: 23,
+      isolatedRules: { mode: 'ISOLATED_RULES', precision: 0.8333, recall: 0.9091, f1Score: 0.8696 },
+      contextualCorrelation: { mode: 'CONTEXTUAL_CORRELATION', precision: 1.0, recall: 1.0, f1Score: 1.0 },
+      robustnessFindings: [
+        { testCase: 'Sliding Window', category: 'Boundary', expectedBehavior: '', observedBehavior: '', passed: true, details: '' }
+      ],
+      generatedAt: '2026-11-12T12:00:00Z'
+    };
 
     mockSecurityApi.getDataLeakageSummary.and.returnValue(of(mockSummary));
     mockSecurityApi.getDataLeakageIncidents.and.returnValue(of({
@@ -104,6 +115,7 @@ describe('DataLeakageComponent', () => {
     }));
     mockSecurityApi.getDataLeakageEvidence.and.returnValue(of(mockEvidence));
     mockSecurityApi.getDataLeakageRules.and.returnValue(of(mockRules));
+    mockSecurityApi.getComparativeBenchmark.and.returnValue(of(mockBenchmark as any));
 
     await TestBed.configureTestingModule({
       imports: [DataLeakageComponent],
@@ -143,5 +155,17 @@ describe('DataLeakageComponent', () => {
     expect(component.selectedIncident()).not.toBeNull();
     component.toggleIncident(mockIncidents[0]);
     expect(component.selectedIncident()).toBeNull();
+  });
+
+  it('should load comparative benchmark data on refresh', () => {
+    expect(mockSecurityApi.getComparativeBenchmark).toHaveBeenCalled();
+    expect(component.benchmarkData()).not.toBeNull();
+    expect(component.benchmarkData()?.datasetSize).toBe(23);
+  });
+
+  it('should switch between incidents and benchmark views', () => {
+    expect(component.activeView()).toBe('incidents');
+    component.activeView.set('benchmark');
+    expect(component.activeView()).toBe('benchmark');
   });
 });

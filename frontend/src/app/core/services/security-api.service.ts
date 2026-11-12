@@ -42,7 +42,8 @@ import {
   SensitiveDataFilterParams,
   DataLeakageSummaryResponse,
   DataLeakageRuleInfoResponse,
-  DataLeakageFilterParams
+  DataLeakageFilterParams,
+  ComparativeBenchmarkResponse
 } from '../models/security.models';
 
 @Injectable({
@@ -550,6 +551,16 @@ export class SecurityApiService {
   getDataLeakageRules(): Observable<DataLeakageRuleInfoResponse[]> {
     return this.http.get<DataLeakageRuleInfoResponse[]>(
       `${this.baseUrl}/api/v1/security/leakage/rules`
+    ).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/leakage/evaluation/benchmark
+   * Retrieves comparative evaluation and adversarial robustness research metrics.
+   */
+  getComparativeBenchmark(): Observable<ComparativeBenchmarkResponse> {
+    return this.http.get<ComparativeBenchmarkResponse>(
+      `${this.baseUrl}/api/v1/security/leakage/evaluation/benchmark`
     ).pipe(catchError(this.handleError));
   }
 
