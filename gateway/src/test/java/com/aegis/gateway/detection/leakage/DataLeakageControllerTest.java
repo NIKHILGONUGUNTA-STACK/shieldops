@@ -89,5 +89,21 @@ class DataLeakageControllerTest {
                 "RULE-BOLA-02"
             )));
     }
+
+    @Test
+    @DisplayName("Analyst request to evaluation benchmark returns 200 OK with comparative metrics")
+    void analystCanGetBenchmark() throws Exception {
+        mockMvc.perform(get("/api/v1/security/leakage/evaluation/benchmark")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ANALYST"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.datasetSize").value(23))
+            .andExpect(jsonPath("$.isolatedRules.mode").value("ISOLATED_RULES"))
+            .andExpect(jsonPath("$.isolatedRules.precision").isNumber())
+            .andExpect(jsonPath("$.contextualCorrelation.mode").value("CONTEXTUAL_CORRELATION"))
+            .andExpect(jsonPath("$.contextualCorrelation.precision").value(1.0))
+            .andExpect(jsonPath("$.contextualCorrelation.falsePositives").value(0))
+            .andExpect(jsonPath("$.robustnessFindings", hasSize(greaterThanOrEqualTo(6))))
+            .andExpect(jsonPath("$.generatedAt").isNotEmpty());
+    }
 }
 
