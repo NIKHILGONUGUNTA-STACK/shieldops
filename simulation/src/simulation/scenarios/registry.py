@@ -22,6 +22,24 @@ from simulation.scenarios.data_leak_scenarios import (
     MultiStageExfilScenario,
 )
 from simulation.scenarios.benign_repeated_reads_scenario import BenignRepeatedReadsScenario
+from simulation.scenarios.robustness_scenarios import (
+    BenignMultiResourceScenario,
+    BenignConcurrentReadsScenario,
+    BenignSharedIpScenario,
+    BenignLegitimateDeniedScenario,
+    BolaRepeatedAttemptsScenario,
+    BolaConfirmedLeakScenario,
+    BolaMultiIdentityTargetScenario,
+    SlowExtractionScenario,
+    DistributedExtractionScenario,
+    EdgeMissingOwnershipScenario,
+    EdgeMissingClassificationScenario,
+    EdgeDuplicateEventsScenario,
+    EdgeDelayedEventsScenario,
+    EdgeOutOfOrderScenario,
+    EdgeWindowBoundaryScenario,
+    EdgeIncompleteSequenceScenario,
+)
 
 log = logging.getLogger(__name__)
 
@@ -174,6 +192,230 @@ def get_default_registry() -> ScenarioRegistry:
         is_implemented=True,
     )
     registry.register_class(BenignRepeatedReadsScenario, benign_02_meta)
+
+    # 8. SCEN-BENIGN-03: Authorized Multi-Resource Access
+    registry.register_class(
+        BenignMultiResourceScenario,
+        ScenarioMetadata(
+            id="SCEN-BENIGN-03",
+            name="Authorized Multi-Resource Access",
+            description="Legitimate customer accesses their profile, accounts, and transactions without cross-owner violations.",
+            category=ScenarioCategory.BENIGN,
+            target_services=["customer-service", "account-service", "transaction-service"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[200], expected_detection_rules=[]),
+            is_implemented=True,
+        ),
+    )
+
+    # 9. SCEN-BENIGN-04: Concurrent Legitimate Reads
+    registry.register_class(
+        BenignConcurrentReadsScenario,
+        ScenarioMetadata(
+            id="SCEN-BENIGN-04",
+            name="Concurrent Legitimate Reads",
+            description="Single customer issues concurrent read operations across their own assets.",
+            category=ScenarioCategory.BENIGN,
+            target_services=["customer-service", "account-service"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[200], expected_detection_rules=[]),
+            is_implemented=True,
+        ),
+    )
+
+    # 10. SCEN-BENIGN-05: Shared IP Across Different Identities
+    registry.register_class(
+        BenignSharedIpScenario,
+        ScenarioMetadata(
+            id="SCEN-BENIGN-05",
+            name="Shared IP Across Distinct Customer Identities",
+            description="Two distinct legitimate customers communicate through a shared corporate NAT IP.",
+            category=ScenarioCategory.BENIGN,
+            target_services=["customer-service"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[200], expected_detection_rules=[]),
+            is_implemented=True,
+        ),
+    )
+
+    # 11. SCEN-BENIGN-06: Legitimate Denied Access
+    registry.register_class(
+        BenignLegitimateDeniedScenario,
+        ScenarioMetadata(
+            id="SCEN-BENIGN-06",
+            name="Legitimate Denied Access (Non-BOLA 403)",
+            description="Customer denied access to administrative operational route without BOLA or sensitive leakage.",
+            category=ScenarioCategory.BENIGN,
+            target_services=["security-gateway"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[403], expected_detection_rules=[]),
+            is_implemented=True,
+        ),
+    )
+
+    # 12. SCEN-BOLA-03: Repeated Cross-Owner Attempts on Single Resource
+    registry.register_class(
+        BolaRepeatedAttemptsScenario,
+        ScenarioMetadata(
+            id="SCEN-BOLA-03",
+            name="Repeated Cross-Owner Resource Probing",
+            description="Repeated unauthorized cross-customer attempts against a single victim resource.",
+            category=ScenarioCategory.BOLA,
+            target_services=["customer-service"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[403], expected_detection_rules=["RULE-BOLA-01"]),
+            is_implemented=True,
+        ),
+    )
+
+    # 13. SCEN-BOLA-05: Successful Unauthorized Resource Access (Confirmed Leak)
+    registry.register_class(
+        BolaConfirmedLeakScenario,
+        ScenarioMetadata(
+            id="SCEN-BOLA-05",
+            name="Confirmed BOLA Leakage (HTTP 200 Cross-Owner)",
+            description="Cross-owner resource access succeeds with HTTP 200 containing confidential data.",
+            category=ScenarioCategory.BOLA,
+            target_services=["account-service"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[200], expected_detection_rules=["RULE-BOLA-CONFIRMED-01"]),
+            is_implemented=True,
+        ),
+    )
+
+    # 14. SCEN-BOLA-06: Different Identities Targeting One Victim Resource
+    registry.register_class(
+        BolaMultiIdentityTargetScenario,
+        ScenarioMetadata(
+            id="SCEN-BOLA-06",
+            name="Multi-Identity BOLA Targeting Single Resource",
+            description="Multiple distinct attacker identities attempt unauthorized access against the same victim account.",
+            category=ScenarioCategory.BOLA,
+            target_services=["account-service"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[403], expected_detection_rules=["RULE-BOLA-01"]),
+            is_implemented=True,
+        ),
+    )
+
+    # 15. SCEN-EXTRACT-SLOW: Slow Extraction (Spaced / Below Threshold)
+    registry.register_class(
+        SlowExtractionScenario,
+        ScenarioMetadata(
+            id="SCEN-EXTRACT-SLOW",
+            name="Slow Data Extraction Below Threshold",
+            description="Slow extraction targeting only 2 distinct resources to evaluate boundary threshold behaviour.",
+            category=ScenarioCategory.DATA_ACCESS,
+            target_services=["customer-service"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[200], expected_detection_rules=[]),
+            is_implemented=True,
+        ),
+    )
+
+    # 16. SCEN-EXTRACT-DISTRIBUTED: Distributed Extraction Across Sessions
+    registry.register_class(
+        DistributedExtractionScenario,
+        ScenarioMetadata(
+            id="SCEN-EXTRACT-DISTRIBUTED",
+            name="Distributed Extraction Across Identities",
+            description="Extraction distributed across separate user identities to test identity isolation.",
+            category=ScenarioCategory.DATA_ACCESS,
+            target_services=["customer-service"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[200], expected_detection_rules=[]),
+            is_implemented=True,
+        ),
+    )
+
+    # 17. SCEN-EDGE-NO-OWNERSHIP: Missing Ownership Metadata
+    registry.register_class(
+        EdgeMissingOwnershipScenario,
+        ScenarioMetadata(
+            id="SCEN-EDGE-NO-OWNERSHIP",
+            name="Edge Case: Missing Ownership Metadata",
+            description="Telemetry event lacks explicit customer ownership metadata.",
+            category=ScenarioCategory.BENIGN,
+            target_services=["gateway"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[200], expected_detection_rules=[]),
+            is_implemented=True,
+        ),
+    )
+
+    # 18. SCEN-EDGE-NO-CLASSIF: Missing Sensitivity Classification
+    registry.register_class(
+        EdgeMissingClassificationScenario,
+        ScenarioMetadata(
+            id="SCEN-EDGE-NO-CLASSIF",
+            name="Edge Case: Missing Sensitivity Classification",
+            description="Request hits an internal route without pre-declared schema sensitivity.",
+            category=ScenarioCategory.BENIGN,
+            target_services=["gateway"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[200], expected_detection_rules=[]),
+            is_implemented=True,
+        ),
+    )
+
+    # 19. SCEN-EDGE-DUPLICATE: Duplicate Event Delivery
+    registry.register_class(
+        EdgeDuplicateEventsScenario,
+        ScenarioMetadata(
+            id="SCEN-EDGE-DUPLICATE",
+            name="Edge Case: Duplicate Event Delivery",
+            description="Exact duplicate telemetry delivery with identical correlation ID.",
+            category=ScenarioCategory.BENIGN,
+            target_services=["account-service"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[200], expected_detection_rules=[]),
+            is_implemented=True,
+        ),
+    )
+
+    # 20. SCEN-EDGE-DELAYED: Delayed Event Arrival
+    registry.register_class(
+        EdgeDelayedEventsScenario,
+        ScenarioMetadata(
+            id="SCEN-EDGE-DELAYED",
+            name="Edge Case: Delayed Event Arrival",
+            description="Telemetry events arriving with delay to test time-window tolerance.",
+            category=ScenarioCategory.BENIGN,
+            target_services=["account-service"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[200], expected_detection_rules=[]),
+            is_implemented=True,
+        ),
+    )
+
+    # 21. SCEN-EDGE-OUT-OF-ORDER: Out-of-Order Event Sequence
+    registry.register_class(
+        EdgeOutOfOrderScenario,
+        ScenarioMetadata(
+            id="SCEN-EDGE-OUT-OF-ORDER",
+            name="Edge Case: Out-of-Order Event Sequence",
+            description="Extraction telemetry arrived prior to reconnaissance probes.",
+            category=ScenarioCategory.DATA_ACCESS,
+            target_services=["customer-service", "gateway"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[200, 404], expected_detection_rules=["RULE-DATA-LEAK-01"]),
+            is_implemented=True,
+        ),
+    )
+
+    # 22. SCEN-EDGE-WINDOW-BOUNDARY: Sliding-Window Boundary Conditions
+    registry.register_class(
+        EdgeWindowBoundaryScenario,
+        ScenarioMetadata(
+            id="SCEN-EDGE-WINDOW-BOUNDARY",
+            name="Edge Case: Sliding Window Boundary Conditions",
+            description="Events right at sliding window boundary to test edge retention.",
+            category=ScenarioCategory.BENIGN,
+            target_services=["customer-service"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[200], expected_detection_rules=[]),
+            is_implemented=True,
+        ),
+    )
+
+    # 23. SCEN-EDGE-INCOMPLETE-SEQUENCE: Incomplete Attack Sequence
+    registry.register_class(
+        EdgeIncompleteSequenceScenario,
+        ScenarioMetadata(
+            id="SCEN-EDGE-INCOMPLETE-SEQUENCE",
+            name="Edge Case: Incomplete Attack Sequence",
+            description="Reconnaissance probes that terminate without progressing to data extraction.",
+            category=ScenarioCategory.PROBING,
+            target_services=["gateway"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[200], expected_detection_rules=["RULE-PROBE-01"]),
+            is_implemented=True,
+        ),
+    )
 
     standard_scenarios = [
         ScenarioMetadata(

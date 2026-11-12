@@ -77,12 +77,28 @@ def test_default_registry_all_categories_present():
     # Verify implemented scenarios
     implemented_ids = {
         "SCEN-BENIGN-01",
+        "SCEN-BENIGN-02",
+        "SCEN-BENIGN-03",
+        "SCEN-BENIGN-04",
+        "SCEN-BENIGN-05",
+        "SCEN-BENIGN-06",
         "SCEN-BOLA-01",
         "SCEN-BOLA-02",
+        "SCEN-BOLA-03",
+        "SCEN-BOLA-05",
+        "SCEN-BOLA-06",
         "SCEN-DATA-LEAK-01",
         "SCEN-BULK-EXTRACT-01",
         "SCEN-EXFIL-01",
-        "SCEN-BENIGN-02",
+        "SCEN-EXTRACT-SLOW",
+        "SCEN-EXTRACT-DISTRIBUTED",
+        "SCEN-EDGE-NO-OWNERSHIP",
+        "SCEN-EDGE-NO-CLASSIF",
+        "SCEN-EDGE-DUPLICATE",
+        "SCEN-EDGE-DELAYED",
+        "SCEN-EDGE-OUT-OF-ORDER",
+        "SCEN-EDGE-WINDOW-BOUNDARY",
+        "SCEN-EDGE-INCOMPLETE-SEQUENCE",
     }
     benign = registry.get_metadata("SCEN-BENIGN-01")
     assert benign is not None and benign.is_implemented is True
