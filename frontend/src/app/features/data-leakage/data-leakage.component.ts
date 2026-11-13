@@ -12,7 +12,8 @@ import {
   ProblemDetail,
   ComparativeBenchmarkResponse,
   ModeBenchmarkMetrics,
-  RobustnessFindingResponse
+  RobustnessFindingResponse,
+  ExtractionAnalyticsResponse
 } from '../../core/models/security.models';
 
 @Component({
@@ -95,6 +96,14 @@ import {
             <polyline points="10 9 9 9 8 9"/>
           </svg>
           Active Incidents Queue
+        </button>
+        <button class="view-tab-btn" [class.active]="activeView() === 'extraction'" (click)="activeView.set('extraction')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+          </svg>
+          Excessive Exposure &amp; Advanced Extraction
         </button>
         <button class="view-tab-btn" [class.active]="activeView() === 'benchmark'" (click)="activeView.set('benchmark')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -223,6 +232,11 @@ import {
               <option value="SENSITIVE_DATA_EXPOSURE">Sensitive Data Exposure</option>
               <option value="EXCESSIVE_DATA_EXTRACTION">Excessive Data Extraction</option>
               <option value="DATA_EXFILTRATION_CAMPAIGN">Data Exfiltration Campaign</option>
+              <option value="EXCESSIVE_DATA_EXPOSURE">Excessive Data Exposure</option>
+              <option value="LOW_AND_SLOW_EXTRACTION">Low-and-Slow Extraction</option>
+              <option value="DISTRIBUTED_EXTRACTION">Distributed Session Extraction</option>
+              <option value="PAGINATION_EXTRACTION">Pagination Harvesting</option>
+              <option value="MULTI_RESOURCE_EXTRACTION">Multi-Resource Extraction</option>
             </select>
           </div>
 
@@ -422,6 +436,167 @@ import {
         </div>
       </div>
       </div> <!-- End VIEW 1: activeView() === 'incidents' -->
+
+      <!-- VIEW 3: EXCESSIVE DATA EXPOSURE & ADVANCED BULK EXTRACTION -->
+      <div *ngIf="activeView() === 'extraction'" class="extraction-view">
+        <!-- Extraction Header Card -->
+        <div class="soc-card benchmark-header-card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Excessive Data Exposure &amp; Advanced Bulk Extraction Engine</h2>
+              <span class="card-sub">
+                Telemetry-driven detection of contract violations, restricted secret exposures, low-and-slow extraction, distributed harvesting, and pagination scraping.
+              </span>
+            </div>
+            <div class="mono time-tag">
+              Generated: {{ extractionAnalytics()?.generatedAt || 'Live' }}
+            </div>
+          </div>
+          <div class="benchmark-narrative">
+            ShieldOps field-level exposure engine analyzes response payload schemas against OpenAPI baseline contracts.
+            Bulk extraction correlates request velocity across sliding deques (120s rapid window vs 600s low-and-slow window),
+            isolating corporate NAT IP addresses while tracking automated pagination crawls and multi-domain harvest campaigns.
+          </div>
+        </div>
+
+        <!-- Extraction Analytics Top KPI Cards -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">Total Extraction Incidents</div>
+            <div class="kpi-val mono red">{{ extractionAnalytics()?.totalExtractionIncidents || 0 }}</div>
+            <div class="kpi-sub">All extraction vectors combined</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">Rapid Extractions</div>
+            <div class="kpi-val mono cyan">{{ extractionAnalytics()?.rapidExtractionCount || 0 }}</div>
+            <div class="kpi-sub">&ge; 3 resources in 120s window</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">Low &amp; Slow Extractions</div>
+            <div class="kpi-val mono orange">{{ extractionAnalytics()?.lowAndSlowExtractionCount || 0 }}</div>
+            <div class="kpi-sub">&ge; 5 resources in 600s window (&lt; 3/120s)</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">Distributed Extractions</div>
+            <div class="kpi-val mono purple">{{ extractionAnalytics()?.distributedExtractionCount || 0 }}</div>
+            <div class="kpi-sub">&ge; 2 sessions across &ge; 3 resources</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">Pagination Harvesting</div>
+            <div class="kpi-val mono" [class.red]="(extractionAnalytics()?.paginationExtractionCount || 0) > 0">
+              {{ extractionAnalytics()?.paginationExtractionCount || 0 }}
+            </div>
+            <div class="kpi-sub">&ge; 3 pages or &ge; 15 records</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">Multi-Resource Extractions</div>
+            <div class="kpi-val mono" [class.red]="(extractionAnalytics()?.multiResourceExtractionCount || 0) > 0">
+              {{ extractionAnalytics()?.multiResourceExtractionCount || 0 }}
+            </div>
+            <div class="kpi-sub">&ge; 2 sensitive domains</div>
+          </div>
+        </div>
+
+        <!-- Exposure & Schema Drift KPI Row -->
+        <div class="kpi-grid" style="margin-top: 16px;">
+          <div class="kpi-card">
+            <div class="kpi-label">Excessive Data Exposures</div>
+            <div class="kpi-val mono purple">{{ extractionAnalytics()?.excessiveDataExposureCount || 0 }}</div>
+            <div class="kpi-sub">Contractual schema violations</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">High-Risk Fields Exposed</div>
+            <div class="kpi-val mono red">{{ extractionAnalytics()?.highRiskFieldsExposedCount || 0 }}</div>
+            <div class="kpi-sub">RESTRICTED secrets leaked to unprivileged roles</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">Schema Drift Events</div>
+            <div class="kpi-val mono orange">{{ extractionAnalytics()?.schemaDriftCount || 0 }}</div>
+            <div class="kpi-sub">Undeclared response keys outside OpenAPI contract</div>
+          </div>
+        </div>
+
+        <!-- Extraction Vectors Architectural Specification Matrix -->
+        <div class="soc-card" style="margin-top: 20px;">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Advanced Bulk Extraction &amp; Exposure Vectors</h2>
+              <span class="card-sub">Sliding-window algorithms and behavioral correlation boundaries</span>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="benchmark-table">
+              <thead>
+                <tr>
+                  <th>Detection Vector</th>
+                  <th>Detection Window</th>
+                  <th>Threshold Trigger</th>
+                  <th>Adversarial Pattern Countered</th>
+                  <th>Security Invariant Preserved</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Rapid Extraction</strong></td>
+                  <td class="mono">120 seconds</td>
+                  <td class="mono">&ge; 3 distinct resources</td>
+                  <td>Automated high-velocity scrapers</td>
+                  <td>Advisory detection without customer workflow interruption</td>
+                </tr>
+                <tr>
+                  <td><strong>Low-and-Slow Extraction</strong></td>
+                  <td class="mono">600 seconds</td>
+                  <td class="mono">&ge; 5 resources (rate &lt; 3/120s)</td>
+                  <td>Rate-limit evasive creeping crawlers</td>
+                  <td>Sliding deques retain long-horizon state without memory leakage</td>
+                </tr>
+                <tr>
+                  <td><strong>Distributed Extraction</strong></td>
+                  <td class="mono">120 seconds</td>
+                  <td class="mono">&ge; 2 sessions &amp; &ge; 3 resources</td>
+                  <td>Token/Session cycling from shared origin</td>
+                  <td>Anti-affinity partitions sessions without NAT IP false positives</td>
+                </tr>
+                <tr>
+                  <td><strong>Pagination Harvesting</strong></td>
+                  <td class="mono">120 seconds</td>
+                  <td class="mono">&ge; 3 pages OR &ge; 15 records</td>
+                  <td>Automated offset/cursor crawling</td>
+                  <td>Legitimate multi-page navigation (&lt; 3 pages) stays unflagged</td>
+                </tr>
+                <tr>
+                  <td><strong>Multi-Resource Extraction</strong></td>
+                  <td class="mono">120 seconds</td>
+                  <td class="mono">&ge; 2 sensitive domains</td>
+                  <td>Cross-domain harvesting (Customer + Account + Transfer)</td>
+                  <td>Domain-level aggregation correlates diverse target entities</td>
+                </tr>
+                <tr>
+                  <td><strong>Cumulative Volume Extraction</strong></td>
+                  <td class="mono">120 seconds</td>
+                  <td class="mono">&ge; 50,000 response bytes</td>
+                  <td>Fragmented payloads evading count-based rules</td>
+                  <td>Aggregates wire volume across safe advisory limits</td>
+                </tr>
+                <tr>
+                  <td><strong>Excessive Data Exposure</strong></td>
+                  <td class="mono">Per-Event</td>
+                  <td class="mono">Undeclared or RESTRICTED field</td>
+                  <td>Accidental API schema drift and secret exposure</td>
+                  <td>Zero raw payload data retained; field paths tracked deterministically</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div> <!-- End VIEW 3: activeView() === 'extraction' -->
 
       <!-- VIEW 2: RESEARCH EVALUATION & ADVERSARIAL ROBUSTNESS -->
       <div *ngIf="activeView() === 'benchmark'" class="benchmark-view">
@@ -1371,8 +1546,9 @@ import {
 export class DataLeakageComponent implements OnInit {
   private readonly securityApi = inject(SecurityApiService);
 
-  activeView = signal<'incidents' | 'benchmark'>('incidents');
+  activeView = signal<'incidents' | 'extraction' | 'benchmark'>('incidents');
   readonly summary = signal<DataLeakageSummaryResponse | null>(null);
+  readonly extractionAnalytics = signal<ExtractionAnalyticsResponse | null>(null);
   readonly incidents = signal<IncidentResponse[]>([]);
   readonly rules = signal<DataLeakageRuleInfoResponse[]>([]);
   readonly benchmarkData = signal<ComparativeBenchmarkResponse | null>(null);
@@ -1403,9 +1579,17 @@ export class DataLeakageComponent implements OnInit {
 
   refresh(): void {
     this.loadSummary();
+    this.loadExtractionAnalytics();
     this.loadIncidents(0);
     this.loadRules();
     this.loadBenchmark();
+  }
+
+  loadExtractionAnalytics(): void {
+    this.securityApi.getExtractionAnalytics().subscribe({
+      next: (data) => this.extractionAnalytics.set(data),
+      error: (err) => console.warn('Failed to load extraction analytics', err)
+    });
   }
 
   loadBenchmark(): void {
@@ -1519,6 +1703,10 @@ export class DataLeakageComponent implements OnInit {
     const c = category.toUpperCase();
     if (c.includes('BOLA_CONFIRMED') || c.includes('CONFIRMED')) return 'bola-leak';
     if (c.includes('EXPOSURE') || c.includes('LEAK')) return 'sensitive-exp';
+    if (c.includes('PAGINATION')) return 'bulk-extract';
+    if (c.includes('MULTI_RESOURCE')) return 'sensitive-exp';
+    if (c.includes('LOW_AND_SLOW')) return 'bulk-extract';
+    if (c.includes('DISTRIBUTED')) return 'exfil-camp';
     if (c.includes('EXTRACTION') || c.includes('BULK')) return 'bulk-extract';
     if (c.includes('CAMPAIGN') || c.includes('EXFIL')) return 'exfil-camp';
     return 'default-cat';

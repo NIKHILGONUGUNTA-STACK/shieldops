@@ -43,7 +43,8 @@ import {
   DataLeakageSummaryResponse,
   DataLeakageRuleInfoResponse,
   DataLeakageFilterParams,
-  ComparativeBenchmarkResponse
+  ComparativeBenchmarkResponse,
+  ExtractionAnalyticsResponse
 } from '../models/security.models';
 
 @Injectable({
@@ -561,6 +562,16 @@ export class SecurityApiService {
   getComparativeBenchmark(): Observable<ComparativeBenchmarkResponse> {
     return this.http.get<ComparativeBenchmarkResponse>(
       `${this.baseUrl}/api/v1/security/leakage/evaluation/benchmark`
+    ).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/leakage/extraction/analytics
+   * Retrieves analytics on excessive data exposure and advanced bulk extraction vectors.
+   */
+  getExtractionAnalytics(): Observable<ExtractionAnalyticsResponse> {
+    return this.http.get<ExtractionAnalyticsResponse>(
+      `${this.baseUrl}/api/v1/security/leakage/extraction/analytics`
     ).pipe(catchError(this.handleError));
   }
 

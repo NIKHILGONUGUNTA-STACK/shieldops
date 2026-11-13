@@ -872,6 +872,29 @@ describe('SecurityApiService', () => {
         generatedAt: '2026-11-12T12:00:00Z'
       });
     });
+
+    it('should query getExtractionAnalytics', () => {
+      service.getExtractionAnalytics().subscribe(res => {
+        expect(res.totalExtractionIncidents).toBe(5);
+        expect(res.rapidExtractionCount).toBe(2);
+        expect(res.paginationExtractionCount).toBe(1);
+      });
+
+      const req = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/leakage/extraction/analytics`);
+      expect(req.request.method).toBe('GET');
+      req.flush({
+        totalExtractionIncidents: 5,
+        rapidExtractionCount: 2,
+        lowAndSlowExtractionCount: 1,
+        distributedExtractionCount: 1,
+        paginationExtractionCount: 1,
+        multiResourceExtractionCount: 1,
+        excessiveDataExposureCount: 2,
+        highRiskFieldsExposedCount: 1,
+        schemaDriftCount: 2,
+        generatedAt: '2026-11-13T12:00:00Z'
+      });
+    });
   });
 
   describe('Error Handling', () => {

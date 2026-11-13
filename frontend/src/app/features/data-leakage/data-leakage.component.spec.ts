@@ -89,8 +89,22 @@ describe('DataLeakageComponent', () => {
       'getDataLeakageIncidents',
       'getDataLeakageEvidence',
       'getDataLeakageRules',
-      'getComparativeBenchmark'
+      'getComparativeBenchmark',
+      'getExtractionAnalytics'
     ]);
+
+    const mockExtractionAnalytics = {
+      totalExtractionIncidents: 4,
+      rapidExtractionCount: 1,
+      lowAndSlowExtractionCount: 1,
+      distributedExtractionCount: 1,
+      paginationExtractionCount: 1,
+      multiResourceExtractionCount: 0,
+      excessiveDataExposureCount: 1,
+      highRiskFieldsExposedCount: 1,
+      schemaDriftCount: 1,
+      generatedAt: '2026-11-13T12:00:00Z'
+    };
 
     const mockBenchmark = {
       datasetSize: 23,
@@ -116,6 +130,7 @@ describe('DataLeakageComponent', () => {
     mockSecurityApi.getDataLeakageEvidence.and.returnValue(of(mockEvidence));
     mockSecurityApi.getDataLeakageRules.and.returnValue(of(mockRules));
     mockSecurityApi.getComparativeBenchmark.and.returnValue(of(mockBenchmark as any));
+    mockSecurityApi.getExtractionAnalytics.and.returnValue(of(mockExtractionAnalytics as any));
 
     await TestBed.configureTestingModule({
       imports: [DataLeakageComponent],
@@ -167,5 +182,13 @@ describe('DataLeakageComponent', () => {
     expect(component.activeView()).toBe('incidents');
     component.activeView.set('benchmark');
     expect(component.activeView()).toBe('benchmark');
+  });
+
+  it('should load extraction analytics and switch to extraction view', () => {
+    expect(mockSecurityApi.getExtractionAnalytics).toHaveBeenCalled();
+    expect(component.extractionAnalytics()).not.toBeNull();
+    expect(component.extractionAnalytics()?.totalExtractionIncidents).toBe(4);
+    component.activeView.set('extraction');
+    expect(component.activeView()).toBe('extraction');
   });
 });

@@ -653,7 +653,7 @@ export interface PostureFilterParams {
 // Phase 7.2.4.1 — Sensitive Data Classification Models
 // ============================================================================
 
-export type DataSensitivityLevel = 'PUBLIC' | 'INTERNAL' | 'CONFIDENTIAL' | 'RESTRICTED';
+export type DataSensitivityLevel = 'UNKNOWN' | 'PUBLIC' | 'INTERNAL' | 'CONFIDENTIAL' | 'RESTRICTED';
 
 export type ResourceOwnershipRequirement = 'NONE' | 'OWNER_CUSTOMER' | 'INTERNAL_SERVICE' | 'ANALYST_ROLE';
 
@@ -743,7 +743,12 @@ export type DataLeakageCategory =
   | 'BOLA_PROBE_CAMPAIGN'
   | 'SENSITIVE_DATA_EXPOSURE'
   | 'EXCESSIVE_DATA_EXTRACTION'
-  | 'DATA_EXFILTRATION_CAMPAIGN';
+  | 'DATA_EXFILTRATION_CAMPAIGN'
+  | 'EXCESSIVE_DATA_EXPOSURE'
+  | 'LOW_AND_SLOW_EXTRACTION'
+  | 'DISTRIBUTED_EXTRACTION'
+  | 'PAGINATION_EXTRACTION'
+  | 'MULTI_RESOURCE_EXTRACTION';
 
 export interface DataLeakageSummaryResponse {
   totalLeakageIncidents: number;
@@ -752,9 +757,31 @@ export interface DataLeakageSummaryResponse {
   sensitiveDataExposures: number;
   bulkExtractionEvents: number;
   multiStageCampaigns: number;
+  excessiveDataExposures?: number;
+  lowAndSlowExtractions?: number;
+  distributedExtractions?: number;
+  paginationExtractions?: number;
+  multiResourceExtractions?: number;
   incidentsBySeverity: Record<string, number>;
   incidentsByStatus: Record<string, number>;
   recentIncidents: IncidentResponse[];
+  generatedAt: string;
+}
+
+// ============================================================================
+// Phase 7.2.4.4 — Excessive Data Exposure & Advanced Bulk Extraction Models
+// ============================================================================
+
+export interface ExtractionAnalyticsResponse {
+  totalExtractionIncidents: number;
+  rapidExtractionCount: number;
+  lowAndSlowExtractionCount: number;
+  distributedExtractionCount: number;
+  paginationExtractionCount: number;
+  multiResourceExtractionCount: number;
+  excessiveDataExposureCount: number;
+  highRiskFieldsExposedCount: number;
+  schemaDriftCount: number;
   generatedAt: string;
 }
 
