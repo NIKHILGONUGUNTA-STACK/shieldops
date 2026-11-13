@@ -32,13 +32,15 @@ public class ApiEventRepository {
                     request_path, route_id, status_code, latency_ms,
                     auth_subject, auth_roles, customer_id, user_agent,
                     payload_hash, anomaly_flags,
-                    resource_type, resource_id, error_code, response_size_bytes, record_count
+                    resource_type, resource_id, error_code, response_size_bytes, record_count,
+                    observed_fields, page_number, page_size
                 ) VALUES (
                     :id, :correlationId, :timestamp, :sourceIp, :httpMethod,
                     :requestPath, :routeId, :statusCode, :latencyMs,
                     :authSubject, :authRoles, :customerId, :userAgent,
                     :payloadHash, :anomalyFlags,
-                    :resourceType, :resourceId, :errorCode, :responseSizeBytes, :recordCount
+                    :resourceType, :resourceId, :errorCode, :responseSizeBytes, :recordCount,
+                    :observedFields, :pageNumber, :pageSize
                 )
                 """)
                 .param("id", e.id())
@@ -61,6 +63,9 @@ public class ApiEventRepository {
                 .param("errorCode", e.errorCode())
                 .param("responseSizeBytes", e.responseSizeBytes())
                 .param("recordCount", e.recordCount())
+                .param("observedFields", e.observedFields())
+                .param("pageNumber", e.pageNumber())
+                .param("pageSize", e.pageSize())
                 .update();
         } catch (DuplicateKeyException dke) {
             log.debug("Event {} already persisted (duplicate key ignored)", e.id());
@@ -86,7 +91,8 @@ public class ApiEventRepository {
                    request_path, route_id, status_code, latency_ms,
                    auth_subject, auth_roles, customer_id, user_agent,
                    payload_hash, anomaly_flags, resource_type, resource_id,
-                   error_code, response_size_bytes, record_count
+                   error_code, response_size_bytes, record_count,
+                   observed_fields, page_number, page_size
             FROM security_data.api_events
             WHERE id = :id
             """;
@@ -170,7 +176,8 @@ public class ApiEventRepository {
                           "request_path, route_id, status_code, latency_ms, " +
                           "auth_subject, auth_roles, customer_id, user_agent, " +
                           "payload_hash, anomaly_flags, resource_type, resource_id, " +
-                          "error_code, response_size_bytes, record_count " +
+                          "error_code, response_size_bytes, record_count, " +
+                          "observed_fields, page_number, page_size " +
                           "FROM security_data.api_events" + whereClause +
                           " ORDER BY timestamp DESC, id DESC LIMIT :limit OFFSET :offset";
 
@@ -240,6 +247,17 @@ public class ApiEventRepository {
         Timestamp ts = rs.getTimestamp("timestamp");
         Instant timestamp = (ts != null) ? ts.toInstant() : Instant.EPOCH;
 
+        String observedFields = null;
+        Integer pageNumber = null;
+        Integer pageSize = null;
+        try {
+            observedFields = rs.getString("observed_fields");
+            int pNum = rs.getInt("page_number");
+            if (!rs.wasNull()) pageNumber = pNum;
+            int pSize = rs.getInt("page_size");
+            if (!rs.wasNull()) pageSize = pSize;
+        } catch (SQLException ignored) {}
+
         return new SecurityEventResponse(
             id,
             rs.getString("correlation_id"),
@@ -260,7 +278,10 @@ public class ApiEventRepository {
             rs.getString("resource_id"),
             rs.getString("error_code"),
             rs.getLong("response_size_bytes"),
-            rs.getInt("record_count")
+            rs.getInt("record_count"),
+            observedFields,
+            pageNumber,
+            pageSize
         );
     }
 }

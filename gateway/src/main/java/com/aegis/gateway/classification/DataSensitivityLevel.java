@@ -7,6 +7,11 @@ package com.aegis.gateway.classification;
  */
 public enum DataSensitivityLevel {
     /**
+     * Unclassified or uncatalogued information requiring review. Distinct from INTERNAL.
+     */
+    UNKNOWN(0, "Unknown"),
+
+    /**
      * Information intentionally available without authentication.
      */
     PUBLIC(1, "Public"),

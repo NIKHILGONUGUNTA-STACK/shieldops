@@ -31,7 +31,12 @@ public class DataLeakageController {
         "BOLA",
         "BOLA_PROBE_CAMPAIGN",
         "SENSITIVE_DATA_EXPOSURE",
+        "EXCESSIVE_DATA_EXPOSURE",
         "EXCESSIVE_DATA_EXTRACTION",
+        "LOW_AND_SLOW_EXTRACTION",
+        "DISTRIBUTED_EXTRACTION",
+        "PAGINATION_EXTRACTION",
+        "MULTI_RESOURCE_EXTRACTION",
         "DATA_EXFILTRATION_CAMPAIGN",
         "DATA_ACCESS"
     );
@@ -58,6 +63,11 @@ public class DataLeakageController {
         long sensitiveExposure = leakageIncidents.stream().filter(i -> "SENSITIVE_DATA_EXPOSURE".equalsIgnoreCase(i.threatCategory())).count();
         long bulkExtract = leakageIncidents.stream().filter(i -> "EXCESSIVE_DATA_EXTRACTION".equalsIgnoreCase(i.threatCategory()) || "DATA_ACCESS".equalsIgnoreCase(i.threatCategory())).count();
         long multiStage = leakageIncidents.stream().filter(i -> "DATA_EXFILTRATION_CAMPAIGN".equalsIgnoreCase(i.threatCategory())).count();
+        long excessiveExposures = leakageIncidents.stream().filter(i -> "EXCESSIVE_DATA_EXPOSURE".equalsIgnoreCase(i.threatCategory())).count();
+        long lowAndSlow = leakageIncidents.stream().filter(i -> "LOW_AND_SLOW_EXTRACTION".equalsIgnoreCase(i.threatCategory())).count();
+        long distributed = leakageIncidents.stream().filter(i -> "DISTRIBUTED_EXTRACTION".equalsIgnoreCase(i.threatCategory())).count();
+        long pagination = leakageIncidents.stream().filter(i -> "PAGINATION_EXTRACTION".equalsIgnoreCase(i.threatCategory())).count();
+        long multiResource = leakageIncidents.stream().filter(i -> "MULTI_RESOURCE_EXTRACTION".equalsIgnoreCase(i.threatCategory())).count();
 
         Map<String, Long> bySeverity = leakageIncidents.stream()
             .collect(Collectors.groupingBy(SecurityIncident::severity, Collectors.counting()));
@@ -77,6 +87,11 @@ public class DataLeakageController {
             sensitiveExposure,
             bulkExtract,
             multiStage,
+            excessiveExposures,
+            lowAndSlow,
+            distributed,
+            pagination,
+            multiResource,
             bySeverity,
             byStatus,
             recent,
@@ -188,6 +203,26 @@ public class DataLeakageController {
                 "Initial 403 BOLA denial followed by >= 2 probing requests across distinct targets in 180s"
             ),
             new DataLeakageRuleInfoResponse(
+                RuleExcessiveDataExposure01.RULE_ID,
+                RuleExcessiveDataExposure01.RULE_VERSION,
+                "Excessive Data Exposure & Schema Contract Engine",
+                "Detects contract breaches, unexpected response fields, unauthenticated sensitive exposure, and RESTRICTED credential exposure.",
+                "EXCESSIVE_DATA_EXPOSURE",
+                "HIGH",
+                true,
+                "Observed response fields breach declared OpenAPI contract or expose RESTRICTED/CONFIDENTIAL fields"
+            ),
+            new DataLeakageRuleInfoResponse(
+                RuleAdvancedExtraction01.RULE_ID,
+                RuleAdvancedExtraction01.RULE_VERSION,
+                "Advanced Bulk Extraction Engine",
+                "Detects low-and-slow harvesting, distributed session extraction, cross-resource extraction, and automated pagination scraping.",
+                "EXCESSIVE_DATA_EXTRACTION",
+                "HIGH",
+                true,
+                "Multi-vector harvesting breaching pagination, low-and-slow (600s), multi-resource, or distributed thresholds"
+            ),
+            new DataLeakageRuleInfoResponse(
                 "DATA_EXFILTRATION_CAMPAIGN",
                 "1.0.0",
                 "Multi-Stage Exfiltration Correlator",
@@ -199,6 +234,51 @@ public class DataLeakageController {
             )
         );
         return ResponseEntity.ok(rules);
+    }
+
+    @GetMapping(value = "/extraction/analytics", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('SECURITY_ANALYST', 'SECURITY_ADMIN')")
+    public ResponseEntity<ExtractionAnalyticsResponse> getExtractionAnalytics() {
+        List<SecurityIncident> all = repository.findAllIncidents();
+        List<SecurityIncident> extractionIncidents = all.stream()
+            .filter(i -> isExtractionCategory(i.threatCategory(), i.ruleId()))
+            .toList();
+
+        long total = extractionIncidents.size();
+        long rapid = extractionIncidents.stream().filter(i -> "EXCESSIVE_DATA_EXTRACTION".equalsIgnoreCase(i.threatCategory()) || RuleBulkExtract01.RULE_ID.equalsIgnoreCase(i.ruleId())).count();
+        long lowAndSlow = extractionIncidents.stream().filter(i -> "LOW_AND_SLOW_EXTRACTION".equalsIgnoreCase(i.threatCategory())).count();
+        long distributed = extractionIncidents.stream().filter(i -> "DISTRIBUTED_EXTRACTION".equalsIgnoreCase(i.threatCategory())).count();
+        long pagination = extractionIncidents.stream().filter(i -> "PAGINATION_EXTRACTION".equalsIgnoreCase(i.threatCategory())).count();
+        long multiResource = extractionIncidents.stream().filter(i -> "MULTI_RESOURCE_EXTRACTION".equalsIgnoreCase(i.threatCategory())).count();
+        long excessiveExposure = extractionIncidents.stream().filter(i -> "EXCESSIVE_DATA_EXPOSURE".equalsIgnoreCase(i.threatCategory()) || RuleExcessiveDataExposure01.RULE_ID.equalsIgnoreCase(i.ruleId())).count();
+
+        long cumulativeRecords = extractionIncidents.stream().mapToLong(SecurityIncident::eventCount).sum() * 5L;
+        long cumulativeBytes = cumulativeRecords * 480L;
+
+        Map<String, Long> byEntity = extractionIncidents.stream()
+            .collect(Collectors.groupingBy(SecurityIncident::targetEntityValue, Collectors.counting()));
+
+        return ResponseEntity.ok(new ExtractionAnalyticsResponse(
+            total,
+            rapid,
+            lowAndSlow,
+            distributed,
+            pagination,
+            multiResource,
+            excessiveExposure,
+            cumulativeRecords,
+            cumulativeBytes,
+            byEntity,
+            Instant.now()
+        ));
+    }
+
+    private boolean isExtractionCategory(String category, String ruleId) {
+        if (category == null && ruleId == null) return false;
+        String cat = category != null ? category.toUpperCase() : "";
+        String rId = ruleId != null ? ruleId.toUpperCase() : "";
+        return cat.contains("EXTRACTION") || cat.contains("EXPOSURE") ||
+               rId.contains("BULK") || rId.contains("EXTRACT") || rId.contains("EXPOSURE");
     }
 
     @GetMapping(value = "/evaluation/benchmark", produces = MediaType.APPLICATION_JSON_VALUE)

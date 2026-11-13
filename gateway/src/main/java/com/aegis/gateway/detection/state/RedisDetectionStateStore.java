@@ -438,9 +438,30 @@ public class RedisDetectionStateStore implements DetectionStateStore {
 
     @Override
     public void recordSensitiveAccess(String customerId, UUID eventId, String resourceId, String routeTemplate, int recordCount, long responseSizeBytes, Instant timestamp) {
+        recordSensitiveAccess(customerId, eventId, "UNKNOWN", resourceId, routeTemplate, recordCount, responseSizeBytes, null, null, "CONFIDENTIAL", timestamp);
+    }
+
+    @Override
+    public void recordSensitiveAccess(
+            String customerId,
+            UUID eventId,
+            String resourceType,
+            String resourceId,
+            String routeTemplate,
+            int recordCount,
+            long responseSizeBytes,
+            String authSubject,
+            Integer pageNumber,
+            String highestSensitivity,
+            Instant timestamp) {
         if (customerId == null || customerId.isBlank() || eventId == null) return;
         String key = KEY_PREFIX_SENSITIVE + customerId.trim();
-        String member = eventId + ":" + (resourceId != null ? resourceId.trim() : "UNKNOWN") + ":" + recordCount + ":" + responseSizeBytes;
+        String member = eventId + ":" + (resourceId != null ? resourceId.trim() : "UNKNOWN") + ":" +
+            recordCount + ":" + responseSizeBytes + ":" +
+            (resourceType != null ? resourceType : "UNKNOWN") + ":" +
+            (authSubject != null ? authSubject : "") + ":" +
+            (pageNumber != null ? pageNumber : -1) + ":" +
+            (highestSensitivity != null ? highestSensitivity : "CONFIDENTIAL");
         double score = timestamp.toEpochMilli();
 
         try {
@@ -449,7 +470,18 @@ public class RedisDetectionStateStore implements DetectionStateStore {
         } catch (Exception e) {
             log.debug("Redis state store unavailable, using sensitive access fallback: {}", e.getMessage());
             Map<UUID, com.aegis.gateway.detection.model.SensitiveAccessRecord> customerAccess = sensitiveFallback.computeIfAbsent(customerId.trim(), k -> new ConcurrentHashMap<>());
-            customerAccess.put(eventId, new com.aegis.gateway.detection.model.SensitiveAccessRecord(eventId, resourceId, routeTemplate, recordCount, responseSizeBytes, timestamp));
+            customerAccess.put(eventId, new com.aegis.gateway.detection.model.SensitiveAccessRecord(
+                eventId,
+                resourceType != null ? resourceType : "UNKNOWN",
+                resourceId != null ? resourceId.trim() : "UNKNOWN",
+                routeTemplate != null ? routeTemplate : "",
+                recordCount,
+                responseSizeBytes,
+                authSubject,
+                pageNumber,
+                highestSensitivity != null ? highestSensitivity : "CONFIDENTIAL",
+                timestamp
+            ));
             pruneSensitiveFallback(customerAccess, timestamp);
         }
     }
@@ -478,8 +510,18 @@ public class RedisDetectionStateStore implements DetectionStateStore {
                             String resourceId = parts[1];
                             int recCount = Integer.parseInt(parts[2]);
                             long bytes = Long.parseLong(parts[3]);
+                            String resourceType = parts.length >= 5 ? parts[4] : "UNKNOWN";
+                            String authSubject = (parts.length >= 6 && !parts[5].isBlank()) ? parts[5] : null;
+                            Integer pageNumber = null;
+                            if (parts.length >= 7) {
+                                int p = Integer.parseInt(parts[6]);
+                                if (p >= 0) pageNumber = p;
+                            }
+                            String highestSens = parts.length >= 8 ? parts[7] : "CONFIDENTIAL";
                             Instant ts = Instant.ofEpochMilli(tuple.getScore().longValue());
-                            results.add(new com.aegis.gateway.detection.model.SensitiveAccessRecord(eventId, resourceId, "", recCount, bytes, ts));
+                            results.add(new com.aegis.gateway.detection.model.SensitiveAccessRecord(
+                                eventId, resourceType, resourceId, "", recCount, bytes, authSubject, pageNumber, highestSens, ts
+                            ));
                         } catch (Exception ignored) {}
                     }
                 }

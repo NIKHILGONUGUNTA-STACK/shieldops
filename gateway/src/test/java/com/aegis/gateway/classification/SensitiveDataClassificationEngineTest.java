@@ -58,13 +58,13 @@ class SensitiveDataClassificationEngineTest {
     }
 
     @Test
-    @DisplayName("Should classify unknown field as INTERNAL with UNKNOWN confidence and manual review flag")
+    @DisplayName("Should classify unknown field as UNKNOWN with UNKNOWN confidence and manual review flag")
     void shouldClassifyUnknownFieldAsInternalUnknown() {
         FieldClassification fc = engine.classifyField(
             "custom-service", "GET", "/api/v1/unknown/resource", "unregisteredField"
         );
 
-        assertThat(fc.dataClassification()).isEqualTo(DataSensitivityLevel.INTERNAL);
+        assertThat(fc.dataClassification()).isEqualTo(DataSensitivityLevel.UNKNOWN);
         assertThat(fc.confidence()).isEqualTo(ClassificationConfidence.UNKNOWN);
         assertThat(fc.manualReviewRequired()).isTrue();
         assertThat(fc.schemaSource()).isEqualTo("UNCLASSIFIED_OBSERVATION");

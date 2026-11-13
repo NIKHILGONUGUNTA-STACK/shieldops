@@ -40,6 +40,15 @@ from simulation.scenarios.robustness_scenarios import (
     EdgeWindowBoundaryScenario,
     EdgeIncompleteSequenceScenario,
 )
+from simulation.scenarios.advanced_extraction_scenarios import (
+    BenignPaginationScenario,
+    BenignLargeResponseScenario,
+    PaginationExtractionScenario,
+    RestrictedFieldRetrievalScenario,
+    MultiResourceExtractionScenario,
+    CumulativeWindowExtractionScenario,
+    EdgeNoResponseSizeScenario,
+)
 
 log = logging.getLogger(__name__)
 
@@ -413,6 +422,120 @@ def get_default_registry() -> ScenarioRegistry:
             category=ScenarioCategory.PROBING,
             target_services=["gateway"],
             expected_outcome=ExpectedOutcome(expected_status_codes=[200], expected_detection_rules=["RULE-PROBE-01"]),
+            is_implemented=True,
+        ),
+    )
+
+    # 24. SCEN-BENIGN-PAGINATION: Legitimate Multi-Page Account History Access
+    registry.register_class(
+        BenignPaginationScenario,
+        ScenarioMetadata(
+            id="SCEN-BENIGN-PAGINATION",
+            name="Legitimate Multi-Page Account History Access",
+            description="Authenticates as customer and navigates account history across sequential pages.",
+            category=ScenarioCategory.BENIGN,
+            target_services=["account-service"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[200], expected_detection_rules=[]),
+            is_implemented=True,
+        ),
+    )
+
+    # 25. SCEN-BENIGN-LARGE-RESP: Legitimate Large Statement Response
+    registry.register_class(
+        BenignLargeResponseScenario,
+        ScenarioMetadata(
+            id="SCEN-BENIGN-LARGE-RESP",
+            name="Legitimate Bulk Statement Export Response",
+            description="Legitimate high-volume account export response by authorized owner.",
+            category=ScenarioCategory.BENIGN,
+            target_services=["account-service"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[200], expected_detection_rules=[]),
+            is_implemented=True,
+        ),
+    )
+
+    # 26. SCEN-EXTRACT-PAGINATION: Automated Sequential Pagination Harvesting
+    registry.register_class(
+        PaginationExtractionScenario,
+        ScenarioMetadata(
+            id="SCEN-EXTRACT-PAGINATION",
+            name="Automated Pagination-Based Data Harvesting",
+            description="Automated crawler iterating through paginated records to systematically harvest data.",
+            category=ScenarioCategory.DATA_ACCESS,
+            target_services=["account-service"],
+            expected_outcome=ExpectedOutcome(
+                expected_status_codes=[200],
+                expected_detection_rules=["RULE-ADV-EXTRACT-01"],
+                expected_incident_severity="HIGH",
+            ),
+            is_implemented=True,
+        ),
+    )
+
+    # 27. SCEN-DATA-RESTRICTED: Probing for Restricted Sensitive Secrets
+    registry.register_class(
+        RestrictedFieldRetrievalScenario,
+        ScenarioMetadata(
+            id="SCEN-DATA-RESTRICTED",
+            name="Repeated Restricted Field Retrieval Probing",
+            description="Probes customer profile endpoints for unexpected exposure of RESTRICTED secrets and tokens.",
+            category=ScenarioCategory.DATA_ACCESS,
+            target_services=["customer-service"],
+            expected_outcome=ExpectedOutcome(
+                expected_status_codes=[200],
+                expected_detection_rules=["RULE-EXCESSIVE-EXPOSURE-01"],
+                expected_incident_severity="CRITICAL",
+            ),
+            is_implemented=True,
+        ),
+    )
+
+    # 28. SCEN-EXTRACT-MULTI-RESOURCE: Cross-Domain Multi-Resource Harvesting
+    registry.register_class(
+        MultiResourceExtractionScenario,
+        ScenarioMetadata(
+            id="SCEN-EXTRACT-MULTI-RESOURCE",
+            name="Cross-Domain Multi-Resource Extraction",
+            description="Coordinated harvesting sequence querying Customer, Account, and Transfer resources.",
+            category=ScenarioCategory.DATA_ACCESS,
+            target_services=["customer-service", "account-service", "transaction-service"],
+            expected_outcome=ExpectedOutcome(
+                expected_status_codes=[200],
+                expected_detection_rules=["RULE-ADV-EXTRACT-01"],
+                expected_incident_severity="HIGH",
+            ),
+            is_implemented=True,
+        ),
+    )
+
+    # 29. SCEN-EXTRACT-CUMULATIVE: Cumulative High-Volume Window Extraction
+    registry.register_class(
+        CumulativeWindowExtractionScenario,
+        ScenarioMetadata(
+            id="SCEN-EXTRACT-CUMULATIVE",
+            name="Cumulative High-Volume Sliding-Window Harvesting",
+            description="Rapid bulk harvesting breaching cumulative volume thresholds across sliding windows.",
+            category=ScenarioCategory.DATA_ACCESS,
+            target_services=["account-service"],
+            expected_outcome=ExpectedOutcome(
+                expected_status_codes=[200],
+                expected_detection_rules=["RULE-ADV-EXTRACT-01"],
+                expected_incident_severity="HIGH",
+            ),
+            is_implemented=True,
+        ),
+    )
+
+    # 30. SCEN-EDGE-NO-RESP-SIZE: Missing Response Size Metadata
+    registry.register_class(
+        EdgeNoResponseSizeScenario,
+        ScenarioMetadata(
+            id="SCEN-EDGE-NO-RESP-SIZE",
+            name="Edge Case: Missing Response-Size Metadata",
+            description="Handles telemetry arrival when response size is zero or absent.",
+            category=ScenarioCategory.BENIGN,
+            target_services=["account-service"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[200], expected_detection_rules=[]),
             is_implemented=True,
         ),
     )

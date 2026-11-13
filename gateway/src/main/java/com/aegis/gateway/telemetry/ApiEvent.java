@@ -23,8 +23,40 @@ public record ApiEvent(
     String resourceId,
     String errorCode,
     long responseSizeBytes,
-    int recordCount
+    int recordCount,
+    String observedFields,
+    Integer pageNumber,
+    Integer pageSize
 ) {
+    public ApiEvent(
+            UUID id,
+            String correlationId,
+            Instant timestamp,
+            String sourceIp,
+            String httpMethod,
+            String requestPath,
+            String routeId,
+            int statusCode,
+            long latencyMs,
+            String authSubject,
+            String authRoles,
+            String customerId,
+            String userAgent,
+            String payloadHash,
+            String anomalyFlags,
+            String resourceType,
+            String resourceId,
+            String errorCode,
+            long responseSizeBytes,
+            int recordCount) {
+        this(
+            id, correlationId, timestamp, sourceIp, httpMethod, requestPath, routeId,
+            statusCode, latencyMs, authSubject, authRoles, customerId, userAgent,
+            payloadHash, anomalyFlags, resourceType, resourceId, errorCode,
+            responseSizeBytes, recordCount, null, null, null
+        );
+    }
+
     public ApiEvent(
             UUID id,
             String correlationId,
@@ -44,7 +76,7 @@ public record ApiEvent(
         this(
             id, correlationId, timestamp, sourceIp, httpMethod, requestPath, routeId,
             statusCode, latencyMs, authSubject, authRoles, customerId, userAgent,
-            payloadHash, anomalyFlags, null, null, null, 0L, 0
+            payloadHash, anomalyFlags, null, null, null, 0L, 0, null, null, null
         );
     }
 }

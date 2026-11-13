@@ -270,6 +270,30 @@ public class TelemetryFilter extends OncePerRequestFilter {
                 }
             }
 
+            Integer pageNumber = null;
+            String pageParam = request.getParameter("page");
+            if (pageParam == null) pageParam = request.getParameter("pageNumber");
+            if (pageParam != null) {
+                try {
+                    pageNumber = Integer.parseInt(pageParam.trim());
+                } catch (Exception ignored) {}
+            }
+
+            Integer pageSize = null;
+            String sizeParam = request.getParameter("size");
+            if (sizeParam == null) sizeParam = request.getParameter("pageSize");
+            if (sizeParam == null) sizeParam = request.getParameter("limit");
+            if (sizeParam != null) {
+                try {
+                    pageSize = Integer.parseInt(sizeParam.trim());
+                } catch (Exception ignored) {}
+            }
+
+            String observedFields = null;
+            if ((statusCode == 200 || statusCode == 201) && responseSizeBytes > 2 && respBytes != null) {
+                observedFields = extractObservedFieldNames(respBytes);
+            }
+
             ApiEvent event = new ApiEvent(
                 UUID.randomUUID(),
                 correlationId,
@@ -290,12 +314,46 @@ public class TelemetryFilter extends OncePerRequestFilter {
                 resourceId,
                 errorCode,
                 responseSizeBytes,
-                recordCount
+                recordCount,
+                observedFields,
+                pageNumber,
+                pageSize
             );
 
             publishToRedisOrDatabase(event);
         } catch (Exception e) {
             log.warn("Failed to record telemetry for request: {}", e.getMessage());
+        }
+    }
+
+    private String extractObservedFieldNames(byte[] respBytes) {
+        if (respBytes == null || respBytes.length < 2) return null;
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(respBytes);
+            Set<String> fields = new LinkedHashSet<>();
+            if (root.isObject()) {
+                collectFieldPaths("", root, fields, 0);
+            } else if (root.isArray() && root.size() > 0 && root.get(0).isObject()) {
+                collectFieldPaths("", root.get(0), fields, 0);
+            }
+            if (fields.isEmpty()) return null;
+            return String.join(",", fields);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private void collectFieldPaths(String prefix, com.fasterxml.jackson.databind.JsonNode node, Set<String> fields, int depth) {
+        if (depth > 3 || fields.size() >= 50 || node == null || !node.isObject()) return;
+        Iterator<Map.Entry<String, com.fasterxml.jackson.databind.JsonNode>> it = node.fields();
+        while (it.hasNext() && fields.size() < 50) {
+            Map.Entry<String, com.fasterxml.jackson.databind.JsonNode> entry = it.next();
+            String path = prefix.isEmpty() ? entry.getKey() : prefix + "." + entry.getKey();
+            fields.add(path);
+            if (entry.getValue().isObject()) {
+                collectFieldPaths(path, entry.getValue(), fields, depth + 1);
+            }
         }
     }
 
@@ -325,6 +383,15 @@ public class TelemetryFilter extends OncePerRequestFilter {
         fields.put("errorCode", event.errorCode() != null ? event.errorCode() : "");
         fields.put("responseSizeBytes", String.valueOf(event.responseSizeBytes()));
         fields.put("recordCount", String.valueOf(event.recordCount()));
+        if (event.observedFields() != null) {
+            fields.put("observedFields", event.observedFields());
+        }
+        if (event.pageNumber() != null) {
+            fields.put("pageNumber", String.valueOf(event.pageNumber()));
+        }
+        if (event.pageSize() != null) {
+            fields.put("pageSize", String.valueOf(event.pageSize()));
+        }
 
         try {
             redisTemplate.opsForStream().add(Record.of(fields).withStreamKey(streamKey));

@@ -46,6 +46,7 @@ class FintechSpecificationBaselineTest {
 
     @BeforeEach
     void cleanDatabase() {
+        jdbcClient.sql("DELETE FROM security_data.api_events").update();
         jdbcClient.sql("DELETE FROM security_data.api_spec_operations").update();
         jdbcClient.sql("DELETE FROM security_data.api_specifications").update();
     }

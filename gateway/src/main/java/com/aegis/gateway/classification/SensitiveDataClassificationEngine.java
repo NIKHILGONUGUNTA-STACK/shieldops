@@ -111,14 +111,14 @@ public class SensitiveDataClassificationEngine {
             }
         }
 
-        // 3. Unknown field: classified with UNKNOWN confidence requiring manual review
+        // 3. Unknown field: classified with UNKNOWN sensitivity level and confidence requiring manual review
         return new FieldClassification(
             serviceBoundary != null ? serviceBoundary : "unknown",
             httpMethod,
             routeTemplate,
             normalizedField,
-            DataSensitivityLevel.INTERNAL,
-            "Unclassified response field absent from authoritative schema; provisional internal classification",
+            DataSensitivityLevel.UNKNOWN,
+            "Unclassified response field absent from authoritative schema; unknown classification requiring manual review",
             Set.of("SECURITY_ANALYST", "SECURITY_ADMIN"),
             ResourceOwnershipRequirement.NONE,
             "UNCLASSIFIED_OBSERVATION",
@@ -126,6 +126,24 @@ public class SensitiveDataClassificationEngine {
             POLICY_VERSION,
             true
         );
+    }
+
+    /**
+     * Checks if an endpoint has catalogued schema rules.
+     */
+    public boolean hasDeclaredSchema(String httpMethod, String routeTemplate) {
+        String endpointKey = buildEndpointKey(httpMethod, routeTemplate);
+        Map<String, FieldClassification> map = classificationRules.get(endpointKey);
+        return map != null && !map.isEmpty();
+    }
+
+    /**
+     * Retrieves all declared field rules for an endpoint.
+     */
+    public Map<String, FieldClassification> getDeclaredFields(String httpMethod, String routeTemplate) {
+        String endpointKey = buildEndpointKey(httpMethod, routeTemplate);
+        Map<String, FieldClassification> map = classificationRules.get(endpointKey);
+        return map != null ? Collections.unmodifiableMap(map) : Collections.emptyMap();
     }
 
     /**

@@ -27,9 +27,34 @@ public enum DataLeakageCategory {
     SENSITIVE_DATA_EXPOSURE("Sensitive Data Exposure"),
 
     /**
+     * Field-level exposure anomaly (contract breach, schema drift, unexpected sensitive fields, or unclassified fields).
+     */
+    EXCESSIVE_DATA_EXPOSURE("Excessive Data Exposure"),
+
+    /**
      * Excessive reads or automated harvesting across multiple distinct customer resources.
      */
     EXCESSIVE_DATA_EXTRACTION("Excessive Data Extraction"),
+
+    /**
+     * Cumulative extraction across extended time windows where individual requests remain below rapid thresholds.
+     */
+    LOW_AND_SLOW_EXTRACTION("Low-and-Slow Extraction"),
+
+    /**
+     * Coordinated extraction distributed across related sessions or identities.
+     */
+    DISTRIBUTED_EXTRACTION("Distributed Extraction"),
+
+    /**
+     * Automated harvesting exploiting pagination and cursor progression.
+     */
+    PAGINATION_EXTRACTION("Pagination-Based Extraction"),
+
+    /**
+     * Correlated cross-resource extraction spanning customer, account, and transaction domains.
+     */
+    MULTI_RESOURCE_EXTRACTION("Multi-Resource Extraction"),
 
     /**
      * Correlated multi-stage exfiltration sequence (enumeration -> BOLA attempts -> sensitive extraction).

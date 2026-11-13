@@ -16,9 +16,33 @@ public record DataLeakageSummaryResponse(
     long sensitiveDataExposures,
     long bulkExtractionEvents,
     long multiStageCampaigns,
+    long excessiveExposures,
+    long lowAndSlowExtractions,
+    long distributedExtractions,
+    long paginationExtractions,
+    long multiResourceExtractions,
     Map<String, Long> incidentsBySeverity,
     Map<String, Long> incidentsByStatus,
     List<IncidentResponse> recentIncidents,
     Instant generatedAt
-) {}
+) {
+    public DataLeakageSummaryResponse(
+            long totalLeakageIncidents,
+            long confirmedBolaLeaks,
+            long deniedBolaAttempts,
+            long sensitiveDataExposures,
+            long bulkExtractionEvents,
+            long multiStageCampaigns,
+            Map<String, Long> incidentsBySeverity,
+            Map<String, Long> incidentsByStatus,
+            List<IncidentResponse> recentIncidents,
+            Instant generatedAt) {
+        this(
+            totalLeakageIncidents, confirmedBolaLeaks, deniedBolaAttempts,
+            sensitiveDataExposures, bulkExtractionEvents, multiStageCampaigns,
+            0L, 0L, 0L, 0L, 0L,
+            incidentsBySeverity, incidentsByStatus, recentIncidents, generatedAt
+        );
+    }
+}
 

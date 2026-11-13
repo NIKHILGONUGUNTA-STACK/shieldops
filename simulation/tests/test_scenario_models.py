@@ -99,6 +99,13 @@ def test_default_registry_all_categories_present():
         "SCEN-EDGE-OUT-OF-ORDER",
         "SCEN-EDGE-WINDOW-BOUNDARY",
         "SCEN-EDGE-INCOMPLETE-SEQUENCE",
+        "SCEN-BENIGN-PAGINATION",
+        "SCEN-BENIGN-LARGE-RESP",
+        "SCEN-EXTRACT-PAGINATION",
+        "SCEN-DATA-RESTRICTED",
+        "SCEN-EXTRACT-MULTI-RESOURCE",
+        "SCEN-EXTRACT-CUMULATIVE",
+        "SCEN-EDGE-NO-RESP-SIZE",
     }
     benign = registry.get_metadata("SCEN-BENIGN-01")
     assert benign is not None and benign.is_implemented is True

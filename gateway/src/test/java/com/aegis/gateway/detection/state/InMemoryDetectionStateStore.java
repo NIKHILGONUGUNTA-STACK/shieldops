@@ -102,8 +102,35 @@ public class InMemoryDetectionStateStore implements DetectionStateStore {
 
     @Override
     public void recordSensitiveAccess(String customerId, UUID eventId, String resourceId, String routeTemplate, int recordCount, long responseSizeBytes, Instant timestamp) {
+        recordSensitiveAccess(customerId, eventId, "UNKNOWN", resourceId, routeTemplate, recordCount, responseSizeBytes, null, null, "CONFIDENTIAL", timestamp);
+    }
+
+    @Override
+    public void recordSensitiveAccess(
+            String customerId,
+            UUID eventId,
+            String resourceType,
+            String resourceId,
+            String routeTemplate,
+            int recordCount,
+            long responseSizeBytes,
+            String authSubject,
+            Integer pageNumber,
+            String highestSensitivity,
+            Instant timestamp) {
         sensitiveStore.computeIfAbsent(customerId.trim(), k -> new CopyOnWriteArrayList<>())
-            .add(new com.aegis.gateway.detection.model.SensitiveAccessRecord(eventId, resourceId, routeTemplate, recordCount, responseSizeBytes, timestamp));
+            .add(new com.aegis.gateway.detection.model.SensitiveAccessRecord(
+                eventId,
+                resourceType != null ? resourceType : "UNKNOWN",
+                resourceId != null ? resourceId.trim() : "UNKNOWN",
+                routeTemplate != null ? routeTemplate : "",
+                recordCount,
+                responseSizeBytes,
+                authSubject,
+                pageNumber,
+                highestSensitivity != null ? highestSensitivity : "CONFIDENTIAL",
+                timestamp
+            ));
     }
 
     @Override

@@ -86,8 +86,26 @@ class DataLeakageControllerTest {
                 "RULE-BOLA-CONFIRMED-01",
                 "RULE-DATA-LEAK-01",
                 "RULE-BULK-EXTRACT-01",
-                "RULE-BOLA-02"
+                "RULE-BOLA-02",
+                "RULE-EXCESSIVE-EXPOSURE-01",
+                "RULE-ADV-EXTRACT-01"
             )));
+    }
+
+    @Test
+    @DisplayName("Analyst request to extraction analytics returns 200 OK with analytics metrics")
+    void analystCanGetExtractionAnalytics() throws Exception {
+        mockMvc.perform(get("/api/v1/security/leakage/extraction/analytics")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ANALYST"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totalExtractionIncidents").isNumber())
+            .andExpect(jsonPath("$.rapidExtractions").isNumber())
+            .andExpect(jsonPath("$.lowAndSlowExtractions").isNumber())
+            .andExpect(jsonPath("$.distributedExtractions").isNumber())
+            .andExpect(jsonPath("$.paginationExtractions").isNumber())
+            .andExpect(jsonPath("$.multiResourceExtractions").isNumber())
+            .andExpect(jsonPath("$.excessiveExposures").isNumber())
+            .andExpect(jsonPath("$.generatedAt").isNotEmpty());
     }
 
     @Test
