@@ -21,21 +21,31 @@ public class ThreatDetectionEngine {
     private final List<DetectionRule> rules;
     private final IncidentService incidentService;
     private final ExfiltrationCampaignCorrelator campaignCorrelator;
+    private final com.aegis.gateway.detection.policy.AdaptivePolicyEngine policyEngine;
 
     @Autowired
     public ThreatDetectionEngine(
             List<DetectionRule> rules,
             IncidentService incidentService,
-            @Autowired(required = false) ExfiltrationCampaignCorrelator campaignCorrelator) {
+            @Autowired(required = false) ExfiltrationCampaignCorrelator campaignCorrelator,
+            @Autowired(required = false) com.aegis.gateway.detection.policy.AdaptivePolicyEngine policyEngine) {
         this.rules = rules != null ? rules : List.of();
         this.incidentService = incidentService;
         this.campaignCorrelator = campaignCorrelator;
-        log.info("Initialized ThreatDetectionEngine with {} active rules and campaign correlator {}",
-            this.rules.size(), campaignCorrelator != null ? "ENABLED" : "DISABLED");
+        this.policyEngine = policyEngine;
+        log.info("Initialized ThreatDetectionEngine with {} active rules, campaign correlator {}, policy engine {}",
+            this.rules.size(), campaignCorrelator != null ? "ENABLED" : "DISABLED", policyEngine != null ? "ENABLED" : "DISABLED");
+    }
+
+    public ThreatDetectionEngine(
+            List<DetectionRule> rules,
+            IncidentService incidentService,
+            ExfiltrationCampaignCorrelator campaignCorrelator) {
+        this(rules, incidentService, campaignCorrelator, null);
     }
 
     public ThreatDetectionEngine(List<DetectionRule> rules, IncidentService incidentService) {
-        this(rules, incidentService, null);
+        this(rules, incidentService, null, null);
     }
 
     public List<SecurityIncident> processEvent(ApiEvent event) {
@@ -58,6 +68,13 @@ public class ThreatDetectionEngine {
                     SecurityIncident inc = incidentService.processRuleResult(result);
                     if (inc != null) {
                         incidents.add(inc);
+                        if (policyEngine != null) {
+                            try {
+                                policyEngine.evaluateIncident(inc, java.util.Collections.emptyList());
+                            } catch (Exception pe) {
+                                log.debug("Policy recommendation generation skipped for incident {}: {}", inc.id(), pe.getMessage());
+                            }
+                        }
                     }
                     if (campaignCorrelator != null) {
                         campaignCorrelator.correlateEvent(event, result, inc);

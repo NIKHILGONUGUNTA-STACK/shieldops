@@ -132,7 +132,7 @@ import {
             <span class="tax-dot restricted"></span>
             <span class="tax-name">RESTRICTED</span>
           </div>
-          <div class="tax-count mono">{{ summary()?.sensitivityBreakdown?.RESTRICTED || 0 }}</div>
+          <div class="tax-count mono">{{ summary()?.sensitivityBreakdown?.['RESTRICTED'] || 0 }}</div>
           <div class="tax-desc">Authentication secrets, Bearer tokens, passwords, private keys</div>
         </div>
 
@@ -141,7 +141,7 @@ import {
             <span class="tax-dot confidential"></span>
             <span class="tax-name">CONFIDENTIAL</span>
           </div>
-          <div class="tax-count mono">{{ summary()?.sensitivityBreakdown?.CONFIDENTIAL || 0 }}</div>
+          <div class="tax-count mono">{{ summary()?.sensitivityBreakdown?.['CONFIDENTIAL'] || 0 }}</div>
           <div class="tax-desc">Customer profiles, emails, ledger balances, transactions, beneficiaries</div>
         </div>
 
@@ -150,7 +150,7 @@ import {
             <span class="tax-dot internal"></span>
             <span class="tax-name">INTERNAL</span>
           </div>
-          <div class="tax-count mono">{{ summary()?.sensitivityBreakdown?.INTERNAL || 0 }}</div>
+          <div class="tax-count mono">{{ summary()?.sensitivityBreakdown?.['INTERNAL'] || 0 }}</div>
           <div class="tax-desc">Service health, correlation IDs, timestamps, internal metadata</div>
         </div>
 
@@ -159,7 +159,7 @@ import {
             <span class="tax-dot public"></span>
             <span class="tax-name">PUBLIC</span>
           </div>
-          <div class="tax-count mono">{{ summary()?.sensitivityBreakdown?.PUBLIC || 0 }}</div>
+          <div class="tax-count mono">{{ summary()?.sensitivityBreakdown?.['PUBLIC'] || 0 }}</div>
           <div class="tax-desc">Public OpenAPI discovery, realm endpoints, unauthenticated metadata</div>
         </div>
       </div>
@@ -203,17 +203,17 @@ import {
                 </td>
                 <td>
                   <div class="mini-tax-chips">
-                    <span class="chip chip-restricted" *ngIf="svc.sensitivityBreakdown.RESTRICTED > 0" title="Restricted fields">
-                      R: {{ svc.sensitivityBreakdown.RESTRICTED }}
+                    <span class="chip chip-restricted" *ngIf="svc.sensitivityBreakdown['RESTRICTED'] > 0" title="Restricted fields">
+                      R: {{ svc.sensitivityBreakdown['RESTRICTED'] }}
                     </span>
-                    <span class="chip chip-confidential" *ngIf="svc.sensitivityBreakdown.CONFIDENTIAL > 0" title="Confidential fields">
-                      C: {{ svc.sensitivityBreakdown.CONFIDENTIAL }}
+                    <span class="chip chip-confidential" *ngIf="svc.sensitivityBreakdown['CONFIDENTIAL'] > 0" title="Confidential fields">
+                      C: {{ svc.sensitivityBreakdown['CONFIDENTIAL'] }}
                     </span>
-                    <span class="chip chip-internal" *ngIf="svc.sensitivityBreakdown.INTERNAL > 0" title="Internal fields">
-                      I: {{ svc.sensitivityBreakdown.INTERNAL }}
+                    <span class="chip chip-internal" *ngIf="svc.sensitivityBreakdown['INTERNAL'] > 0" title="Internal fields">
+                      I: {{ svc.sensitivityBreakdown['INTERNAL'] }}
                     </span>
-                    <span class="chip chip-public" *ngIf="svc.sensitivityBreakdown.PUBLIC > 0" title="Public fields">
-                      P: {{ svc.sensitivityBreakdown.PUBLIC }}
+                    <span class="chip chip-public" *ngIf="svc.sensitivityBreakdown['PUBLIC'] > 0" title="Public fields">
+                      P: {{ svc.sensitivityBreakdown['PUBLIC'] }}
                     </span>
                   </div>
                 </td>

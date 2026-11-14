@@ -51,7 +51,15 @@ import {
   CampaignStatusHistory,
   CampaignRiskAssessment,
   CampaignEvidenceDetailsResponse,
-  CampaignStatusUpdateRequest
+  CampaignStatusUpdateRequest,
+  SecurityPolicyResponse,
+  AdaptivePolicyDecisionResponse,
+  PolicyDecisionPageResponse,
+  PolicyApprovalRequest,
+  PolicyRejectionRequest,
+  PolicyUpdateRequest,
+  PolicyDecisionAction,
+  PolicyAuditHistory
 } from '../models/security.models';
 
 @Injectable({
@@ -658,6 +666,106 @@ export class SecurityApiService {
    */
   updateCampaignStatus(id: string, req: CampaignStatusUpdateRequest): Observable<CampaignResponse> {
     return this.http.patch<CampaignResponse>(`${this.baseUrl}/api/v1/security/campaigns/${encodeURIComponent(id)}/status`, req)
+      .pipe(catchError(this.handleError));
+  }
+
+  // ==========================================
+  // Phase 7.2.4.6: Adaptive Security Response & Policy Decision Engine
+  // ==========================================
+
+  /**
+   * GET /api/v1/security/policies
+   * Retrieves all active security policies.
+   */
+  getSecurityPolicies(): Observable<SecurityPolicyResponse[]> {
+    return this.http.get<SecurityPolicyResponse[]>(`${this.baseUrl}/api/v1/security/policies`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/policies/{id}
+   */
+  getSecurityPolicyById(id: string): Observable<SecurityPolicyResponse> {
+    return this.http.get<SecurityPolicyResponse>(`${this.baseUrl}/api/v1/security/policies/${encodeURIComponent(id)}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * PUT /api/v1/security/policies/{id}
+   */
+  updateSecurityPolicy(id: string, req: PolicyUpdateRequest): Observable<SecurityPolicyResponse> {
+    return this.http.put<SecurityPolicyResponse>(`${this.baseUrl}/api/v1/security/policies/${encodeURIComponent(id)}`, req)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/policies/{id}/history
+   */
+  getSecurityPolicyAuditHistory(id: string): Observable<PolicyAuditHistory[]> {
+    return this.http.get<PolicyAuditHistory[]>(`${this.baseUrl}/api/v1/security/policies/${encodeURIComponent(id)}/history`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/adaptive-decisions
+   */
+  getAdaptiveDecisions(page: number = 0, size: number = 20, status?: string, category?: string, search?: string): Observable<PolicyDecisionPageResponse> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    if (status) params = params.set('status', status);
+    if (category) params = params.set('category', category);
+    if (search) params = params.set('search', search);
+
+    return this.http.get<PolicyDecisionPageResponse>(`${this.baseUrl}/api/v1/security/adaptive-decisions`, { params })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/adaptive-decisions/{id}
+   */
+  getAdaptiveDecisionById(id: string): Observable<AdaptivePolicyDecisionResponse> {
+    return this.http.get<AdaptivePolicyDecisionResponse>(`${this.baseUrl}/api/v1/security/adaptive-decisions/${encodeURIComponent(id)}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/adaptive-decisions/{id}/actions
+   */
+  getAdaptiveDecisionActions(id: string): Observable<PolicyDecisionAction[]> {
+    return this.http.get<PolicyDecisionAction[]>(`${this.baseUrl}/api/v1/security/adaptive-decisions/${encodeURIComponent(id)}/actions`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * POST /api/v1/security/adaptive-decisions/{id}/approve
+   */
+  approveAdaptiveDecision(id: string, req: PolicyApprovalRequest): Observable<AdaptivePolicyDecisionResponse> {
+    return this.http.post<AdaptivePolicyDecisionResponse>(`${this.baseUrl}/api/v1/security/adaptive-decisions/${encodeURIComponent(id)}/approve`, req)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * POST /api/v1/security/adaptive-decisions/{id}/reject
+   */
+  rejectAdaptiveDecision(id: string, req: PolicyRejectionRequest): Observable<AdaptivePolicyDecisionResponse> {
+    return this.http.post<AdaptivePolicyDecisionResponse>(`${this.baseUrl}/api/v1/security/adaptive-decisions/${encodeURIComponent(id)}/reject`, req)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * POST /api/v1/security/adaptive-decisions/evaluate/incident/{incidentId}
+   */
+  evaluateIncidentPolicy(incidentId: string): Observable<AdaptivePolicyDecisionResponse> {
+    return this.http.post<AdaptivePolicyDecisionResponse>(`${this.baseUrl}/api/v1/security/adaptive-decisions/evaluate/incident/${encodeURIComponent(incidentId)}`, {})
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * POST /api/v1/security/adaptive-decisions/evaluate/campaign/{campaignId}
+   */
+  evaluateCampaignPolicy(campaignId: string): Observable<AdaptivePolicyDecisionResponse> {
+    return this.http.post<AdaptivePolicyDecisionResponse>(`${this.baseUrl}/api/v1/security/adaptive-decisions/evaluate/campaign/${encodeURIComponent(campaignId)}`, {})
       .pipe(catchError(this.handleError));
   }
 

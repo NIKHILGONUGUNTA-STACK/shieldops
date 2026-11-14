@@ -942,3 +942,122 @@ export interface CampaignStatusUpdateRequest {
   transitionReason: string;
 }
 
+
+
+// ==========================================
+// Phase 7.2.4.6: Adaptive Security Response & Policy Decision Engine
+// ==========================================
+
+export type PolicyAction =
+  | 'MONITOR_ACTIVITY'
+  | 'REVIEW_AUTHORIZATION'
+  | 'ESCALATE_INCIDENT'
+  | 'REVIEW_DATA_EXPOSURE'
+  | 'INVESTIGATE_ACTIVITY'
+  | 'PRIORITIZE_CAMPAIGN'
+  | 'REQUEST_ADDITIONAL_EVIDENCE';
+
+export type PolicyStatus =
+  | 'RECOMMENDED'
+  | 'UNDER_REVIEW'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'SUPERSEDED';
+
+export type PolicyCategory =
+  | 'RECONNAISSANCE'
+  | 'AUTHORIZATION'
+  | 'DATA_EXPOSURE'
+  | 'EXTRACTION'
+  | 'CAMPAIGN'
+  | 'EVIDENCE_INTEGRITY';
+
+export interface SecurityPolicyResponse {
+  id: string;
+  name: string;
+  version: string;
+  category: PolicyCategory;
+  recommendedAction: PolicyAction;
+  description: string;
+  enabled: boolean;
+  severityThreshold: number;
+  conditionExpression: string;
+  effectiveFrom: string;
+  updatedAt: string;
+}
+
+export interface AdaptivePolicyDecisionResponse {
+  id: string;
+  incidentId: string | null;
+  campaignId: string | null;
+  policyId: string;
+  policyVersion: string;
+  category: PolicyCategory;
+  riskLevel: string;
+  recommendedAction: PolicyAction;
+  enforcementLevel: string;
+  rationale: string;
+  supportingEvidence: string[];
+  identityContext: string;
+  tenantId: string;
+  evidenceCompleteness: CampaignEvidenceCompleteness;
+  evidenceSnapshot: string;
+  status: PolicyStatus;
+  analystUser: string | null;
+  analystAction: string | null;
+  analystRationale: string | null;
+  analystActionAt: string | null;
+  createdAt: string;
+  expiresAt: string | null;
+  updatedAt: string;
+}
+
+export interface PolicyDecisionPageResponse {
+  content: AdaptivePolicyDecisionResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface PolicyApprovalRequest {
+  analystUser: string;
+  comments?: string;
+}
+
+export interface PolicyRejectionRequest {
+  analystUser: string;
+  rationale: string;
+  comments?: string;
+}
+
+export interface PolicyUpdateRequest {
+  name?: string;
+  description?: string;
+  enabled?: boolean;
+  severityThreshold?: number;
+  conditionExpression?: string;
+  changedBy: string;
+  changeReason: string;
+}
+
+export interface PolicyDecisionAction {
+  id: string;
+  decisionId: string;
+  action: string;
+  performedBy: string;
+  rationale: string | null;
+  comments: string | null;
+  actionAt: string;
+}
+
+export interface PolicyAuditHistory {
+  id: string;
+  policyId: string;
+  previousVersion: string;
+  newVersion: string;
+  changeReason: string;
+  changedBy: string;
+  changedAt: string;
+  snapshotData: string;
+}
