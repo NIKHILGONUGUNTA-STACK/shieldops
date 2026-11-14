@@ -696,7 +696,7 @@ export interface ServiceClassificationSummary {
   unclassifiedFields: number;
   coveragePercentage: number;
   manualReviewRequiredCount: number;
-  sensitivityBreakdown: Record<DataSensitivityLevel, number>;
+  sensitivityBreakdown: Record<string, number>;
 }
 
 export interface SensitiveDataInventorySummary {
@@ -706,7 +706,7 @@ export interface SensitiveDataInventorySummary {
   totalUnclassifiedFields: number;
   overallCoveragePercentage: number;
   totalManualReviewRequired: number;
-  sensitivityBreakdown: Record<DataSensitivityLevel, number>;
+  sensitivityBreakdown: Record<string, number>;
   services: ServiceClassificationSummary[];
   generatedAt: string;
 }
@@ -846,7 +846,99 @@ export interface ComparativeBenchmarkResponse {
   generatedAt: string;
 }
 
+// ============================================================================
+// Phase 7.2.4.5 — Multi-Stage Exfiltration Campaign Models
+// ============================================================================
 
+export type CampaignStage =
+  | 'RECONNAISSANCE'
+  | 'AUTHORIZATION_PROBING'
+  | 'RESOURCE_DISCOVERY'
+  | 'SENSITIVE_DATA_ACCESS'
+  | 'BULK_EXTRACTION'
+  | 'MULTI_DOMAIN_EXTRACTION';
 
+export type CampaignStatus =
+  | 'OPEN'
+  | 'INVESTIGATING'
+  | 'ESCALATED'
+  | 'RESOLVED'
+  | 'FALSE_POSITIVE';
 
+export type CampaignEvidenceCompleteness =
+  | 'COMPLETE'
+  | 'INCOMPLETE'
+  | 'DEGRADED';
+
+export interface CampaignResponse {
+  id: string;
+  name: string;
+  tenantId: string;
+  correlationIdentity: string;
+  status: CampaignStatus;
+  riskScore: number;
+  riskCategory: string;
+  severity: string;
+  stagesObserved: CampaignStage[];
+  currentStage: CampaignStage;
+  evidenceCompleteness: CampaignEvidenceCompleteness;
+  firstObservedAt: string;
+  lastObservedAt: string;
+  eventCount: number;
+  distinctServices: number;
+  distinctResources: number;
+  description: string;
+}
+
+export interface CampaignPageResponse {
+  content: CampaignResponse[];
+  totalElements: number;
+  totalPages: number;
+  page: number;
+  size: number;
+}
+
+export interface CampaignTimelineEvent {
+  id: string;
+  campaignId: string;
+  eventId: string;
+  eventTimestamp: string;
+  stage: CampaignStage;
+  httpMethod: string;
+  route: string;
+  statusCode: number;
+  details: string;
+  riskContribution: number;
+}
+
+export interface CampaignStatusHistory {
+  id: string;
+  campaignId: string;
+  fromStatus: CampaignStatus;
+  toStatus: CampaignStatus;
+  transitionReason: string;
+  changedBy: string;
+  changedAt: string;
+}
+
+export interface CampaignRiskAssessment {
+  riskScore: number;
+  riskCategory: string;
+  severity: string;
+  scoreBreakdown: Record<string, number>;
+  keyRiskIndicators: string[];
+}
+
+export interface CampaignEvidenceDetailsResponse {
+  campaignId: string;
+  incidentIds: string[];
+  evidenceUris: string[];
+  missingEvidenceReasons: string[];
+  completeness: CampaignEvidenceCompleteness;
+}
+
+export interface CampaignStatusUpdateRequest {
+  targetStatus: CampaignStatus;
+  transitionReason: string;
+}
 

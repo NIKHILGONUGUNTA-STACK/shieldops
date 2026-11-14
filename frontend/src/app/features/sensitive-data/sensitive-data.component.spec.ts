@@ -52,6 +52,7 @@ describe('SensitiveDataComponent', () => {
     overallCoveragePercentage: 100.0,
     totalManualReviewRequired: 0,
     sensitivityBreakdown: {
+      UNKNOWN: 0,
       RESTRICTED: 5,
       CONFIDENTIAL: 25,
       INTERNAL: 10,
@@ -66,7 +67,7 @@ describe('SensitiveDataComponent', () => {
         unclassifiedFields: 0,
         coveragePercentage: 100.0,
         manualReviewRequiredCount: 0,
-        sensitivityBreakdown: { RESTRICTED: 0, CONFIDENTIAL: 10, INTERNAL: 2, PUBLIC: 0 }
+        sensitivityBreakdown: { UNKNOWN: 0, RESTRICTED: 0, CONFIDENTIAL: 10, INTERNAL: 2, PUBLIC: 0 }
       }
     ],
     generatedAt: '2026-11-10T12:00:00Z'

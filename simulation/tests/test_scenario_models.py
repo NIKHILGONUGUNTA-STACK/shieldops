@@ -106,6 +106,12 @@ def test_default_registry_all_categories_present():
         "SCEN-EXTRACT-MULTI-RESOURCE",
         "SCEN-EXTRACT-CUMULATIVE",
         "SCEN-EDGE-NO-RESP-SIZE",
+        "SCEN-EXFIL-RECON-PROBE",
+        "SCEN-EXFIL-PROBE-EXTRACT",
+        "SCEN-EXFIL-EXPOSE-BULK",
+        "SCEN-EXFIL-LOW-SLOW-MULTI",
+        "SCEN-BENIGN-LOOKALIKE",
+        "SCEN-MULTI-01",
     }
     benign = registry.get_metadata("SCEN-BENIGN-01")
     assert benign is not None and benign.is_implemented is True

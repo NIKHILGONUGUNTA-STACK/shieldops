@@ -895,6 +895,59 @@ describe('SecurityApiService', () => {
         generatedAt: '2026-11-13T12:00:00Z'
       });
     });
+
+    it('should query getCampaigns with filtering', () => {
+      service.getCampaigns({ page: 0, size: 20, status: 'OPEN', minRisk: 65 }).subscribe(res => {
+        expect(res.totalElements).toBe(1);
+        expect(res.content[0].name).toBe('Exfil Campaign');
+      });
+
+      const req = httpTesting.expectOne(r =>
+        r.url === `${environment.apiBaseUrl}/api/v1/security/campaigns` &&
+        r.params.get('status') === 'OPEN' &&
+        r.params.get('minRisk') === '65'
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush({
+        content: [{ id: 'c-1', name: 'Exfil Campaign', status: 'OPEN', riskScore: 85 }],
+        totalElements: 1,
+        totalPages: 1,
+        page: 0,
+        size: 20
+      });
+    });
+
+    it('should query getCampaignById, timeline, risk, evidence, history, and updateCampaignStatus', () => {
+      service.getCampaignById('c-1').subscribe(c => expect(c.id).toBe('c-1'));
+      const req1 = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/campaigns/c-1`);
+      expect(req1.request.method).toBe('GET');
+      req1.flush({ id: 'c-1', name: 'Exfil Campaign' });
+
+      service.getCampaignTimeline('c-1').subscribe(t => expect(t.length).toBe(1));
+      const req2 = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/campaigns/c-1/timeline`);
+      expect(req2.request.method).toBe('GET');
+      req2.flush([{ id: 'te-1', stage: 'RECONNAISSANCE' }]);
+
+      service.getCampaignRisk('c-1').subscribe(r => expect(r.riskScore).toBe(90));
+      const req3 = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/campaigns/c-1/risk`);
+      expect(req3.request.method).toBe('GET');
+      req3.flush({ riskScore: 90, riskCategory: 'CRITICAL', severity: 'CRITICAL', scoreBreakdown: {}, keyRiskIndicators: [] });
+
+      service.getCampaignEvidence('c-1').subscribe(e => expect(e.completeness).toBe('COMPLETE'));
+      const req4 = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/campaigns/c-1/evidence`);
+      expect(req4.request.method).toBe('GET');
+      req4.flush({ campaignId: 'c-1', incidentIds: [], evidenceUris: [], missingEvidenceReasons: [], completeness: 'COMPLETE' });
+
+      service.getCampaignHistory('c-1').subscribe(h => expect(h.length).toBe(1));
+      const req5 = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/campaigns/c-1/history`);
+      expect(req5.request.method).toBe('GET');
+      req5.flush([{ id: 'h-1', fromStatus: 'OPEN', toStatus: 'INVESTIGATING' }]);
+
+      service.updateCampaignStatus('c-1', { targetStatus: 'INVESTIGATING', transitionReason: 'Triaged' }).subscribe(u => expect(u.status).toBe('INVESTIGATING'));
+      const req6 = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/campaigns/c-1/status`);
+      expect(req6.request.method).toBe('PATCH');
+      req6.flush({ id: 'c-1', status: 'INVESTIGATING' });
+    });
   });
 
   describe('Error Handling', () => {

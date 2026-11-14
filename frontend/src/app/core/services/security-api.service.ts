@@ -44,7 +44,14 @@ import {
   DataLeakageRuleInfoResponse,
   DataLeakageFilterParams,
   ComparativeBenchmarkResponse,
-  ExtractionAnalyticsResponse
+  ExtractionAnalyticsResponse,
+  CampaignResponse,
+  CampaignPageResponse,
+  CampaignTimelineEvent,
+  CampaignStatusHistory,
+  CampaignRiskAssessment,
+  CampaignEvidenceDetailsResponse,
+  CampaignStatusUpdateRequest
 } from '../models/security.models';
 
 @Injectable({
@@ -573,6 +580,85 @@ export class SecurityApiService {
     return this.http.get<ExtractionAnalyticsResponse>(
       `${this.baseUrl}/api/v1/security/leakage/extraction/analytics`
     ).pipe(catchError(this.handleError));
+  }
+
+  // ============================================================================
+  // Phase 7.2.4.5 — Multi-Stage Exfiltration Campaign APIs
+  // ============================================================================
+
+  /**
+   * GET /api/v1/security/campaigns
+   * Retrieves paginated exfiltration campaigns with optional filtering.
+   */
+  getCampaigns(params?: {
+    page?: number;
+    size?: number;
+    status?: string;
+    minRisk?: number;
+  }): Observable<CampaignPageResponse> {
+    let httpParams = new HttpParams();
+    if (params?.page !== undefined) httpParams = httpParams.set('page', params.page.toString());
+    if (params?.size !== undefined) httpParams = httpParams.set('size', params.size.toString());
+    if (params?.status) httpParams = httpParams.set('status', params.status);
+    if (params?.minRisk !== undefined) httpParams = httpParams.set('minRisk', params.minRisk.toString());
+
+    return this.http.get<CampaignPageResponse>(`${this.baseUrl}/api/v1/security/campaigns`, {
+      params: httpParams
+    }).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/campaigns/{id}
+   * Retrieves single campaign by ID.
+   */
+  getCampaignById(id: string): Observable<CampaignResponse> {
+    return this.http.get<CampaignResponse>(`${this.baseUrl}/api/v1/security/campaigns/${encodeURIComponent(id)}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/campaigns/{id}/timeline
+   * Retrieves ordered kill-chain attack timeline for a campaign.
+   */
+  getCampaignTimeline(id: string): Observable<CampaignTimelineEvent[]> {
+    return this.http.get<CampaignTimelineEvent[]>(`${this.baseUrl}/api/v1/security/campaigns/${encodeURIComponent(id)}/timeline`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/campaigns/{id}/evidence
+   * Retrieves evidence completeness, correlated incident IDs and raw telemetry evidence references.
+   */
+  getCampaignEvidence(id: string): Observable<CampaignEvidenceDetailsResponse> {
+    return this.http.get<CampaignEvidenceDetailsResponse>(`${this.baseUrl}/api/v1/security/campaigns/${encodeURIComponent(id)}/evidence`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/campaigns/{id}/history
+   * Retrieves immutable audit trail of status lifecycle transitions.
+   */
+  getCampaignHistory(id: string): Observable<CampaignStatusHistory[]> {
+    return this.http.get<CampaignStatusHistory[]>(`${this.baseUrl}/api/v1/security/campaigns/${encodeURIComponent(id)}/history`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/campaigns/{id}/risk
+   * Retrieves deterministic risk assessment and key risk indicators.
+   */
+  getCampaignRisk(id: string): Observable<CampaignRiskAssessment> {
+    return this.http.get<CampaignRiskAssessment>(`${this.baseUrl}/api/v1/security/campaigns/${encodeURIComponent(id)}/risk`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * PATCH /api/v1/security/campaigns/{id}/status
+   * Transitions campaign lifecycle status with mandatory analyst reason audit log.
+   */
+  updateCampaignStatus(id: string, req: CampaignStatusUpdateRequest): Observable<CampaignResponse> {
+    return this.http.patch<CampaignResponse>(`${this.baseUrl}/api/v1/security/campaigns/${encodeURIComponent(id)}/status`, req)
+      .pipe(catchError(this.handleError));
   }
 
   /**

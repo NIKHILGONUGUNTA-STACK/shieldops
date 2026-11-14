@@ -49,6 +49,14 @@ from simulation.scenarios.advanced_extraction_scenarios import (
     CumulativeWindowExtractionScenario,
     EdgeNoResponseSizeScenario,
 )
+from simulation.scenarios.campaign_scenarios import (
+    ReconThenBolaProbingScenario,
+    BolaProbingThenExtractionScenario,
+    SensitiveExposureThenBulkScenario,
+    LowSlowMultiDomainScenario,
+    BenignLookalikeScenario,
+    MultiVectorCampaignScenario,
+)
 
 log = logging.getLogger(__name__)
 
@@ -540,6 +548,110 @@ def get_default_registry() -> ScenarioRegistry:
         ),
     )
 
+    # 31. SCEN-EXFIL-RECON-PROBE: Reconnaissance Followed by BOLA Probing
+    registry.register_class(
+        ReconThenBolaProbingScenario,
+        ScenarioMetadata(
+            id="SCEN-EXFIL-RECON-PROBE",
+            name="Reconnaissance Followed by BOLA Probing Campaign",
+            description="Reconnaissance scans on system endpoints followed immediately by BOLA probing on customer profiles.",
+            category=ScenarioCategory.MULTI_VECTOR,
+            target_services=["customer-service", "gateway"],
+            expected_outcome=ExpectedOutcome(
+                expected_status_codes=[403, 404],
+                expected_detection_rules=["RULE-PROBE-01", "RULE-BOLA-01", "DATA_EXFILTRATION_CAMPAIGN"],
+                expected_incident_severity="CRITICAL",
+            ),
+            is_implemented=True,
+        ),
+    )
+
+    # 32. SCEN-EXFIL-PROBE-EXTRACT: BOLA Probing Followed by Unauthorized Extraction
+    registry.register_class(
+        BolaProbingThenExtractionScenario,
+        ScenarioMetadata(
+            id="SCEN-EXFIL-PROBE-EXTRACT",
+            name="Authorization Probing Followed by Unauthorized Extraction",
+            description="BOLA probing attempts culminating in successful cross-owner account extraction.",
+            category=ScenarioCategory.MULTI_VECTOR,
+            target_services=["customer-service", "account-service"],
+            expected_outcome=ExpectedOutcome(
+                expected_status_codes=[200, 403],
+                expected_detection_rules=["RULE-BOLA-01", "RULE-BOLA-CONFIRMED-01", "DATA_EXFILTRATION_CAMPAIGN"],
+                expected_incident_severity="CRITICAL",
+            ),
+            is_implemented=True,
+        ),
+    )
+
+    # 33. SCEN-EXFIL-EXPOSE-BULK: Sensitive-Field Exposure Followed by Bulk Harvesting
+    registry.register_class(
+        SensitiveExposureThenBulkScenario,
+        ScenarioMetadata(
+            id="SCEN-EXFIL-EXPOSE-BULK",
+            name="Sensitive-Field Exposure Followed by Bulk Harvesting",
+            description="Retrieving undeclared restricted secrets followed by rapid pagination harvesting.",
+            category=ScenarioCategory.DATA_ACCESS,
+            target_services=["customer-service", "account-service"],
+            expected_outcome=ExpectedOutcome(
+                expected_status_codes=[200],
+                expected_detection_rules=["RULE-EXCESSIVE-EXPOSURE-01", "RULE-ADV-EXTRACT-01", "DATA_EXFILTRATION_CAMPAIGN"],
+                expected_incident_severity="CRITICAL",
+            ),
+            is_implemented=True,
+        ),
+    )
+
+    # 34. SCEN-EXFIL-LOW-SLOW-MULTI: Low-and-Slow Multi-Domain Extraction Campaign
+    registry.register_class(
+        LowSlowMultiDomainScenario,
+        ScenarioMetadata(
+            id="SCEN-EXFIL-LOW-SLOW-MULTI",
+            name="Low-and-Slow Multi-Domain Extraction Campaign",
+            description="Creeping extraction distributed across Customer, Account, and Transfer service domains.",
+            category=ScenarioCategory.DATA_ACCESS,
+            target_services=["customer-service", "account-service", "transaction-service"],
+            expected_outcome=ExpectedOutcome(
+                expected_status_codes=[200],
+                expected_detection_rules=["RULE-ADV-EXTRACT-01", "DATA_EXFILTRATION_CAMPAIGN"],
+                expected_incident_severity="HIGH",
+            ),
+            is_implemented=True,
+        ),
+    )
+
+    # 35. SCEN-BENIGN-LOOKALIKE: Benign Activity Resembling Attack Sequence
+    registry.register_class(
+        BenignLookalikeScenario,
+        ScenarioMetadata(
+            id="SCEN-BENIGN-LOOKALIKE",
+            name="Benign Lookalike: Asset 404 & Own Profile Navigation",
+            description="Legitimate customer accessing missing asset followed by owned profile read (zero alarms).",
+            category=ScenarioCategory.BENIGN,
+            target_services=["customer-service"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[200, 404], expected_detection_rules=[]),
+            is_implemented=True,
+        ),
+    )
+
+    # 36. SCEN-MULTI-01: Multi-Vector Coordinated Intrusion Campaign
+    registry.register_class(
+        MultiVectorCampaignScenario,
+        ScenarioMetadata(
+            id="SCEN-MULTI-01",
+            name="Multi-Vector Coordinated Attack Campaign",
+            description="Simulates reconnaissance probing, followed by targeted BOLA probing, leading into data retrieval.",
+            category=ScenarioCategory.MULTI_VECTOR,
+            target_services=["customer-service", "account-service"],
+            expected_outcome=ExpectedOutcome(
+                expected_status_codes=[200, 403, 404],
+                expected_detection_rules=["RULE-PROBE-01", "RULE-BOLA-01", "DATA_EXFILTRATION_CAMPAIGN"],
+                expected_incident_severity="CRITICAL",
+            ),
+            is_implemented=True,
+        ),
+    )
+
     standard_scenarios = [
         ScenarioMetadata(
             id="SCEN-AUTH-01",
@@ -616,19 +728,6 @@ def get_default_registry() -> ScenarioRegistry:
                 expected_status_codes=[200, 403, 404],
                 expected_detection_rules=["RULE-PROBE-01"],
                 expected_incident_severity="MEDIUM",
-            ),
-            is_implemented=False,
-        ),
-        ScenarioMetadata(
-            id="SCEN-MULTI-01",
-            name="Multi-Vector Coordinated Attack Campaign",
-            description="Simulates reconnaissance probing, followed by credential spray, leading into targeted BOLA debit attempt.",
-            category=ScenarioCategory.MULTI_VECTOR,
-            target_services=["customer-service", "account-service", "transaction-service"],
-            expected_outcome=ExpectedOutcome(
-                expected_status_codes=[401, 403, 404],
-                expected_detection_rules=["RULE-PROBE-01", "RULE-AUTH-01", "RULE-BOLA-01"],
-                expected_incident_severity="CRITICAL",
             ),
             is_implemented=False,
         ),
