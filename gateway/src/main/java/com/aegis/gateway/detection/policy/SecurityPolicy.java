@@ -18,3 +18,4 @@ public record SecurityPolicy(
     Instant effectiveFrom,
     Instant updatedAt
 ) {}
+

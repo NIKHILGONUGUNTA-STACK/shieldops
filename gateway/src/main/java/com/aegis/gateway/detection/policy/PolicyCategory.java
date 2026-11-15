@@ -12,3 +12,4 @@ public enum PolicyCategory {
     EVIDENCE_INTEGRITY,
     GENERAL
 }
+

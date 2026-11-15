@@ -490,3 +490,4 @@ def test_scenario_14_analyst_decision_workflow(engine):
     approved = engine.approve_decision(dec2["decision_id"], "analyst-2", "Confirmed anomaly, following up.")
     assert approved["status"] == PolicyStatus.APPROVED
     assert approved["analyst_comment"] == "Confirmed anomaly, following up."
+

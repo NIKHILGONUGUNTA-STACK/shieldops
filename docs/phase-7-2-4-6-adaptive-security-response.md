@@ -165,3 +165,4 @@ The Angular SOC Dashboard (`/policy-decisions`) provides end-to-end governance:
 - [x] All generated policy recommendations persist `enforcement_level = 'ADVISORY'`.
 - [x] Mandatory operational rationale enforced for all decision rejections.
 - [x] Full policy configuration change history persisted with analyst identity.
+

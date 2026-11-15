@@ -8,3 +8,4 @@ public record PolicyRejectionRequest(
     @Size(min = 5, max = 1024, message = "Rejection rationale must be between 5 and 1024 characters")
     String rationale
 ) {}
+

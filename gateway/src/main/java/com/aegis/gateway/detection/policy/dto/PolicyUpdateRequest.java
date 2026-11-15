@@ -13,3 +13,4 @@ public record PolicyUpdateRequest(
     @Size(min = 5, max = 512)
     String changeReason
 ) {}
+

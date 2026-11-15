@@ -14,3 +14,4 @@ public record PolicyDecisionAction(
     String analystComment,
     Instant actionAt
 ) {}
+
