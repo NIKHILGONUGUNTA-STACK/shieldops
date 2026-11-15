@@ -28,6 +28,8 @@ class ExecutionStatus(str, Enum):
     PLANNED = "PLANNED"
     NOT_STARTED = "NOT_STARTED"
     RUNNING = "RUNNING"
+    PAUSED = "PAUSED"
+    STOPPED = "STOPPED"
     SUCCESS = "SUCCESS"
     FAILURE = "FAILURE"
     SKIPPED = "SKIPPED"

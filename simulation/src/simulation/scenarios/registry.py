@@ -57,6 +57,15 @@ from simulation.scenarios.campaign_scenarios import (
     BenignLookalikeScenario,
     MultiVectorCampaignScenario,
 )
+from simulation.scenarios.orchestration_scenarios import (
+    BeneficiaryCreationScenario,
+    AuthAbuseScenario,
+    InjectionProbeScenario,
+    MixedConcurrentTrafficScenario,
+    MultiTenantBoundaryScenario,
+    TelemetryBacklogResilienceScenario,
+    ServiceUnavailabilityScenario,
+)
 
 log = logging.getLogger(__name__)
 
@@ -648,6 +657,120 @@ def get_default_registry() -> ScenarioRegistry:
                 expected_detection_rules=["RULE-PROBE-01", "RULE-BOLA-01", "DATA_EXFILTRATION_CAMPAIGN"],
                 expected_incident_severity="CRITICAL",
             ),
+            is_implemented=True,
+        ),
+    )
+
+    # 37. SCEN-BENIGN-BENEFICIARY: Beneficiary Creation & Verification
+    registry.register_class(
+        BeneficiaryCreationScenario,
+        ScenarioMetadata(
+            id="SCEN-BENIGN-BENEFICIARY",
+            name="Beneficiary Creation & Counterparty Verification",
+            description="Legitimate customer navigates profile, verifies counterparty identity, and adds synthetic beneficiary.",
+            category=ScenarioCategory.BENIGN,
+            target_services=["customer-service"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[200], expected_detection_rules=[]),
+            is_implemented=True,
+        ),
+    )
+
+    # 38. SCEN-SEC-AUTH-ABUSE: Authentication Abuse & Token Tampering
+    registry.register_class(
+        AuthAbuseScenario,
+        ScenarioMetadata(
+            id="SCEN-SEC-AUTH-ABUSE",
+            name="Authentication Abuse & Token Tampering",
+            description="Submits malformed, expired, and signature-tampered Bearer tokens against protected resources.",
+            category=ScenarioCategory.AUTHENTICATION,
+            target_services=["customer-service", "account-service"],
+            expected_outcome=ExpectedOutcome(
+                expected_status_codes=[401],
+                expected_detection_rules=["RULE-AUTH-01"],
+                expected_incident_severity="MEDIUM",
+            ),
+            is_implemented=True,
+        ),
+    )
+
+    # 39. SCEN-SEC-INJECTION-PROBE: SQL Injection & Path Traversal Probing
+    registry.register_class(
+        InjectionProbeScenario,
+        ScenarioMetadata(
+            id="SCEN-SEC-INJECTION-PROBE",
+            name="SQL Injection & Path Traversal Probing",
+            description="Executes SQL injection syntax and path traversal probes in query parameters against isolated endpoints.",
+            category=ScenarioCategory.INJECTION,
+            target_services=["transaction-service", "customer-service"],
+            expected_outcome=ExpectedOutcome(
+                expected_status_codes=[200, 400, 404],
+                expected_detection_rules=["RULE-INJ-01"],
+                expected_incident_severity="HIGH",
+            ),
+            is_implemented=True,
+        ),
+    )
+
+    # 40. SCEN-MIXED-CONCURRENT: Concurrent Legitimate Transactions with Malicious Probes
+    registry.register_class(
+        MixedConcurrentTrafficScenario,
+        ScenarioMetadata(
+            id="SCEN-MIXED-CONCURRENT",
+            name="Concurrent Benign Traffic & Security Probes",
+            description="Simultaneously generates authorized customer balance checks and unauthorized cross-owner resource attempts.",
+            category=ScenarioCategory.MULTI_VECTOR,
+            target_services=["customer-service", "account-service"],
+            expected_outcome=ExpectedOutcome(
+                expected_status_codes=[200, 403],
+                expected_detection_rules=["RULE-BOLA-01"],
+                expected_incident_severity="MEDIUM",
+            ),
+            is_implemented=True,
+        ),
+    )
+
+    # 41. SCEN-MIXED-MULTI-TENANT: Multi-Tenant Boundary Isolation Probing
+    registry.register_class(
+        MultiTenantBoundaryScenario,
+        ScenarioMetadata(
+            id="SCEN-MIXED-MULTI-TENANT",
+            name="Multi-Tenant Boundary Isolation Probing",
+            description="Simulates cross-tenant queries verifying tenant isolation boundaries and anti-affinity.",
+            category=ScenarioCategory.AUTHORIZATION,
+            target_services=["customer-service"],
+            expected_outcome=ExpectedOutcome(
+                expected_status_codes=[200, 403],
+                expected_detection_rules=["RULE-BOLA-01"],
+                expected_incident_severity="MEDIUM",
+            ),
+            is_implemented=True,
+        ),
+    )
+
+    # 42. SCEN-INFRA-BACKLOG: Gateway & Redis Backlog Resilience
+    registry.register_class(
+        TelemetryBacklogResilienceScenario,
+        ScenarioMetadata(
+            id="SCEN-INFRA-BACKLOG",
+            name="Gateway & Telemetry Backlog Resilience",
+            description="Generates burst telemetry traffic and verifies gateway actuator readiness and stream queue health.",
+            category=ScenarioCategory.BENIGN,
+            target_services=["external-gateway"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[200], expected_detection_rules=[]),
+            is_implemented=True,
+        ),
+    )
+
+    # 43. SCEN-INFRA-UNAVAILABLE: Non-Existent Service Route Resilience
+    registry.register_class(
+        ServiceUnavailabilityScenario,
+        ScenarioMetadata(
+            id="SCEN-INFRA-UNAVAILABLE",
+            name="Service Route Unavailability & Isolation",
+            description="Probes non-existent microservice routes verifying safe gateway 404/503 responses and zero false alarms.",
+            category=ScenarioCategory.PROBING,
+            target_services=["external-gateway"],
+            expected_outcome=ExpectedOutcome(expected_status_codes=[404, 502, 503], expected_detection_rules=[]),
             is_implemented=True,
         ),
     )

@@ -38,9 +38,11 @@ app = typer.Typer(
 )
 config_app = typer.Typer(help="Inspect and validate simulation configuration.")
 scenarios_app = typer.Typer(help="Inspect registered simulation scenarios.")
+campaign_app = typer.Typer(help="Orchestrate and execute multi-stage simulation campaigns.")
 
 app.add_typer(config_app, name="config")
 app.add_typer(scenarios_app, name="scenarios")
+app.add_typer(campaign_app, name="campaign")
 
 console = Console()
 
@@ -492,6 +494,72 @@ def scenarios_list_cmd() -> None:
     console.print(
         "[dim]Note: Executable traffic generation logic for scenarios will be introduced in Phase 7.2.3.[/dim]"
     )
+
+
+@campaign_app.command("list")
+def campaign_list_cmd() -> None:
+    """Lists available campaign orchestration templates."""
+    from simulation.orchestration.templates import get_default_campaign_templates
+
+    templates = get_default_campaign_templates()
+    table = Table(title="ShieldOps Campaign Orchestration Templates", header_style="bold cyan")
+    table.add_column("Template ID", style="bold magenta", no_wrap=True)
+    table.add_column("Category", style="cyan")
+    table.add_column("Campaign Name", style="white")
+    table.add_column("Mix", style="dim")
+    table.add_column("Stages", style="yellow")
+    table.add_column("Default Duration")
+
+    for tpl in templates.values():
+        table.add_row(
+            tpl.template_id,
+            tpl.category,
+            tpl.name,
+            tpl.traffic_mix.value,
+            str(len(tpl.stages)),
+            f"{tpl.default_duration_seconds}s",
+        )
+
+    console.print(table)
+
+
+@campaign_app.command("run")
+def campaign_run_cmd(
+    template: str = typer.Option("TPL-BENIGN-WORKDAY", "--template", "-t", help="Campaign template ID to execute"),
+    duration: int = typer.Option(60, "--duration", "-d", help="Run duration in seconds"),
+    rate: float = typer.Option(5.0, "--rate", "-r", help="Max requests per second"),
+    concurrency: int = typer.Option(2, "--concurrency", "-c", help="Worker concurrency"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Simulate without real network calls"),
+) -> None:
+    """Runs a multi-stage security campaign using the campaign orchestrator."""
+    from simulation.orchestration.templates import CampaignRunConfig
+    from simulation.orchestration.orchestrator import CampaignOrchestrator
+
+    config = load_config()
+    orchestrator = CampaignOrchestrator(config)
+
+    run_config = CampaignRunConfig(
+        template_id=template,
+        duration_seconds=duration,
+        request_rate_per_sec=rate,
+        concurrency=concurrency,
+        dry_run=dry_run,
+    )
+
+    console.print(f"[bold cyan]Launching campaign orchestration run...[/bold cyan]")
+    summary = asyncio.run(orchestrator.run_campaign(run_config))
+
+    console.print(Panel(
+        f"[bold green]Campaign Run Completed![/bold green]\n"
+        f"Run ID: [bold white]{summary.run_id}[/bold white]\n"
+        f"Campaign: [bold cyan]{summary.campaign_id}[/bold cyan]\n"
+        f"Total Requests: [yellow]{orchestrator.total_requests}[/yellow] "
+        f"([green]{orchestrator.successful_requests} ok[/green], [red]{orchestrator.failed_requests} failed[/red])\n"
+        f"Stages Passed: {summary.passed_stages}/{summary.total_stages}\n"
+        f"Overall Assertions: {'[bold green]PASS[/bold green]' if summary.overall_passed else '[bold red]FAIL[/bold red]'}",
+        title="Execution Summary",
+        border_style="green" if summary.overall_passed else "yellow"
+    ))
 
 
 if __name__ == "__main__":
