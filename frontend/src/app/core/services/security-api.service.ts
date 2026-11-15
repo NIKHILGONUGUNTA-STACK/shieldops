@@ -59,7 +59,12 @@ import {
   PolicyRejectionRequest,
   PolicyUpdateRequest,
   PolicyDecisionAction,
-  PolicyAuditHistory
+  PolicyAuditHistory,
+  SimulationScenario,
+  SimulationCampaignTemplate,
+  SimulationRunConfig,
+  SimulationRunResponse,
+  SimulationReport
 } from '../models/security.models';
 
 @Injectable({
@@ -766,6 +771,65 @@ export class SecurityApiService {
    */
   evaluateCampaignPolicy(campaignId: string): Observable<AdaptivePolicyDecisionResponse> {
     return this.http.post<AdaptivePolicyDecisionResponse>(`${this.baseUrl}/api/v1/security/adaptive-decisions/evaluate/campaign/${encodeURIComponent(campaignId)}`, {})
+      .pipe(catchError(this.handleError));
+  }
+
+  // =========================================================================
+  // Simulation & Campaign Orchestration API (Phase 7.3.1)
+  // =========================================================================
+
+  getSimulationScenarios(): Observable<SimulationScenario[]> {
+    return this.http.get<SimulationScenario[]>(`${this.baseUrl}/api/v1/simulation/scenarios`)
+      .pipe(catchError(this.handleError));
+  }
+
+  getSimulationScenario(id: string): Observable<SimulationScenario> {
+    return this.http.get<SimulationScenario>(`${this.baseUrl}/api/v1/simulation/scenarios/${encodeURIComponent(id)}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  getSimulationTemplates(): Observable<SimulationCampaignTemplate[]> {
+    return this.http.get<SimulationCampaignTemplate[]>(`${this.baseUrl}/api/v1/simulation/templates`)
+      .pipe(catchError(this.handleError));
+  }
+
+  getSimulationTemplate(id: string): Observable<SimulationCampaignTemplate> {
+    return this.http.get<SimulationCampaignTemplate>(`${this.baseUrl}/api/v1/simulation/templates/${encodeURIComponent(id)}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  startSimulationRun(config?: SimulationRunConfig): Observable<SimulationRunResponse> {
+    return this.http.post<SimulationRunResponse>(`${this.baseUrl}/api/v1/simulation/runs`, config || {})
+      .pipe(catchError(this.handleError));
+  }
+
+  pauseSimulationRun(runId: string): Observable<SimulationRunResponse> {
+    return this.http.post<SimulationRunResponse>(`${this.baseUrl}/api/v1/simulation/runs/${encodeURIComponent(runId)}/pause`, {})
+      .pipe(catchError(this.handleError));
+  }
+
+  resumeSimulationRun(runId: string): Observable<SimulationRunResponse> {
+    return this.http.post<SimulationRunResponse>(`${this.baseUrl}/api/v1/simulation/runs/${encodeURIComponent(runId)}/resume`, {})
+      .pipe(catchError(this.handleError));
+  }
+
+  stopSimulationRun(runId: string): Observable<SimulationRunResponse> {
+    return this.http.post<SimulationRunResponse>(`${this.baseUrl}/api/v1/simulation/runs/${encodeURIComponent(runId)}/stop`, {})
+      .pipe(catchError(this.handleError));
+  }
+
+  getSimulationRun(runId: string): Observable<SimulationRunResponse> {
+    return this.http.get<SimulationRunResponse>(`${this.baseUrl}/api/v1/simulation/runs/${encodeURIComponent(runId)}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  getSimulationRuns(): Observable<SimulationRunResponse[]> {
+    return this.http.get<SimulationRunResponse[]>(`${this.baseUrl}/api/v1/simulation/runs`)
+      .pipe(catchError(this.handleError));
+  }
+
+  getSimulationReport(runId: string): Observable<SimulationReport> {
+    return this.http.get<SimulationReport>(`${this.baseUrl}/api/v1/simulation/runs/${encodeURIComponent(runId)}/report`)
       .pipe(catchError(this.handleError));
   }
 

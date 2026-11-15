@@ -1061,3 +1061,123 @@ export interface PolicyAuditHistory {
   changedAt: string;
   snapshotData: string;
 }
+
+// =========================================================================
+// Simulation Orchestration & Campaign Models (Phase 7.3.1)
+// =========================================================================
+
+export type SimulationRunStatus = 'PENDING' | 'RUNNING' | 'PAUSED' | 'STOPPED' | 'COMPLETED' | 'FAILED';
+
+export interface SimulationScenario {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  severity: string;
+  isImplemented: boolean;
+  tags: string[];
+  targetEndpoints: string[];
+  expectedOutcomes: string[];
+}
+
+export interface SimulationCampaignStage {
+  stageNumber: number;
+  name: string;
+  scenarioId: string;
+  iterations: number;
+  delayBetweenRequestsMs: number;
+  expectedDetectionRules: string[];
+  expectedIncidents: number;
+  expectedCampaigns: number;
+  expectedPolicyActions: string[];
+  timeoutSeconds: number;
+}
+
+export interface SimulationCampaignTemplate {
+  id: string;
+  name: string;
+  description: string;
+  stages: SimulationCampaignStage[];
+  trafficMix: 'SEQUENTIAL' | 'CONCURRENT' | 'MIXED';
+  defaultRequestRate: number;
+  defaultConcurrency: number;
+  defaultDurationSeconds: number;
+  tags: string[];
+}
+
+export interface SimulationRunConfig {
+  templateId?: string;
+  scenarioIds?: string[];
+  durationSeconds?: number;
+  requestRate?: number;
+  concurrency?: number;
+  trafficMix?: string;
+  deterministicSeed?: number;
+  tenantIds?: string[];
+  targetEndpoints?: string[];
+  dryRun?: boolean;
+}
+
+export interface ExpectedVsActualAssertion {
+  assertionType: string;
+  targetIdentifier: string;
+  expected: any;
+  actual: any;
+  passed: boolean;
+  details: string;
+}
+
+export interface SimulationStageResult {
+  stageNumber: number;
+  stageName: string;
+  scenarioId: string;
+  status: 'PASSED' | 'FAILED' | 'RUNNING' | 'SKIPPED';
+  totalRequests: number;
+  successfulRequests: number;
+  failedRequests: number;
+  startTime: string;
+  endTime: string;
+  durationMs: number;
+  assertionResults: ExpectedVsActualAssertion[];
+  errorMessage?: string;
+}
+
+export interface SimulationRunResponse {
+  runId: string;
+  campaignId: string;
+  templateId: string;
+  status: SimulationRunStatus;
+  startTime: string;
+  endTime?: string;
+  config: SimulationRunConfig;
+  stages: SimulationStageResult[];
+  totalRequests: number;
+  requests2xx: number;
+  requests4xx: number;
+  requests5xx: number;
+  allAssertionsPassed: boolean;
+  provenanceMetadata: Record<string, any>;
+}
+
+export interface SimulationReport {
+  runId: string;
+  campaignId: string;
+  templateId: string;
+  status: SimulationRunStatus;
+  startTime: string;
+  endTime: string;
+  durationMs: number;
+  config: SimulationRunConfig;
+  totalStages: number;
+  passedStages: number;
+  failedStages: number;
+  totalRequests: number;
+  requests2xx: number;
+  requests4xx: number;
+  requests5xx: number;
+  stages: SimulationStageResult[];
+  detectionAttribution: Record<string, any>;
+  provenance: Record<string, any>;
+  markdownReport: string;
+}
+

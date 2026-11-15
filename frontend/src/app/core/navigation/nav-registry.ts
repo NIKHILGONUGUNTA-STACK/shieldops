@@ -197,6 +197,14 @@ export const NAV_SECTIONS: NavSection[] = [
         description: 'Live operational health of Gateway, Redis Stream, Postgres Flyway V3, and Keycloak tiers'
       },
       {
+        id: 'simulation-center',
+        label: 'Simulation Center',
+        path: '/simulation',
+        icon: 'play-circle',
+        availability: 'implemented',
+        description: 'Full-scale security traffic generation, campaign orchestration, and assertion verification'
+      },
+      {
         id: 'settings',
         label: 'Settings',
         path: '/settings',

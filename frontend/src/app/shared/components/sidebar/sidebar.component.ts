@@ -157,6 +157,11 @@ import { LayoutService } from '../../../core/services/layout.service';
                     <line x1="1" y1="9" x2="4" y2="9"></line>
                     <line x1="1" y1="14" x2="4" y2="14"></line>
                   </svg>
+                  <!-- Play Circle / Simulation Center -->
+                  <svg *ngSwitchCase="'play-circle'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polygon points="10 8 16 12 10 16 10 8"></polygon>
+                  </svg>
                   <!-- Default Bullet -->
                   <span *ngSwitchDefault class="nav-dot"></span>
                 </span>
