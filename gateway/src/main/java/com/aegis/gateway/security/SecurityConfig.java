@@ -57,7 +57,7 @@ public class SecurityConfig {
                     "/beneficiaries/**", "/api/v1/beneficiaries/**",
                     "/transactions/**", "/api/v1/transactions/**"
                 ).hasAnyRole("CUSTOMER", "SECURITY_ANALYST", "SECURITY_ADMIN")
-                .requestMatchers("/security/**", "/api/v1/security/**").hasAnyRole("SECURITY_ANALYST", "SECURITY_ADMIN")
+                .requestMatchers("/security/**", "/api/v1/security/**", "/simulation/**", "/api/v1/simulation/**").hasAnyRole("SECURITY_ANALYST", "SECURITY_ADMIN")
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2
