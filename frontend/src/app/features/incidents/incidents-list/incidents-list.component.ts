@@ -165,7 +165,7 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
       <div *ngIf="!loading() && pageData() as data" class="soc-card queue-table-card">
         <div class="queue-meta-bar">
           <span class="queue-count mono">
-            Showing {{ data.incidents.length }} of {{ data.totalElements }} incidents (Page {{ data.page + 1 }} of {{ data.totalPages || 1 }})
+            Showing {{ (data.incidents || data.content || []).length }} of {{ data.totalElements || 0 }} incidents (Page {{ (data.page || 0) + 1 }} of {{ data.totalPages || 1 }})
           </span>
 
           <div class="page-size-selector">
@@ -186,13 +186,13 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 
         <!-- Empty State -->
         <app-empty-state
-          *ngIf="data.incidents.length === 0"
+          *ngIf="(data.incidents || data.content || []).length === 0"
           title="No Incidents Match Filters"
           message="No security incidents match the selected status, severity, or category filters."
         ></app-empty-state>
 
         <!-- Table View -->
-        <div *ngIf="data.incidents.length > 0" class="soc-table-container">
+        <div *ngIf="(data.incidents || data.content || []).length > 0" class="soc-table-container">
           <table class="soc-table">
             <thead>
               <tr>
@@ -209,7 +209,7 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let inc of data.incidents">
+              <tr *ngFor="let inc of (data.incidents || data.content || [])">
                 <td><app-severity-badge [severity]="inc.severity"></app-severity-badge></td>
                 <td><app-status-badge [status]="inc.status"></app-status-badge></td>
                 <td class="mono text-teal">{{ inc.ruleId }}</td>
@@ -436,7 +436,12 @@ export class IncidentsListComponent implements OnInit {
 
     this.api.getIncidents(filterParams).subscribe({
       next: (res) => {
-        this.pageData.set(res);
+        const list = res?.incidents || res?.content || [];
+        this.pageData.set({
+          ...res,
+          incidents: list,
+          content: list
+        });
         this.loading.set(false);
       },
       error: (err: ProblemDetail) => {

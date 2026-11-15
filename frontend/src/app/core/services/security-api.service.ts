@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { Observable, catchError, throwError } from 'rxjs';
+import { Observable, catchError, throwError, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   SecurityOverview,
@@ -139,7 +139,17 @@ export class SecurityApiService {
     }
 
     return this.http.get<IncidentPageResponse>(`${this.baseUrl}/api/v1/security/incidents`, { params })
-      .pipe(catchError(this.handleError));
+      .pipe(
+        map(res => {
+          const list = res?.incidents || res?.content || [];
+          return {
+            ...res,
+            incidents: list,
+            content: list
+          };
+        }),
+        catchError(this.handleError)
+      );
   }
 
   /**
