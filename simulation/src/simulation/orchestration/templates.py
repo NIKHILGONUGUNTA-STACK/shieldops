@@ -80,7 +80,7 @@ def get_default_campaign_templates() -> Dict[str, CampaignTemplate]:
                 CampaignStage(
                     stage_id="stage-2-portfolio-pagination",
                     name="Account Balances & Statement Pagination",
-                    scenario_ids=["SCEN-BENIGN-REPEATED-READS", "SCEN-BENIGN-PAGINATION"],
+                    scenario_ids=["SCEN-BENIGN-02", "SCEN-BENIGN-PAGINATION"],
                     target_identities=["alex_morgan"],
                     expected_rules=[],
                     expected_severity=None,
@@ -118,7 +118,7 @@ def get_default_campaign_templates() -> Dict[str, CampaignTemplate]:
                 CampaignStage(
                     stage_id="stage-3-exploitation",
                     name="Confirmed BOLA Unauthorized Extraction",
-                    scenario_ids=["SCEN-BOLA-CONFIRMED-LEAK", "SCEN-BULK-EXTRACT-01"],
+                    scenario_ids=["SCEN-BOLA-05", "SCEN-BULK-EXTRACT-01"],
                     target_identities=["attacker_bola"],
                     expected_rules=["RULE-BOLA-CONFIRMED-01", "RULE-BULK-EXTRACT-01", "POL-CAMPAIGN-01"],
                     expected_severity="CRITICAL",
@@ -138,7 +138,7 @@ def get_default_campaign_templates() -> Dict[str, CampaignTemplate]:
                 CampaignStage(
                     stage_id="stage-1-creeping-read",
                     name="Sub-Threshold Distributed Read",
-                    scenario_ids=["SCEN-EXFIL-LOW-SLOW-MULTI", "SCEN-ADV-LOW-SLOW"],
+                    scenario_ids=["SCEN-EXFIL-LOW-SLOW-MULTI", "SCEN-EXTRACT-SLOW"],
                     target_identities=["attacker_stealth"],
                     expected_rules=["RULE-ADV-EXTRACT-01", "POL-LOW-SLOW-01"],
                     expected_severity="HIGH",

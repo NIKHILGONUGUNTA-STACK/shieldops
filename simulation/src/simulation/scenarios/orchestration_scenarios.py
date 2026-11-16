@@ -66,9 +66,10 @@ class BeneficiaryCreationScenario(BaseScenario):
         alex_token = None
         if not self.dry_run:
             try:
-                alex_token = await auth.get_user_token("alex_morgan", self.config.user_passwords.get("alex_morgan", "secret-alex"))
+                alex_pass = self.config.get_password("alex.morgan") or "Password123!"
+                alex_token = await auth.get_access_token("alex.morgan", alex_pass)
             except Exception as e:
-                log.warning("Could not fetch Keycloak token for alex_morgan in mock: %s", e)
+                log.warning("Could not fetch Keycloak token for alex.morgan: %s", e)
                 alex_token = "mock-alex-jwt-token"
         else:
             alex_token = "mock-alex-jwt-token"
@@ -178,7 +179,8 @@ class InjectionProbeScenario(BaseScenario):
         token = "mock-attacker-jwt-token"
         if not self.dry_run:
             try:
-                token = await auth.get_user_token("alex_morgan", self.config.user_passwords.get("alex_morgan", "secret-alex"))
+                alex_pass = self.config.get_password("alex.morgan") or "Password123!"
+                token = await auth.get_access_token("alex.morgan", alex_pass)
             except Exception:
                 pass
 
@@ -228,7 +230,8 @@ class MixedConcurrentTrafficScenario(BaseScenario):
         alex_token = "mock-alex-jwt-token"
         if not self.dry_run:
             try:
-                alex_token = await auth.get_user_token("alex_morgan", self.config.user_passwords.get("alex_morgan", "secret-alex"))
+                alex_pass = self.config.get_password("alex.morgan") or "Password123!"
+                alex_token = await auth.get_access_token("alex.morgan", alex_pass)
             except Exception:
                 pass
 

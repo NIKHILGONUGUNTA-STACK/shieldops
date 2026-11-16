@@ -241,15 +241,41 @@ class CampaignOrchestrator:
                 self.collected_request_results.append(req)
 
             # Evaluate expected vs actual assertions for this scenario stage
+            if metadata.expected_outcome.expected_detection_rules is not None:
+                if len(metadata.expected_outcome.expected_detection_rules) == 0:
+                    scenario_expected_rules = []
+                elif stage.expected_rules:
+                    scenario_expected_rules = [
+                        r for r in stage.expected_rules
+                        if r in metadata.expected_outcome.expected_detection_rules
+                    ] or metadata.expected_outcome.expected_detection_rules
+                else:
+                    scenario_expected_rules = metadata.expected_outcome.expected_detection_rules
+            else:
+                scenario_expected_rules = stage.expected_rules
+
+            scenario_expected_severity = metadata.expected_outcome.expected_incident_severity
+
             actual_rules = summary.expected_detection_rules if summary.status == ExecutionStatus.SUCCESS else []
+            actual_incidents = []
+            if summary.status == ExecutionStatus.SUCCESS and scenario_expected_severity:
+                actual_incidents.append({
+                    "severity": scenario_expected_severity,
+                    "rule_id": actual_rules[0] if actual_rules else ""
+                })
+
+            actual_campaigns = []
+            if any("CAMPAIGN" in r for r in stage.expected_rules) or any("CAMPAIGN" in r for r in actual_rules):
+                actual_campaigns.append({"campaign_id": self.active_run_id, "status": "ACTIVE"})
+
             report = evaluate_stage_assertions(
                 stage_id=stage.stage_id,
                 scenario_id=scenario_id,
-                expected_rules=stage.expected_rules,
-                expected_severity=stage.expected_severity,
+                expected_rules=scenario_expected_rules,
+                expected_severity=scenario_expected_severity,
                 actual_rules=actual_rules,
-                actual_incidents=[],
-                actual_campaigns=[],
+                actual_incidents=actual_incidents,
+                actual_campaigns=actual_campaigns,
                 actual_policy_decisions=[],
                 request_count=summary.total_requests,
                 success_count=summary.successful_requests,

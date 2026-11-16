@@ -151,7 +151,6 @@ def test_campaign_templates_catalogue():
     assert tpl.category == "SECURITY"
 
 
-@respx.mock
 @pytest.mark.asyncio
 async def test_orchestrator_sequential_benign_run(mock_config, respx_mock):
     """Executes benign workday campaign template in dry run mode."""
@@ -176,11 +175,8 @@ async def test_orchestrator_sequential_benign_run(mock_config, respx_mock):
     assert summary.overall_passed is True
 
 
-@respx.mock
-@pytest.mark.asyncio
-async def test_orchestrator_pause_resume_stop(mock_config, respx_mock):
+def test_orchestrator_pause_resume_stop(mock_config):
     """Tests orchestrator pause, resume, and hard stop controls."""
-    setup_respx_gateway_mocks(respx_mock)
     orchestrator = CampaignOrchestrator(mock_config)
 
     # Test state transitions
@@ -198,7 +194,6 @@ async def test_orchestrator_pause_resume_stop(mock_config, respx_mock):
     assert orchestrator._stop_requested is True
 
 
-@respx.mock
 @pytest.mark.asyncio
 async def test_orchestrator_bola_campaign_assertions(mock_config, respx_mock):
     """Executes BOLA multi-stage campaign and verifies expected rule assertions."""
@@ -221,7 +216,6 @@ async def test_orchestrator_bola_campaign_assertions(mock_config, respx_mock):
     assert len(summary.stage_reports) > 0
 
 
-@respx.mock
 @pytest.mark.asyncio
 async def test_orchestrator_mixed_concurrent(mock_config, respx_mock):
     """Executes mixed workload template with concurrency."""
