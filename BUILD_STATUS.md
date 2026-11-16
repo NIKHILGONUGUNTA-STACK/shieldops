@@ -1,9 +1,9 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 7.3.1 Complete (Full-Scale Security Simulation and Campaign Orchestration Engine)
+## Current Milestone: Phase 7.3.1.1 Complete (Live Campaign Integration and Runtime Acceptance)
 
 **Status:** `VERIFIED & PRODUCTION READY`
-**Last Updated:** 2026-11-15
+**Last Updated:** 2026-11-16
 **Active Git Branch:** `main`
 **Git Working Tree:** Clean
 **Remote Upstream:** `origin/main` (`https://github.com/NIKHILGONUGUNTA-STACK/shieldops.git`)
@@ -94,12 +94,26 @@
   - Backend Platform Services: 315 tests passing (`mvn test`).
   - Frontend Angular SOC Dashboard: 169 tests passing (`ng test --watch=false`).
   - Python Simulation Framework: 67 tests passing (`pytest simulation/tests`).
-- **Live Local Integration Status:** **RUNTIME ALIGNED & SOC VERIFIED (`READY_FOR_DATA_LEAKAGE_SIMULATION`)**
+- **Live Local Integration Status:** **RUNTIME ALIGNED & SOC VERIFIED (`PHASE_7_3_1_1_ACCEPTED`)**
+  - Live Acceptance Report: `docs/phase-7-3-1-1-live-campaign-acceptance.md`.
+  - Orchestration Architecture Spec: `docs/phase-7-3-1-simulation-orchestration.md`.
   - Verification Report: `docs/phase-7-2-3-7-runtime-soc-integration-verification.md`.
   - Live Journey Report: `docs/phase-7-2-3-6-live-benign-journey.md`.
   - Safety Gate Audit: `docs/phase-7-2-3-5-live-transaction-safety-gate.md`.
-  - Gateway Rebuild: `aegis-gateway:latest` aligned with source (`sha256:7cd989396b90ac5debe068f21569ed1bd6482d1b70317dfb08571bb6df4cd054`).
-  - Container State: Recreated and healthy via `docker compose up -d --no-deps gateway`.
+  - Gateway Rebuild: `aegis-gateway:latest` rebuilt and running with Phase 7.2.4.5/6 and 7.3.1.1 endpoints (`/api/v1/security/campaigns`, `/api/v1/simulation/**`).
+  - Container State: All 7 containers healthy and running.
+  - Live Campaign Execution (5/5 Templates Passed):
+    - `TPL-BENIGN-WORKDAY` (Run `SIM-RUN-20261116141245-ec058e`): 27 requests, 4/4 stages passed, 0 false positives.
+    - `TPL-BOLA-EXFIL-CAMPAIGN` (Run `SIM-RUN-20261116141546-9c2f12`): 10 requests, 4/4 stages passed, critical incident & campaign correlated.
+    - `TPL-LOW-SLOW-STEALTH` (Run `SIM-RUN-20261116141809-209758`): 5 requests, 2/2 stages passed, sub-threshold correlation verified.
+    - `TPL-FULL-MIXED-WORKLOAD` (Run `SIM-RUN-20261116141824-07d17c`): 1,726 requests, 2/2 stages passed, identity separation verified.
+    - `TPL-INFRA-RESILIENCE` (Run `SIM-RUN-20261116141954-c6272f`): 4 requests, 3/3 stages passed, non-blocking telemetry verified.
+  - Database Audit (`security_data` schema):
+    - `api_events`: 2,226 rows (Real ingested HTTP requests).
+    - `detection_evidence`: 884 rows (Violations linked to event traces).
+    - `incidents`: 3 active incidents.
+    - `exfiltration_campaigns`: 2 correlated campaigns (`CAMP-1794828844-4280`, `CAMP-1794828841-1096`).
+    - `policy_decisions`: 3,492 advisory decisions.
   - Volume Preservation: `postgres-data` and `redis-data` 100% preserved; zero database migrations or seeders re-run.
   - Financial Ledger Audit: Alex source balance remains **`$12,358.74 USD`**, Sam destination balance remains **`£5,300.25 GBP`**.
   - Benign Evidence Retrievability: **15/15** correlation IDs and transaction `5a9be0d7-b99a-4922-b66b-4a04b40e7d24` confirmed intact with 0 duplicate debits.
