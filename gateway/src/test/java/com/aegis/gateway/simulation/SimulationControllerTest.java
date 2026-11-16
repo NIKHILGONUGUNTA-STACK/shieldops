@@ -135,5 +135,31 @@ class SimulationControllerTest {
         assertThat(result.statusCode()).isEqualTo(400);
         assertThat(result.error()).contains("Target host must be localhost");
     }
+
+    @Test
+    @DisplayName("DefaultSimulationHttpDispatcher rejects invalid scheme and arbitrary ports")
+    void testDispatcherSchemeAndPortRestrictions() {
+        DefaultSimulationHttpDispatcher dispatcher = new DefaultSimulationHttpDispatcher();
+
+        // Invalid scheme
+        SimulationHttpDispatcher.DispatchResult ftpResult = dispatcher.dispatch(
+            "GET", "ftp://localhost:8000/files", Map.of(), null, 1000
+        );
+        assertThat(ftpResult.statusCode()).isEqualTo(400);
+        assertThat(ftpResult.error()).contains("Target scheme must be http or https");
+
+        // Arbitrary port (e.g. Postgres port 5433 or Redis 6379 or SSH 22)
+        SimulationHttpDispatcher.DispatchResult pgResult = dispatcher.dispatch(
+            "GET", "http://localhost:5433/admin", Map.of(), null, 1000
+        );
+        assertThat(pgResult.statusCode()).isEqualTo(400);
+        assertThat(pgResult.error()).contains("Target port must be 8000");
+
+        SimulationHttpDispatcher.DispatchResult redisResult = dispatcher.dispatch(
+            "GET", "http://localhost:6379/data", Map.of(), null, 1000
+        );
+        assertThat(redisResult.statusCode()).isEqualTo(400);
+        assertThat(redisResult.error()).contains("Target port must be 8000");
+    }
 }
 

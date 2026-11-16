@@ -36,10 +36,22 @@ public class DefaultSimulationHttpDispatcher implements SimulationHttpDispatcher
         long start = System.currentTimeMillis();
         try {
             URI uri = URI.create(url);
+            String scheme = uri.getScheme();
+            if (scheme == null || (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https"))) {
+                log.warn("Safety invariant violation: target scheme must be http or https, received='{}'", scheme);
+                return new DispatchResult(400, 0, 0, Map.of(), "Target scheme must be http or https");
+            }
+
             String host = uri.getHost();
             if (host == null || (!host.equals("localhost") && !host.equals("127.0.0.1") && !host.equals("::1"))) {
                 log.warn("Safety invariant violation: simulation target must be localhost, received host='{}'", host);
                 return new DispatchResult(400, 0, 0, Map.of(), "Target host must be localhost");
+            }
+
+            int port = uri.getPort();
+            if (port != -1 && port != 8000) {
+                log.warn("Safety invariant violation: simulation target must be on port 8000, received port='{}'", port);
+                return new DispatchResult(400, 0, 0, Map.of(), "Target port must be 8000");
             }
 
             HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
