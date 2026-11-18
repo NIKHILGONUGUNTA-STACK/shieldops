@@ -3,6 +3,8 @@ package com.aegis.gateway.simulation.service;
 import com.aegis.gateway.detection.campaign.CampaignRepository;
 import com.aegis.gateway.detection.incident.IncidentRepository;
 import com.aegis.gateway.simulation.model.*;
+import com.aegis.gateway.simulation.repository.SimulationRunRepository;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,20 +30,54 @@ public class SimulationExecutionService {
     private final SimulationHttpDispatcher httpDispatcher;
     private final Optional<IncidentRepository> incidentRepository;
     private final Optional<CampaignRepository> campaignRepository;
+    private final Optional<SimulationRunRepository> simulationRunRepository;
 
     private final Map<String, RunContext> activeRuns = new ConcurrentHashMap<>();
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
+    @Autowired
     public SimulationExecutionService(
         SimulationCatalogService catalogService,
         SimulationHttpDispatcher httpDispatcher,
         @Autowired(required = false) IncidentRepository incidentRepository,
-        @Autowired(required = false) CampaignRepository campaignRepository
+        @Autowired(required = false) CampaignRepository campaignRepository,
+        @Autowired(required = false) SimulationRunRepository simulationRunRepository
     ) {
         this.catalogService = catalogService;
         this.httpDispatcher = httpDispatcher;
         this.incidentRepository = Optional.ofNullable(incidentRepository);
         this.campaignRepository = Optional.ofNullable(campaignRepository);
+        this.simulationRunRepository = Optional.ofNullable(simulationRunRepository);
+    }
+
+    public SimulationExecutionService(
+        SimulationCatalogService catalogService,
+        SimulationHttpDispatcher httpDispatcher,
+        IncidentRepository incidentRepository,
+        CampaignRepository campaignRepository
+    ) {
+        this(catalogService, httpDispatcher, incidentRepository, campaignRepository, null);
+    }
+
+    public SimulationExecutionService(
+        SimulationCatalogService catalogService,
+        SimulationHttpDispatcher httpDispatcher
+    ) {
+        this(catalogService, httpDispatcher, null, null, null);
+    }
+
+    @PostConstruct
+    public void initCrashRecovery() {
+        simulationRunRepository.ifPresent(r -> {
+            try {
+                int count = r.reconcileInterruptedRuns(Instant.now().minusSeconds(120));
+                if (count > 0) {
+                    log.info("Simulation runtime crash recovery: reconciled {} interrupted run(s) from prior session", count);
+                }
+            } catch (Exception e) {
+                log.warn("Simulation runtime crash recovery encountered non-fatal error: {}", e.getMessage());
+            }
+        });
     }
 
     private static class RunContext {
@@ -60,6 +96,10 @@ public class SimulationExecutionService {
         final AtomicBoolean isPaused = new AtomicBoolean(false);
         final AtomicBoolean isStopped = new AtomicBoolean(false);
         final Object pauseLock = new Object();
+        volatile Instant lastHeartbeatAt;
+        volatile String failureReason;
+        volatile String stopReason;
+        final String requestedBy = "soc-admin";
         Future<?> future;
 
         RunContext(String runId, String campaignId, String templateId, SimulationRunConfig config) {
@@ -69,6 +109,7 @@ public class SimulationExecutionService {
             this.config = config;
             this.status = SimulationRunStatus.PENDING;
             this.startTime = Instant.now();
+            this.lastHeartbeatAt = this.startTime;
         }
 
         SimulationRunResponse toResponse() {
@@ -96,7 +137,11 @@ public class SimulationExecutionService {
                 requests4xx.get(),
                 requests5xx.get(),
                 allPassed,
-                provenance
+                provenance,
+                requestedBy,
+                lastHeartbeatAt,
+                failureReason,
+                stopReason
             );
         }
     }
@@ -113,6 +158,17 @@ public class SimulationExecutionService {
         List<SimulationCampaignStage> stagesToExecute = resolveStages(validated);
 
         ctx.status = SimulationRunStatus.RUNNING;
+        ctx.lastHeartbeatAt = Instant.now();
+
+        // Persist initial simulation run
+        simulationRunRepository.ifPresent(r -> {
+            try {
+                r.saveRun(ctx.toResponse());
+            } catch (Exception e) {
+                log.warn("Failed to persist initial simulation run {}: {}", runId, e.getMessage());
+            }
+        });
+
         ctx.future = executor.submit(() -> executeRun(ctx, stagesToExecute));
 
         log.info("Started simulation run {} with template {}", runId, templateId);
@@ -126,6 +182,14 @@ public class SimulationExecutionService {
         if (ctx.status == SimulationRunStatus.RUNNING) {
             ctx.isPaused.set(true);
             ctx.status = SimulationRunStatus.PAUSED;
+            ctx.lastHeartbeatAt = Instant.now();
+            simulationRunRepository.ifPresent(r -> {
+                try {
+                    r.updateRunStatus(runId, SimulationRunStatus.PAUSED, null, null);
+                } catch (Exception e) {
+                    log.warn("Failed to persist pause status for run {}: {}", runId, e.getMessage());
+                }
+            });
             log.info("Paused simulation run {}", runId);
         }
         return Optional.of(ctx.toResponse());
@@ -138,6 +202,14 @@ public class SimulationExecutionService {
         if (ctx.status == SimulationRunStatus.PAUSED) {
             ctx.isPaused.set(false);
             ctx.status = SimulationRunStatus.RUNNING;
+            ctx.lastHeartbeatAt = Instant.now();
+            simulationRunRepository.ifPresent(r -> {
+                try {
+                    r.updateRunStatus(runId, SimulationRunStatus.RUNNING, null, null);
+                } catch (Exception e) {
+                    log.warn("Failed to persist resume status for run {}: {}", runId, e.getMessage());
+                }
+            });
             synchronized (ctx.pauseLock) {
                 ctx.pauseLock.notifyAll();
             }
@@ -154,7 +226,16 @@ public class SimulationExecutionService {
             ctx.isStopped.set(true);
             ctx.isPaused.set(false);
             ctx.status = SimulationRunStatus.STOPPED;
+            ctx.stopReason = "User requested stop";
             ctx.endTime = Instant.now();
+            ctx.lastHeartbeatAt = ctx.endTime;
+            simulationRunRepository.ifPresent(r -> {
+                try {
+                    r.updateRunStatus(runId, SimulationRunStatus.STOPPED, "User requested stop", null);
+                } catch (Exception e) {
+                    log.warn("Failed to persist stop status for run {}: {}", runId, e.getMessage());
+                }
+            });
             synchronized (ctx.pauseLock) {
                 ctx.pauseLock.notifyAll();
             }
@@ -168,12 +249,32 @@ public class SimulationExecutionService {
 
     public Optional<SimulationRunResponse> getRun(String runId) {
         RunContext ctx = activeRuns.get(runId);
-        return ctx != null ? Optional.of(ctx.toResponse()) : Optional.empty();
+        if (ctx != null) {
+            return Optional.of(ctx.toResponse());
+        }
+        return simulationRunRepository.flatMap(r -> r.findRunById(runId));
     }
 
     public List<SimulationRunResponse> listRuns() {
-        return activeRuns.values().stream()
-            .map(RunContext::toResponse)
+        Map<String, SimulationRunResponse> merged = new LinkedHashMap<>();
+
+        // 1. Historical persisted runs from database
+        simulationRunRepository.ifPresent(r -> {
+            try {
+                for (SimulationRunResponse persisted : r.findAllRuns(100, 0)) {
+                    merged.put(persisted.runId(), persisted);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to query historical simulation runs: {}", e.getMessage());
+            }
+        });
+
+        // 2. Active in-memory runs take precedence
+        for (RunContext ctx : activeRuns.values()) {
+            merged.put(ctx.runId, ctx.toResponse());
+        }
+
+        return merged.values().stream()
             .sorted(Comparator.comparing(SimulationRunResponse::startTime).reversed())
             .toList();
     }
@@ -246,6 +347,17 @@ public class SimulationExecutionService {
 
                 SimulationStageResult stageResult = executeStage(ctx, stage);
                 ctx.stages.add(stageResult);
+
+                // Persist completed stage and update heartbeat & run counters
+                simulationRunRepository.ifPresent(r -> {
+                    try {
+                        r.saveStage(ctx.runId, stageResult);
+                        r.updateHeartbeat(ctx.runId);
+                        r.saveRun(ctx.toResponse());
+                    } catch (Exception e) {
+                        log.debug("Failed to persist simulation stage or run progress: {}", e.getMessage());
+                    }
+                });
             }
 
             if (ctx.status == SimulationRunStatus.RUNNING) {
@@ -254,8 +366,17 @@ public class SimulationExecutionService {
         } catch (Exception e) {
             log.error("Simulation run {} failed unexpectedly", ctx.runId, e);
             ctx.status = SimulationRunStatus.FAILED;
+            ctx.failureReason = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
         } finally {
             ctx.endTime = Instant.now();
+            ctx.lastHeartbeatAt = ctx.endTime;
+            simulationRunRepository.ifPresent(r -> {
+                try {
+                    r.saveRun(ctx.toResponse());
+                } catch (Exception e) {
+                    log.error("Failed to persist final simulation run {}: {}", ctx.runId, e.getMessage());
+                }
+            });
         }
     }
 
@@ -288,14 +409,14 @@ public class SimulationExecutionService {
                 ? ctx.config.tenantIds().get(i % ctx.config.tenantIds().size())
                 : "tenant-sim-01";
 
-            Map<String, String> headers = Map.of(
-                "X-Simulation-Run-Id", ctx.runId,
-                "X-Simulation-Campaign-Id", ctx.campaignId,
-                "X-Simulation-Scenario-Id", stage.scenarioId(),
-                "X-Simulation-Stage", String.valueOf(stage.stageNumber()),
-                "X-Simulation-Tenant", tenant,
-                "X-Correlation-Id", UUID.randomUUID().toString()
-            );
+            Map<String, String> headers = new HashMap<>();
+            headers.put("X-Simulation-Run-Id", ctx.runId);
+            headers.put("X-Simulation-Campaign-Id", ctx.campaignId);
+            headers.put("X-Simulation-Scenario-Id", stage.scenarioId());
+            headers.put("X-Simulation-Stage", String.valueOf(stage.stageNumber()));
+            headers.put("X-Simulation-Tenant", tenant);
+            headers.put("X-Tenant-Id", tenant);
+            headers.put("X-Correlation-Id", UUID.randomUUID().toString());
 
             boolean isDryRun = Boolean.TRUE.equals(ctx.config.dryRun());
             SimulationHttpDispatcher.DispatchResult result;

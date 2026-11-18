@@ -1066,7 +1066,7 @@ export interface PolicyAuditHistory {
 // Simulation Orchestration & Campaign Models (Phase 7.3.1)
 // =========================================================================
 
-export type SimulationRunStatus = 'PENDING' | 'RUNNING' | 'PAUSED' | 'STOPPED' | 'COMPLETED' | 'FAILED';
+export type SimulationRunStatus = 'PENDING' | 'RUNNING' | 'PAUSED' | 'STOPPED' | 'COMPLETED' | 'INTERRUPTED' | 'FAILED';
 
 export interface SimulationScenario {
   id: string;

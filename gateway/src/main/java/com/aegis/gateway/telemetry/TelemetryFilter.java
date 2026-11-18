@@ -294,6 +294,34 @@ public class TelemetryFilter extends OncePerRequestFilter {
                 observedFields = extractObservedFieldNames(respBytes);
             }
 
+            String simulationRunId = request.getHeader("X-Simulation-Run-Id");
+            String simulationCampaignId = request.getHeader("X-Simulation-Campaign-Id");
+            String simulationScenarioId = request.getHeader("X-Simulation-Scenario-Id");
+            String simulationStage = request.getHeader("X-Simulation-Stage");
+
+            String tenantId = request.getHeader("X-Tenant-Id");
+            if (tenantId == null || tenantId.isBlank()) {
+                tenantId = request.getHeader("X-Simulation-Tenant");
+            }
+            if (tenantId != null && tenantId.isBlank()) {
+                tenantId = null;
+            }
+
+            String serviceName = request.getHeader("X-Service-Name");
+            if (serviceName == null || serviceName.isBlank()) {
+                if (uri.startsWith("/api/v1/customers") || uri.startsWith("/customers")) {
+                    serviceName = "customer-service";
+                } else if (uri.startsWith("/api/v1/accounts") || uri.startsWith("/accounts")) {
+                    serviceName = "account-service";
+                } else if (uri.startsWith("/api/v1/beneficiaries") || uri.startsWith("/beneficiaries") ||
+                           uri.startsWith("/api/v1/transactions") || uri.startsWith("/transactions") ||
+                           uri.startsWith("/api/v1/transfers") || uri.startsWith("/transfers")) {
+                    serviceName = "transaction-service";
+                } else if (uri.startsWith("/api/v1/security") || uri.startsWith("/security") || uri.startsWith("/api/v1/simulation")) {
+                    serviceName = "gateway";
+                }
+            }
+
             ApiEvent event = new ApiEvent(
                 UUID.randomUUID(),
                 correlationId,
@@ -317,7 +345,13 @@ public class TelemetryFilter extends OncePerRequestFilter {
                 recordCount,
                 observedFields,
                 pageNumber,
-                pageSize
+                pageSize,
+                simulationRunId,
+                simulationCampaignId,
+                simulationScenarioId,
+                simulationStage,
+                tenantId,
+                serviceName
             );
 
             publishToRedisOrDatabase(event);
@@ -391,6 +425,24 @@ public class TelemetryFilter extends OncePerRequestFilter {
         }
         if (event.pageSize() != null) {
             fields.put("pageSize", String.valueOf(event.pageSize()));
+        }
+        if (event.simulationRunId() != null) {
+            fields.put("simulationRunId", event.simulationRunId());
+        }
+        if (event.simulationCampaignId() != null) {
+            fields.put("simulationCampaignId", event.simulationCampaignId());
+        }
+        if (event.simulationScenarioId() != null) {
+            fields.put("simulationScenarioId", event.simulationScenarioId());
+        }
+        if (event.simulationStage() != null) {
+            fields.put("simulationStage", event.simulationStage());
+        }
+        if (event.tenantId() != null) {
+            fields.put("tenantId", event.tenantId());
+        }
+        if (event.serviceName() != null) {
+            fields.put("serviceName", event.serviceName());
         }
 
         try {

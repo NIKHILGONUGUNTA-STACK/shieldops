@@ -6,6 +6,7 @@ public enum SimulationRunStatus {
     PAUSED,
     STOPPED,
     COMPLETED,
+    INTERRUPTED,
     FAILED
 }
 

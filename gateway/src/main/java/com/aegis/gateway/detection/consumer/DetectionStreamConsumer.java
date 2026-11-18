@@ -281,12 +281,23 @@ public class DetectionStreamConsumer {
         String errorCode = (String) value.get("errorCode");
         long responseSizeBytes = Long.parseLong(value.getOrDefault("responseSizeBytes", "0").toString());
         int recordCount = Integer.parseInt(value.getOrDefault("recordCount", "0").toString());
+        String observedFields = (String) value.get("observedFields");
+        Integer pageNumber = value.get("pageNumber") != null ? Integer.parseInt(value.get("pageNumber").toString()) : null;
+        Integer pageSize = value.get("pageSize") != null ? Integer.parseInt(value.get("pageSize").toString()) : null;
+        String simulationRunId = (String) value.get("simulationRunId");
+        String simulationCampaignId = (String) value.get("simulationCampaignId");
+        String simulationScenarioId = (String) value.get("simulationScenarioId");
+        String simulationStage = (String) value.get("simulationStage");
+        String tenantId = (String) value.get("tenantId");
+        String serviceName = (String) value.get("serviceName");
 
         return new ApiEvent(
             id, correlationId, timestamp, sourceIp, httpMethod, requestPath,
             routeId, statusCode, latencyMs, authSubject, authRoles, customerId,
             userAgent, payloadHash, anomalyFlags, resourceType, resourceId,
-            errorCode, responseSizeBytes, recordCount
+            errorCode, responseSizeBytes, recordCount, observedFields, pageNumber, pageSize,
+            simulationRunId, simulationCampaignId, simulationScenarioId, simulationStage,
+            tenantId, serviceName
         );
     }
 }
