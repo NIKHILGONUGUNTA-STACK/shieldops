@@ -111,6 +111,32 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
             />
           </div>
 
+          <!-- Simulation Run Filter -->
+          <div class="filter-group">
+            <label for="simRunInput" class="filter-label">SIMULATION RUN ID</label>
+            <input
+              id="simRunInput"
+              type="text"
+              [(ngModel)]="simulationRunIdInput"
+              (keydown.enter)="applyTextFilters()"
+              placeholder="e.g. sim-run-..."
+              class="form-input"
+            />
+          </div>
+
+          <!-- Tenant ID Filter -->
+          <div class="filter-group">
+            <label for="tenantInput" class="filter-label">TENANT ID</label>
+            <input
+              id="tenantInput"
+              type="text"
+              [(ngModel)]="tenantIdInput"
+              (keydown.enter)="applyTextFilters()"
+              placeholder="e.g. tenant-alpha"
+              class="form-input"
+            />
+          </div>
+
           <!-- Anomaly Flags Filter -->
           <div class="filter-group">
             <label for="anomalySelect" class="filter-label">ANOMALY INDICATOR</label>
@@ -364,14 +390,64 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
               </div>
             </div>
 
+            <!-- Attribution & Runtime Operations Context -->
+            <div class="drawer-section" *ngIf="evt.tenantId || evt.serviceName || evt.simulationRunId || evt.simulationCampaignId">
+              <div class="drawer-item" *ngIf="evt.tenantId">
+                <span class="drawer-label">TENANT PARTITION:</span>
+                <span class="mono text-xs text-secondary">{{ evt.tenantId }}</span>
+              </div>
+              <div class="drawer-item" *ngIf="evt.serviceName">
+                <span class="drawer-label">TARGET SERVICE:</span>
+                <span class="mono text-xs text-secondary">{{ evt.serviceName }}</span>
+              </div>
+              <div class="drawer-item" *ngIf="evt.simulationRunId">
+                <span class="drawer-label">SIMULATION RUN:</span>
+                <span class="mono text-xs text-teal font-bold">{{ evt.simulationRunId }}</span>
+              </div>
+              <div class="drawer-item" *ngIf="evt.simulationScenarioId || evt.simulationStage">
+                <span class="drawer-label">SCENARIO / STAGE:</span>
+                <span class="mono text-xs text-secondary">{{ evt.simulationScenarioId || '—' }} ({{ evt.simulationStage || '—' }})</span>
+              </div>
+            </div>
+
             <!-- Quick Correlation Action -->
             <div class="drawer-actions">
               <button
                 (click)="filterByCorrelationId(evt.correlationId)"
                 class="btn btn-secondary btn-sm w-100"
               >
-                Find Correlated Events (Same Flow)
+                Filter Explorer by Correlation ID
               </button>
+              <button
+                (click)="loadCorrelationTrace(evt.correlationId)"
+                class="btn btn-primary btn-sm w-100 mt-2"
+                [disabled]="traceLoading()"
+              >
+                {{ traceLoading() ? 'Tracing Flow...' : 'View Full Correlation Trace' }}
+              </button>
+            </div>
+
+            <!-- Full Correlation Flow Trace -->
+            <div *ngIf="correlationTrace() as trace" class="drawer-section trace-section">
+              <span class="drawer-label mb-2" style="display:block;">CORRELATION FLOW TRACE ({{ trace.length }} EVENTS)</span>
+              <div class="trace-list">
+                <div *ngFor="let item of trace; let i = index" class="trace-item" [class.trace-active]="item.id === evt.id">
+                  <div class="trace-meta">
+                    <span class="trace-seq mono">#{{ i + 1 }}</span>
+                    <span class="mono text-xs text-muted">{{ formatDateTime(item.timestamp) }}</span>
+                    <span class="status-code-badge sm" [ngClass]="getStatusCodeClass(item.statusCode)">{{ item.statusCode }}</span>
+                  </div>
+                  <div class="trace-path mono text-xs">
+                    <span class="method-badge sm" [ngClass]="'method-' + item.httpMethod.toLowerCase()">{{ item.httpMethod }}</span>
+                    {{ item.requestUri }}
+                  </div>
+                  <div class="trace-details text-muted text-xs mono">
+                    <span>{{ item.durationMs }}ms</span>
+                    <span *ngIf="item.serviceName"> · {{ item.serviceName }}</span>
+                    <span *ngIf="item.anomalyFlags" class="text-danger"> · {{ item.anomalyFlags }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -600,8 +676,55 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
       color: var(--text-primary);
     }
     .w-100 { width: 100%; }
+    .mt-2 { margin-top: var(--space-2); }
     .mt-3 { margin-top: var(--space-3); }
+    .mb-2 { margin-bottom: var(--space-2); }
     .text-danger { color: var(--sev-critical); }
+    .status-code-badge.sm { font-size: 10px; padding: 1px 4px; }
+    .method-badge.sm { font-size: 9px; padding: 1px 4px; }
+    .trace-section {
+      background: var(--bg-canvas);
+      padding: var(--space-3);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .trace-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+    .trace-item {
+      padding: var(--space-2);
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+    }
+    .trace-item.trace-active {
+      border-color: var(--accent-teal);
+      background: rgba(255, 122, 26, 0.08);
+    }
+    .trace-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-bottom: 2px;
+    }
+    .trace-seq {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--accent-teal);
+    }
+    .trace-path {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      word-break: break-all;
+    }
+    .trace-details {
+      margin-top: 2px;
+    }
   `]
 })
 export class EventsComponent implements OnInit {
@@ -620,9 +743,13 @@ export class EventsComponent implements OnInit {
   readonly selectedMethod = signal<string>('');
   readonly selectedAnomaly = signal<string>('');
   readonly selectedResourceType = signal<string>('');
+  readonly correlationTrace = signal<SecurityEventResponse[] | null>(null);
+  readonly traceLoading = signal<boolean>(false);
 
   sourceIpInput = '';
   customerIdInput = '';
+  simulationRunIdInput = '';
+  tenantIdInput = '';
   correlationIdFilter = '';
 
   ngOnInit(): void {
@@ -635,6 +762,8 @@ export class EventsComponent implements OnInit {
       if (params['resourceType'] !== undefined) this.selectedResourceType.set(params['resourceType']);
       if (params['sourceIp'] !== undefined) this.sourceIpInput = params['sourceIp'];
       if (params['customerId'] !== undefined) this.customerIdInput = params['customerId'];
+      if (params['simulationRunId'] !== undefined) this.simulationRunIdInput = params['simulationRunId'];
+      if (params['tenantId'] !== undefined) this.tenantIdInput = params['tenantId'];
       if (params['correlationId'] !== undefined) this.correlationIdFilter = params['correlationId'];
 
       this.loadEvents();
@@ -659,6 +788,8 @@ export class EventsComponent implements OnInit {
     if (this.selectedResourceType()) filterParams.resourceType = this.selectedResourceType();
     if (this.sourceIpInput.trim()) filterParams.sourceIp = this.sourceIpInput.trim();
     if (this.customerIdInput.trim()) filterParams.customerId = this.customerIdInput.trim();
+    if (this.simulationRunIdInput.trim()) filterParams.simulationRunId = this.simulationRunIdInput.trim();
+    if (this.tenantIdInput.trim()) filterParams.tenantId = this.tenantIdInput.trim();
     if (this.correlationIdFilter.trim()) filterParams.correlationId = this.correlationIdFilter.trim();
 
     this.api.getEvents(filterParams).subscribe({
@@ -683,6 +814,8 @@ export class EventsComponent implements OnInit {
       resourceType: this.selectedResourceType() || null,
       sourceIp: this.sourceIpInput.trim() || null,
       customerId: this.customerIdInput.trim() || null,
+      simulationRunId: this.simulationRunIdInput.trim() || null,
+      tenantId: this.tenantIdInput.trim() || null,
       correlationId: this.correlationIdFilter.trim() || null
     };
 
@@ -749,9 +882,12 @@ export class EventsComponent implements OnInit {
     this.selectedResourceType.set('');
     this.sourceIpInput = '';
     this.customerIdInput = '';
+    this.simulationRunIdInput = '';
+    this.tenantIdInput = '';
     this.correlationIdFilter = '';
     this.currentPage.set(0);
     this.selectedEvent.set(null);
+    this.correlationTrace.set(null);
     this.updateUrlParams();
   }
 
@@ -763,16 +899,34 @@ export class EventsComponent implements OnInit {
       this.selectedResourceType() ||
       this.sourceIpInput.trim() ||
       this.customerIdInput.trim() ||
+      this.simulationRunIdInput.trim() ||
+      this.tenantIdInput.trim() ||
       this.correlationIdFilter.trim()
     );
   }
 
   selectEvent(evt: SecurityEventResponse): void {
     this.selectedEvent.set(evt);
+    this.correlationTrace.set(null);
   }
 
   closeDrawer(): void {
     this.selectedEvent.set(null);
+    this.correlationTrace.set(null);
+  }
+
+  loadCorrelationTrace(corrId: string): void {
+    if (!corrId) return;
+    this.traceLoading.set(true);
+    this.api.getEventsByCorrelationId(corrId).subscribe({
+      next: (events) => {
+        this.correlationTrace.set(events);
+        this.traceLoading.set(false);
+      },
+      error: () => {
+        this.traceLoading.set(false);
+      }
+    });
   }
 
   refresh(): void {

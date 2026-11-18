@@ -197,6 +197,15 @@ export const NAV_SECTIONS: NavSection[] = [
         description: 'Live operational health of Gateway, Redis Stream, Postgres Flyway V3, and Keycloak tiers'
       },
       {
+        id: 'soc-operations',
+        label: 'SOC Operations & Observability',
+        path: '/soc-operations',
+        icon: 'activity',
+        availability: 'implemented',
+        badge: 'LIVE',
+        description: 'Network intelligence, identity attribution, tenant telemetry, and deep infrastructure observability'
+      },
+      {
         id: 'simulation-center',
         label: 'Simulation Center',
         path: '/simulation',

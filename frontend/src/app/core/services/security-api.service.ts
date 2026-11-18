@@ -64,7 +64,14 @@ import {
   SimulationCampaignTemplate,
   SimulationRunConfig,
   SimulationRunResponse,
-  SimulationReport
+  SimulationReport,
+  ObservedIpRecord,
+  NetworkIntelligenceResponse,
+  ObservedIdentityRecord,
+  IdentityIntelligenceResponse,
+  TenantActivityRecord,
+  TenantActivityResponse,
+  InfrastructureObservabilityResponse
 } from '../models/security.models';
 
 @Injectable({
@@ -101,6 +108,8 @@ export class SecurityApiService {
       if (filterParams.anomalyFlags) params = params.set('anomalyFlags', filterParams.anomalyFlags);
       if (filterParams.resourceType) params = params.set('resourceType', filterParams.resourceType);
       if (filterParams.correlationId) params = params.set('correlationId', filterParams.correlationId);
+      if (filterParams.simulationRunId) params = params.set('simulationRunId', filterParams.simulationRunId);
+      if (filterParams.tenantId) params = params.set('tenantId', filterParams.tenantId);
       if (filterParams.from) params = params.set('from', filterParams.from);
       if (filterParams.to) params = params.set('to', filterParams.to);
     }
@@ -115,6 +124,15 @@ export class SecurityApiService {
    */
   getEventById(id: string): Observable<SecurityEventResponse> {
     return this.http.get<SecurityEventResponse>(`${this.baseUrl}/api/v1/security/events/${encodeURIComponent(id)}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/events/correlation/{correlationId}
+   * Retrieves all ordered security events sharing the specified correlation ID.
+   */
+  getEventsByCorrelationId(correlationId: string): Observable<SecurityEventResponse[]> {
+    return this.http.get<SecurityEventResponse[]>(`${this.baseUrl}/api/v1/security/events/correlation/${encodeURIComponent(correlationId)}`)
       .pipe(catchError(this.handleError));
   }
 
@@ -840,6 +858,51 @@ export class SecurityApiService {
 
   getSimulationReport(runId: string): Observable<SimulationReport> {
     return this.http.get<SimulationReport>(`${this.baseUrl}/api/v1/simulation/runs/${encodeURIComponent(runId)}/report`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/soc/network-intelligence
+   * Aggregates observed IP addresses, traffic statistics, error rates and local reputation.
+   */
+  getNetworkIntelligence(windowHours?: number, limit?: number): Observable<NetworkIntelligenceResponse> {
+    let params = new HttpParams();
+    if (windowHours !== undefined) params = params.set('windowHours', windowHours.toString());
+    if (limit !== undefined) params = params.set('limit', limit.toString());
+    return this.http.get<NetworkIntelligenceResponse>(`${this.baseUrl}/api/v1/soc/network-intelligence`, { params })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/soc/identity-intelligence
+   * Aggregates observed identity subjects, customer bindings, role associations, and risk categorization.
+   */
+  getIdentityIntelligence(windowHours?: number, limit?: number): Observable<IdentityIntelligenceResponse> {
+    let params = new HttpParams();
+    if (windowHours !== undefined) params = params.set('windowHours', windowHours.toString());
+    if (limit !== undefined) params = params.set('limit', limit.toString());
+    return this.http.get<IdentityIntelligenceResponse>(`${this.baseUrl}/api/v1/soc/identity-intelligence`, { params })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/soc/tenant-activity
+   * Aggregates tenant-level telemetry partition volumes, active identities, and error rates.
+   */
+  getTenantActivity(windowHours?: number, limit?: number): Observable<TenantActivityResponse> {
+    let params = new HttpParams();
+    if (windowHours !== undefined) params = params.set('windowHours', windowHours.toString());
+    if (limit !== undefined) params = params.set('limit', limit.toString());
+    return this.http.get<TenantActivityResponse>(`${this.baseUrl}/api/v1/soc/tenant-activity`, { params })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/soc/infrastructure-observability
+   * Gathers live operational telemetry for JVM, PostgreSQL pool, Redis Streams, and ingestion pipeline.
+   */
+  getInfrastructureObservability(): Observable<InfrastructureObservabilityResponse> {
+    return this.http.get<InfrastructureObservabilityResponse>(`${this.baseUrl}/api/v1/soc/infrastructure-observability`)
       .pipe(catchError(this.handleError));
   }
 

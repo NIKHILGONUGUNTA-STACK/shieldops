@@ -130,6 +130,12 @@ export interface SecurityEventResponse {
   resourceType: string | null;
   resourceId: string | null;
   errorCode: string | null;
+  simulationRunId?: string | null;
+  simulationCampaignId?: string | null;
+  simulationScenarioId?: string | null;
+  simulationStage?: string | null;
+  tenantId?: string | null;
+  serviceName?: string | null;
 }
 
 export interface SecurityEventPageResponse {
@@ -174,6 +180,8 @@ export interface EventFilterParams {
   anomalyFlags?: string;
   resourceType?: string;
   correlationId?: string;
+  simulationRunId?: string;
+  tenantId?: string;
   from?: string;
   to?: string;
 }
@@ -1181,3 +1189,117 @@ export interface SimulationReport {
   markdownReport: string;
 }
 
+
+
+// ============================================================================
+// Phase 7.3.2: SOC Operations & Observability Models
+// ============================================================================
+
+export interface ObservedIpRecord {
+  ipAddress: string;
+  firstSeen: string;
+  lastSeen: string;
+  totalRequests: number;
+  requests2xx: number;
+  requests4xx: number;
+  requests5xx: number;
+  errorRate: number;
+  uniqueEndpointsCount: number;
+  suspiciousActivityCount: number;
+  tenantCount: number;
+  identityCount: number;
+  reputationStatus: string;
+  reputationSource: string;
+}
+
+export interface NetworkIntelligenceResponse {
+  windowHours: number;
+  totalObservedIps: number;
+  observedIps: ObservedIpRecord[];
+}
+
+export interface ObservedIdentityRecord {
+  subject: string;
+  customerId?: string;
+  roles?: string;
+  firstSeen: string;
+  lastSeen: string;
+  totalRequests: number;
+  requests2xx: number;
+  requests4xx: number;
+  requests5xx: number;
+  uniqueIpsCount: number;
+  tenantCount: number;
+  anomalousEventsCount: number;
+  riskCategory: 'HIGH_RISK' | 'ELEVATED' | 'BENIGN';
+}
+
+export interface IdentityIntelligenceResponse {
+  windowHours: number;
+  totalObservedIdentities: number;
+  observedIdentities: ObservedIdentityRecord[];
+}
+
+export interface TenantActivityRecord {
+  tenantId: string;
+  firstSeen: string;
+  lastSeen: string;
+  totalRequests: number;
+  requests2xx: number;
+  requests4xx: number;
+  requests5xx: number;
+  uniqueIdentitiesCount: number;
+  uniqueIpsCount: number;
+  errorRate: number;
+}
+
+export interface TenantActivityResponse {
+  windowHours: number;
+  totalObservedTenants: number;
+  tenants: TenantActivityRecord[];
+}
+
+export interface JvmMetrics {
+  heapUsedBytes: number;
+  heapMaxBytes: number;
+  heapTotalBytes: number;
+  heapFreeBytes: number;
+  activeThreads: number;
+  peakThreads: number;
+  daemonThreads: number;
+  processCpuLoad: number;
+  systemCpuLoad: number;
+}
+
+export interface DatabaseMetrics {
+  status: string;
+  activeConnections: number;
+  idleConnections: number;
+  totalConnections: number;
+  maxConnections: number;
+}
+
+export interface RedisMetrics {
+  status: string;
+  streamKey: string;
+  streamLength: number | null;
+  pingResponse: string | null;
+}
+
+export interface TelemetryPipelineMetrics {
+  totalEventsPersisted: number;
+  eventsLastHour: number;
+  latestEventTimestamp: string | null;
+  freshnessSeconds: number;
+  failureCount: number;
+}
+
+export interface InfrastructureObservabilityResponse {
+  timestamp: string;
+  gatewayStatus: 'HEALTHY' | 'DEGRADED';
+  uptimeSeconds: number;
+  jvm: JvmMetrics;
+  database: DatabaseMetrics;
+  redis: RedisMetrics;
+  telemetryPipeline: TelemetryPipelineMetrics;
+}
