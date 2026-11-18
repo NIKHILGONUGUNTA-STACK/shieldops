@@ -33,14 +33,18 @@ public class ApiEventRepository {
                     auth_subject, auth_roles, customer_id, user_agent,
                     payload_hash, anomaly_flags,
                     resource_type, resource_id, error_code, response_size_bytes, record_count,
-                    observed_fields, page_number, page_size
+                    observed_fields, page_number, page_size,
+                    simulation_run_id, simulation_campaign_id, simulation_scenario_id,
+                    simulation_stage, tenant_id, service_name
                 ) VALUES (
                     :id, :correlationId, :timestamp, :sourceIp, :httpMethod,
                     :requestPath, :routeId, :statusCode, :latencyMs,
                     :authSubject, :authRoles, :customerId, :userAgent,
                     :payloadHash, :anomalyFlags,
                     :resourceType, :resourceId, :errorCode, :responseSizeBytes, :recordCount,
-                    :observedFields, :pageNumber, :pageSize
+                    :observedFields, :pageNumber, :pageSize,
+                    :simulationRunId, :simulationCampaignId, :simulationScenarioId,
+                    :simulationStage, :tenantId, :serviceName
                 )
                 """)
                 .param("id", e.id())
@@ -66,6 +70,12 @@ public class ApiEventRepository {
                 .param("observedFields", e.observedFields())
                 .param("pageNumber", e.pageNumber())
                 .param("pageSize", e.pageSize())
+                .param("simulationRunId", e.simulationRunId())
+                .param("simulationCampaignId", e.simulationCampaignId())
+                .param("simulationScenarioId", e.simulationScenarioId())
+                .param("simulationStage", e.simulationStage())
+                .param("tenantId", e.tenantId())
+                .param("serviceName", e.serviceName())
                 .update();
         } catch (DuplicateKeyException dke) {
             log.debug("Event {} already persisted (duplicate key ignored)", e.id());
@@ -92,7 +102,9 @@ public class ApiEventRepository {
                    auth_subject, auth_roles, customer_id, user_agent,
                    payload_hash, anomaly_flags, resource_type, resource_id,
                    error_code, response_size_bytes, record_count,
-                   observed_fields, page_number, page_size
+                   observed_fields, page_number, page_size,
+                   simulation_run_id, simulation_campaign_id, simulation_scenario_id,
+                   simulation_stage, tenant_id, service_name
             FROM security_data.api_events
             WHERE id = :id
             """;
@@ -177,7 +189,9 @@ public class ApiEventRepository {
                           "auth_subject, auth_roles, customer_id, user_agent, " +
                           "payload_hash, anomaly_flags, resource_type, resource_id, " +
                           "error_code, response_size_bytes, record_count, " +
-                          "observed_fields, page_number, page_size " +
+                          "observed_fields, page_number, page_size, " +
+                          "simulation_run_id, simulation_campaign_id, simulation_scenario_id, " +
+                          "simulation_stage, tenant_id, service_name " +
                           "FROM security_data.api_events" + whereClause +
                           " ORDER BY timestamp DESC, id DESC LIMIT :limit OFFSET :offset";
 
@@ -250,12 +264,28 @@ public class ApiEventRepository {
         String observedFields = null;
         Integer pageNumber = null;
         Integer pageSize = null;
+        String simRunId = null;
+        String simCampId = null;
+        String simScenId = null;
+        String simStage = null;
+        String tenantId = null;
+        String serviceName = null;
+
         try {
             observedFields = rs.getString("observed_fields");
             int pNum = rs.getInt("page_number");
             if (!rs.wasNull()) pageNumber = pNum;
             int pSize = rs.getInt("page_size");
             if (!rs.wasNull()) pageSize = pSize;
+        } catch (SQLException ignored) {}
+
+        try {
+            simRunId = rs.getString("simulation_run_id");
+            simCampId = rs.getString("simulation_campaign_id");
+            simScenId = rs.getString("simulation_scenario_id");
+            simStage = rs.getString("simulation_stage");
+            tenantId = rs.getString("tenant_id");
+            serviceName = rs.getString("service_name");
         } catch (SQLException ignored) {}
 
         return new SecurityEventResponse(
@@ -281,7 +311,13 @@ public class ApiEventRepository {
             rs.getInt("record_count"),
             observedFields,
             pageNumber,
-            pageSize
+            pageSize,
+            simRunId,
+            simCampId,
+            simScenId,
+            simStage,
+            tenantId,
+            serviceName
         );
     }
 }
