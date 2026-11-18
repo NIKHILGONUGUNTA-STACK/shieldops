@@ -166,3 +166,94 @@ Direct verification on PostgreSQL container `aegis-postgres-1` confirmed:
 - Exfiltration campaigns: 2 records intact.
 - Policy decisions: 8,205 records intact.
 - Simulation runs & stages tables: Empty and ready for operational runs (`count = 0`).
+
+
+---
+
+## Step 3: Network & Identity Intelligence and Infrastructure Observability Backend APIs
+
+### 1. Step 3 Objectives
+Step 3 equips ShieldOps with operational security intelligence APIs and live infrastructure metrics:
+1. **Network Intelligence API (`/api/v1/soc/network-intelligence`)**: Aggregate observed client IPs, error ratios (4xx/5xx), sensitive route probes, and local reputation classification ("LOCAL_LOOPBACK", "INTERNAL_NETWORK", "OBSERVED_EXTERNAL") without fabricated third-party threat scores.
+2. **Identity Intelligence API (`/api/v1/soc/identity-intelligence`)**: Aggregate observed authentication subjects, customer IDs, roles, request volumes, error ratios, and risk categorization ("HIGH_RISK", "ELEVATED", "BENIGN").
+3. **Tenant Activity API (`/api/v1/soc/tenant-activity`)**: Monitor multi-tenant partition metrics, activity windows, and error rates across observed tenants.
+4. **Infrastructure Observability API (`/api/v1/soc/infrastructure-observability`)**: Provide genuine, non-fabricated system observability:
+   - Real JVM Heap (used, max, committed, free) and Thread counts (active, peak, daemon) via `java.lang.management.ManagementFactory`.
+   - Real PostgreSQL connection pool telemetry via `HikariPoolMXBean` (active, idle, total, max connections) and connectivity health probe (`SELECT 1`).
+   - Real Redis Stream status and stream length (`xlen`) via `StringRedisTemplate`.
+   - Telemetry processing throughput, hourly rates, and data freshness metrics.
+5. **Correlation Navigation & Attribution Filters**:
+   - `GET /api/v1/security/events/correlation/{correlationId}`: Retrieve full request trace in chronological order.
+   - Filter support for `simulationRunId` and `tenantId` in `GET /api/v1/security/events`.
+
+---
+
+### 2. Endpoints & Data Model Deliverables
+
+#### 2.1 Network Intelligence
+- Endpoint: `GET /api/v1/soc/network-intelligence?windowHours=24&limit=50`
+- Response: `NetworkIntelligenceResponse` containing `List<ObservedIpRecord>`:
+  - `ipAddress`: Client IP.
+  - `firstSeen` & `lastSeen`: Timestamps.
+  - `totalRequests`, `requests2xx`, `requests4xx`, `requests5xx`, `errorRate`.
+  - `uniqueEndpointsCount`, `suspiciousActivityCount`, `tenantCount`, `identityCount`.
+  - `reputationStatus`: Derived locally ("LOCAL_LOOPBACK", "INTERNAL_NETWORK", "OBSERVED_EXTERNAL").
+  - `reputationSource`: "LOCAL_EVALUATION".
+
+#### 2.2 Identity Intelligence
+- Endpoint: `GET /api/v1/soc/identity-intelligence?windowHours=24&limit=50`
+- Response: `IdentityIntelligenceResponse` containing `List<ObservedIdentityRecord>`:
+  - `subject`: Authentication subject/UUID.
+  - `customerId`, `roles`.
+  - `totalRequests`, `requests2xx`, `requests4xx`, `requests5xx`.
+  - `uniqueIpsCount`, `tenantCount`, `anomalousEventsCount`.
+  - `riskCategory`: "HIGH_RISK" (suspicious > 5 or errorRate > 50%), "ELEVATED" (suspicious > 0 or errorRate > 20%), or "BENIGN".
+
+#### 2.3 Tenant Activity
+- Endpoint: `GET /api/v1/soc/tenant-activity?windowHours=24&limit=50`
+- Response: `TenantActivityResponse` containing `List<TenantActivityRecord>`:
+  - `tenantId`: Tenant identifier.
+  - `totalRequests`, `requests2xx`, `requests4xx`, `requests5xx`, `errorRate`.
+  - `uniqueIdentitiesCount`, `uniqueIpsCount`.
+  - `firstSeen` & `lastSeen`.
+
+#### 2.4 Infrastructure Observability
+- Endpoint: `GET /api/v1/soc/infrastructure-observability`
+- Response: `InfrastructureObservabilityResponse`:
+  - `gatewayStatus`: "HEALTHY" / "DEGRADED".
+  - `uptimeSeconds`: JVM uptime.
+  - `jvm`: Heap memory (used/max/committed) and active/peak threads.
+  - `database`: Status ("CONNECTED"), active, idle, total, max connections from HikariCP.
+  - `redis`: Status ("CONNECTED"), stream key, current stream length, ping response.
+  - `telemetryPipeline`: Total events persisted, events in the last hour, latest event timestamp, data freshness in seconds, failure counter.
+
+#### 2.5 Correlation Navigation & Event Filtering
+- `GET /api/v1/security/events/correlation/{correlationId}`: Returns all events linked by a correlation ID ordered by `timestamp ASC`.
+- `GET /api/v1/security/events`: Extended with `simulationRunId` and `tenantId` parameters.
+
+---
+
+### 3. Automated Verification & Regression Tests
+
+All 29 tests passed cleanly across the test suite:
+- **`SocOperationsIntegrationTest`**: 5/5 passed.
+  - `testNetworkIntelligenceAggregation`
+  - `testIdentityIntelligenceAggregation`
+  - `testTenantActivityAggregation`
+  - `testInfrastructureObservability`
+  - `testCorrelationNavigation`
+- **`SimulationRunPersistenceTest`**: 3/3 passed.
+- **`TelemetryAttributionIntegrationTest`**: 2/2 passed.
+- **`SimulationControllerTest`**: 6/6 passed.
+- **`FlywayMigrationV10Test`**: 3/3 passed.
+- **`SecurityEventControllerTest`**: 10/10 passed.
+
+---
+
+### 4. Zero Data Destruction Confirmation
+Confirmed against live PostgreSQL container `aegis-postgres-1`:
+- 2,318 `api_events` intact.
+- 1,913 `detection_evidence` intact.
+- 3 `incidents` intact.
+- 2 `exfiltration_campaigns` intact.
+- 8,205 `policy_decisions` intact.

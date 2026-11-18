@@ -41,7 +41,9 @@ public class SecurityEventController {
             @RequestParam(name = "resourceType", required = false) String resourceType,
             @RequestParam(name = "from", required = false) String fromStr,
             @RequestParam(name = "to", required = false) String toStr,
-            @RequestParam(name = "correlationId", required = false) String correlationId) {
+            @RequestParam(name = "correlationId", required = false) String correlationId,
+            @RequestParam(name = "simulationRunId", required = false) String simulationRunId,
+            @RequestParam(name = "tenantId", required = false) String tenantId) {
         try {
             Instant from = null;
             if (fromStr != null && !fromStr.isBlank()) {
@@ -66,11 +68,13 @@ public class SecurityEventController {
             }
 
             SecurityEventPageResponse response;
-            if (customerId == null && sourceIp == null && anomalyFlags == null && resourceType == null && from == null && to == null && correlationId == null) {
+            if (customerId == null && sourceIp == null && anomalyFlags == null && resourceType == null &&
+                from == null && to == null && correlationId == null && simulationRunId == null && tenantId == null) {
                 response = apiEventRepository.findEvents(page, size, statusCode, httpMethod);
             } else {
                 response = apiEventRepository.findEvents(
-                    page, size, statusCode, httpMethod, customerId, sourceIp, anomalyFlags, resourceType, from, to, correlationId
+                    page, size, statusCode, httpMethod, customerId, sourceIp, anomalyFlags,
+                    resourceType, from, to, correlationId, simulationRunId, tenantId
                 );
             }
             return ResponseEntity.ok(response);
@@ -102,5 +106,15 @@ public class SecurityEventController {
             .orElseThrow(() -> new ResourceNotFoundException("Security event not found with ID: " + eventId));
 
         return ResponseEntity.ok(event);
+    }
+
+    @GetMapping(value = {"/api/v1/security/events/correlation/{correlationId}", "/security/events/correlation/{correlationId}"}, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('SECURITY_ANALYST', 'SECURITY_ADMIN')")
+    public ResponseEntity<java.util.List<SecurityEventResponse>> getEventsByCorrelationId(@PathVariable("correlationId") String correlationId) {
+        if (correlationId == null || correlationId.isBlank()) {
+            throw new IllegalArgumentException("Correlation ID must not be blank");
+        }
+        java.util.List<SecurityEventResponse> events = apiEventRepository.findByCorrelationId(correlationId);
+        return ResponseEntity.ok(events);
     }
 }

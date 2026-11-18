@@ -130,6 +130,23 @@ public class ApiEventRepository {
             Instant from,
             Instant to,
             String correlationId) {
+        return findEvents(page, size, statusCode, httpMethod, customerId, sourceIp, anomalyFlags, resourceType, from, to, correlationId, null, null);
+    }
+
+    public SecurityEventPageResponse findEvents(
+            int page,
+            int size,
+            Integer statusCode,
+            String httpMethod,
+            String customerId,
+            String sourceIp,
+            String anomalyFlags,
+            String resourceType,
+            Instant from,
+            Instant to,
+            String correlationId,
+            String simulationRunId,
+            String tenantId) {
 
         int boundedPage = Math.max(0, page);
         int boundedSize = Math.min(Math.max(1, size), 100);
@@ -173,6 +190,14 @@ public class ApiEventRepository {
         if (correlationId != null && !correlationId.isBlank()) {
             whereClause.append(" AND correlation_id = :correlationId");
             params.put("correlationId", correlationId.trim());
+        }
+        if (simulationRunId != null && !simulationRunId.isBlank()) {
+            whereClause.append(" AND simulation_run_id = :simulationRunId");
+            params.put("simulationRunId", simulationRunId.trim());
+        }
+        if (tenantId != null && !tenantId.isBlank()) {
+            whereClause.append(" AND tenant_id = :tenantId");
+            params.put("tenantId", tenantId.trim());
         }
 
         String countSql = "SELECT COUNT(*) FROM security_data.api_events" + whereClause;
@@ -253,6 +278,36 @@ public class ApiEventRepository {
                 long anomalyCount = rs.getLong("anomaly_count");
                 return new TimeSeriesBucketResponse(bucketIso, totalCount, anomalyCount);
             }).list();
+    }
+
+    public List<SecurityEventResponse> findByCorrelationId(String correlationId) {
+        if (correlationId == null || correlationId.isBlank()) return List.of();
+        String sql = """
+            SELECT id, correlation_id, timestamp, source_ip, http_method,
+                   request_path, route_id, status_code, latency_ms,
+                   auth_subject, auth_roles, customer_id, user_agent,
+                   payload_hash, anomaly_flags, resource_type, resource_id,
+                   error_code, response_size_bytes, record_count,
+                   observed_fields, page_number, page_size,
+                   simulation_run_id, simulation_campaign_id, simulation_scenario_id,
+                   simulation_stage, tenant_id, service_name
+            FROM security_data.api_events
+            WHERE correlation_id = :correlationId
+            ORDER BY timestamp ASC, id ASC
+            """;
+        return jdbcClient.sql(sql)
+            .param("correlationId", correlationId.trim())
+            .query((rs, rowNum) -> mapRowToEventResponse(rs))
+            .list();
+    }
+
+    public Optional<Instant> findLatestEventTimestamp() {
+        return jdbcClient.sql("SELECT MAX(timestamp) FROM security_data.api_events")
+            .query((rs, rowNum) -> {
+                Timestamp ts = rs.getTimestamp(1);
+                return ts != null ? ts.toInstant() : null;
+            })
+            .optional();
     }
 
     private SecurityEventResponse mapRowToEventResponse(ResultSet rs) throws SQLException {
