@@ -257,3 +257,196 @@ Confirmed against live PostgreSQL container `aegis-postgres-1`:
 - 3 `incidents` intact.
 - 2 `exfiltration_campaigns` intact.
 - 8,205 `policy_decisions` intact.
+
+---
+
+## Step 4: Enterprise SOC Console and Infrastructure Observability Frontend
+
+### 1. Step 4 Objectives
+Step 4 delivers the user-facing operational console for ShieldOps SOC analysts, integrating all backend intelligence and observability APIs into a reactive Angular application:
+1. **SOC Operations Dashboard (`/soc-operations`)**:
+   - Tab 1: **Network Intelligence**: Filterable lookback window (1h–168h), limit selector, summary cards (observed IPs, total requests, error rates, local reputation distribution), and interactive IP traffic table with error rate progress bars and deep links to the Event Explorer.
+   - Tab 2: **Identity Intelligence**: Authenticated principal and customer bindings, roles, deterministic risk categories (`HIGH_RISK`, `ELEVATED`, `BENIGN`), request volume breakdowns, anomalous event counts, and quick pivot to investigations.
+   - Tab 3: **Tenant Telemetry**: Multi-tenant partition monitoring based on Flyway V10 `tenant_id` attribution, tracking partition request volumes, error ratios, active identities, and source IPs.
+   - Tab 4: **Infrastructure Observability**: Real-time platform health banner, live JVM memory gauges (used/max/free) with utilization bars, thread pools (active/peak/daemon), process CPU load, PostgreSQL HikariCP connection pool telemetry (active/idle/max), Redis Streams broker status (`xlen` backlog, `PONG` response), and telemetry ingestion throughput, freshness latency in seconds, and failure counters.
+   - Configurable auto-polling (15s interval) and manual refresh controls.
+2. **API Security Event Explorer Enhancements (`/events`)**:
+   - Added filter inputs for `SIMULATION RUN ID` and `TENANT ID`.
+   - Enhanced inspection drawer with dedicated **Attribution & Runtime Operations Context** displaying Tenant Partition, Target Service, Simulation Run ID, and Scenario/Stage.
+   - Added **Full Correlation Flow Trace**: Chronological sequence view of all events sharing a correlation ID, showing step numbers, timestamps, method badges, status codes, paths, durations, and service attributions.
+3. **Navigation & Routing Integration**:
+   - Added route `/soc-operations` in `app.routes.ts` protected by `authGuard`.
+   - Added sidebar navigation entry under `GOVERNANCE & OPERATIONS` with `LIVE` status badge in `nav-registry.ts`.
+4. **TypeScript Models & Service Layer**:
+   - Added models in `security.models.ts`: `ObservedIpRecord`, `NetworkIntelligenceResponse`, `ObservedIdentityRecord`, `IdentityIntelligenceResponse`, `TenantActivityRecord`, `TenantActivityResponse`, `JvmMetrics`, `DatabaseMetrics`, `RedisMetrics`, `TelemetryPipelineMetrics`, `InfrastructureObservabilityResponse`.
+   - Added API methods in `SecurityApiService`: `getNetworkIntelligence()`, `getIdentityIntelligence()`, `getTenantActivity()`, `getInfrastructureObservability()`, and `getEventsByCorrelationId()`. Extended `getEvents()` with `simulationRunId` and `tenantId`.
+
+### 2. Angular Build Verification
+- Production build command: `npm run build`
+- Output: `Application bundle generation complete. [55.023 seconds]`
+- New lazy chunk: `chunk-5FHQBUJN.js | soc-operations-component | 37.29 kB`
+- Zero TypeScript or Angular compilation errors.
+- Step 4 Commit: `d0a50cc` (`feat(ui): add SOC operations and infrastructure observability dashboard`).
+
+---
+
+## Step 5: End-to-End Acceptance, Live Verification, and Final Sign-Off
+
+### 1. Backend Test Suite Verification
+The complete backend Maven test suite was executed against Java 25:
+- Command: `mvn clean test`
+- Results: **326 tests run, 0 failures, 0 errors, 0 skipped**
+- Test Coverage:
+  - `SocOperationsIntegrationTest` (5/5 passed)
+  - `SimulationRunPersistenceTest` (3/3 passed)
+  - `TelemetryAttributionIntegrationTest` (2/2 passed)
+  - `FlywayMigrationV10Test` (3/3 passed)
+  - `SimulationControllerTest` (6/6 passed)
+  - `SecurityEventControllerTest` (10/10 passed)
+  - Complete security rules, token verification, and microservices integration suite (297 tests passed)
+
+### 2. Live Docker Environment & Gateway Deployment
+All 9 core containers running and healthy:
+- `aegis-gateway-1` (port 8000)
+- `aegis-customer-service-1` (port 8081)
+- `aegis-account-service-1` (port 8082)
+- `aegis-transaction-service-1` (port 8083)
+- `aegis-postgres-1` (port 5433 -> 5432)
+- `aegis-redis-1` (port 6379)
+- `aegis-keycloak-1` (ports 8080, 9000)
+- `aegis-prometheus-1` (port 9090)
+- `aegis-grafana-1` (port 3000)
+
+Updated `gateway-0.1.0-SNAPSHOT.jar` deployed to container and verified live:
+- Flyway V10 validated: `Schema "security_data" is up to date (version 10)`.
+- Contextual correlation and threat detection engines initialized with 12 active rules.
+
+### 3. Live API Endpoint Verification
+Authenticated queries executed via Keycloak OAuth2 password grant (`analyst` user):
+
+#### 3.1 Network Intelligence (`GET /api/v1/soc/network-intelligence`)
+```json
+{
+  "windowHours": 24,
+  "totalObservedIps": 1,
+  "observedIps": [
+    {
+      "ipAddress": "172.18.0.1",
+      "firstSeen": "2026-11-18T14:53:40.839872Z",
+      "lastSeen": "2026-11-18T16:25:13.823187Z",
+      "totalRequests": 83,
+      "requests2xx": 79,
+      "requests4xx": 4,
+      "requests5xx": 0,
+      "errorRate": 0.048,
+      "uniqueEndpointsCount": 29,
+      "suspiciousActivityCount": 0,
+      "tenantCount": 0,
+      "identityCount": 2,
+      "reputationStatus": "INTERNAL_NETWORK",
+      "reputationSource": "LOCAL_EVALUATION"
+    }
+  ]
+}
+```
+
+#### 3.2 Identity Intelligence (`GET /api/v1/soc/identity-intelligence`)
+```json
+{
+  "windowHours": 24,
+  "totalObservedIdentities": 2,
+  "observedIdentities": [
+    {
+      "subject": "7c94fd2e-71b5-4db6-97d5-03c362cde13e",
+      "customerId": "",
+      "roles": "SECURITY_ANALYST",
+      "firstSeen": "2026-11-18T14:53:42.288465Z",
+      "lastSeen": "2026-11-18T16:25:13.823187Z",
+      "totalRequests": 47,
+      "requests2xx": 43,
+      "requests4xx": 4,
+      "requests5xx": 0,
+      "uniqueIpsCount": 1,
+      "tenantCount": 0,
+      "anomalousEventsCount": 0,
+      "riskCategory": "BENIGN"
+    },
+    {
+      "subject": "anonymous",
+      "customerId": "",
+      "roles": "",
+      "firstSeen": "2026-11-18T14:53:40.839872Z",
+      "lastSeen": "2026-11-18T15:00:52.588334Z",
+      "totalRequests": 36,
+      "requests2xx": 36,
+      "requests4xx": 0,
+      "requests5xx": 0,
+      "uniqueIpsCount": 1,
+      "tenantCount": 0,
+      "anomalousEventsCount": 0,
+      "riskCategory": "BENIGN"
+    }
+  ]
+}
+```
+
+#### 3.3 Infrastructure Observability (`GET /api/v1/soc/infrastructure-observability`)
+```json
+{
+  "timestamp": "2026-11-18T16:28:42.623079490Z",
+  "gatewayStatus": "HEALTHY",
+  "uptimeSeconds": 74,
+  "jvm": {
+    "heapUsedBytes": 81918016,
+    "heapMaxBytes": 6106906624,
+    "heapTotalBytes": 121634816,
+    "heapFreeBytes": 39716800,
+    "activeThreads": 31,
+    "peakThreads": 31,
+    "daemonThreads": 23,
+    "processCpuLoad": 3.6,
+    "systemCpuLoad": 5.9
+  },
+  "database": {
+    "status": "CONNECTED",
+    "activeConnections": 0,
+    "idleConnections": 10,
+    "totalConnections": 10,
+    "maxConnections": 10
+  },
+  "redis": {
+    "status": "CONNECTED",
+    "streamKey": "aegis:stream:api-events",
+    "streamLength": 4434,
+    "pingResponse": "PONG"
+  },
+  "telemetryPipeline": {
+    "totalEventsPersisted": 2404,
+    "eventsLastHour": 8,
+    "latestEventTimestamp": "2026-11-18T16:28:42.522108Z",
+    "freshnessSeconds": 0,
+    "failureCount": 0
+  }
+}
+```
+
+#### 3.4 Correlation Trace Flow (`GET /api/v1/security/events/correlation/{correlationId}`)
+- Successfully retrieves ordered chronological event array for trace visualization.
+
+### 4. Zero Data Destruction Audit
+Audited directly on live PostgreSQL instance:
+| Entity Table | Pre-Migration Count | Post-Verification Count | Status |
+| :--- | :--- | :--- | :--- |
+| `security_data.api_events` | 2,318 | 2,404 | Preserved & Actively Ingesting (+86 new operational events) |
+| `security_data.detection_evidence` | 1,913 | 1,926 | Preserved (+13 new evidence records) |
+| `security_data.incidents` | 3 | 3 | 100% Intact |
+| `security_data.exfiltration_campaigns` | 2 | 2 | 100% Intact |
+| `security_data.policy_decisions` | 8,205 | 8,231 | Preserved (+26 decisions) |
+| `security_data.simulation_runs` | 0 | 0 | Ready for durable executions |
+| `security_data.simulation_run_stages` | 0 | 0 | Ready for stage executions |
+
+### 5. Invariant Compliance Matrix
+- **Tenant Attribution Invariant**: Absent tenant headers strictly remain `NULL` (no default `tenant-default`). Confirmed in database schema and live API responses.
+- **Local Reputation Invariant**: IP reputation is derived strictly from local network analysis (`LOCAL_LOOPBACK`, `INTERNAL_NETWORK`, `OBSERVED_EXTERNAL`) with `reputationSource = "LOCAL_EVALUATION"`. Zero fake third-party threat scores.
+- **Observability Invariant**: JVM memory, HikariCP connection pool, Redis Stream backlog, and telemetry pipeline metrics report genuine live system state. If unavailable, `"UNAVAILABLE"` / `"NOT_CONFIGURED"` is returned.
+- **Durable Lifecycle Invariant**: Simulation runs are governed by optimistic locking, heartbeats, and automatic startup crash recovery transitioning stale executions to `INTERRUPTED`.
