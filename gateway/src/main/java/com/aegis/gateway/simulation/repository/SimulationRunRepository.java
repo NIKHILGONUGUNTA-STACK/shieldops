@@ -378,7 +378,7 @@ public class SimulationRunRepository {
 
     @Transactional
     public int reconcileInterruptedRuns(Instant heartbeatCutoff) {
-        Timestamp cutoff = Timestamp.from(heartbeatCutoff != null ? heartbeatCutoff : Instant.now().minusSeconds(120));
+        Timestamp cutoff = Timestamp.from(heartbeatCutoff != null ? heartbeatCutoff : Instant.now().minusSeconds(5));
         Timestamp now = Timestamp.from(Instant.now());
 
         String sql = """

@@ -70,7 +70,7 @@ public class SimulationExecutionService {
     public void initCrashRecovery() {
         simulationRunRepository.ifPresent(r -> {
             try {
-                int count = r.reconcileInterruptedRuns(Instant.now().minusSeconds(120));
+                int count = r.reconcileInterruptedRuns(Instant.now().minusSeconds(5));
                 if (count > 0) {
                     log.info("Simulation runtime crash recovery: reconciled {} interrupted run(s) from prior session", count);
                 }
@@ -407,15 +407,17 @@ public class SimulationExecutionService {
             String url = DEFAULT_BASE_URL + path;
             String tenant = (ctx.config.tenantIds() != null && !ctx.config.tenantIds().isEmpty())
                 ? ctx.config.tenantIds().get(i % ctx.config.tenantIds().size())
-                : "tenant-sim-01";
+                : null;
 
             Map<String, String> headers = new HashMap<>();
             headers.put("X-Simulation-Run-Id", ctx.runId);
             headers.put("X-Simulation-Campaign-Id", ctx.campaignId);
             headers.put("X-Simulation-Scenario-Id", stage.scenarioId());
             headers.put("X-Simulation-Stage", String.valueOf(stage.stageNumber()));
-            headers.put("X-Simulation-Tenant", tenant);
-            headers.put("X-Tenant-Id", tenant);
+            if (tenant != null && !tenant.isBlank()) {
+                headers.put("X-Simulation-Tenant", tenant);
+                headers.put("X-Tenant-Id", tenant);
+            }
             headers.put("X-Correlation-Id", UUID.randomUUID().toString());
 
             boolean isDryRun = Boolean.TRUE.equals(ctx.config.dryRun());

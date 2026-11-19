@@ -1,9 +1,9 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 7.3.1.1 Complete (Live Campaign Integration and Runtime Acceptance)
+## Current Milestone: Phase 7.3.2.1 Complete (Durable Simulation Runtime Acceptance)
 
 **Status:** `VERIFIED & PRODUCTION READY`
-**Last Updated:** 2026-11-16
+**Last Updated:** 2026-11-19
 **Active Git Branch:** `main`
 **Git Working Tree:** Clean
 **Remote Upstream:** `origin/main` (`https://github.com/NIKHILGONUGUNTA-STACK/shieldops.git`)
@@ -22,8 +22,8 @@
 | `customer-service` | 29 | 0 | 0 | 0 | **SUCCESS** |
 | `account-service` | 20 | 0 | 0 | 0 | **SUCCESS** |
 | `transaction-service` | 22 | 0 | 0 | 0 | **SUCCESS** |
-| `gateway` (including Phase 7.2.4.6 Policy Engine & Phase 7.3.1 Simulation Engine) | 312 | 0 | 0 | 1 | **SUCCESS** |
-| **Total Backend Platform Tests** | **383** | **0** | **0** | **1** | **BUILD SUCCESS** |
+| `gateway` (including Phase 7.3.2 SOC APIs & Flyway V10 Persistence) | 326 | 0 | 0 | 0 | **SUCCESS** |
+| **Total Backend Platform Tests** | **397** | **0** | **0** | **0** | **BUILD SUCCESS** |
 
 ### 1.2 Frontend SOC Dashboard (Angular 18 / TypeScript / Node 22)
 - **Framework & Tooling:** Angular 18.2.21 / Node.js 22.20.0 / npm 10.9.3
@@ -572,6 +572,59 @@
   - Generated comprehensive research paper in `docs/phase-7-2-4-3-detection-robustness-evaluation.md`.
   - Verified 342 backend tests, 184 frontend tests, and 80 simulation tests passing.
   - Verified advisory non-blocking invariant, privacy redaction invariant, and zero financial mutations invariant.
+
+---
+
+## 17. Phase 7.3.2 Deliverables Checklist (Enterprise SOC Runtime Operations and Observability)
+
+- [x] **Flyway V10 Database Schema:**
+  - Extended `security_data.api_events` with 6 nullable attribution columns: `simulation_run_id`, `simulation_campaign_id`, `simulation_scenario_id`, `simulation_stage`, `tenant_id`, and `service_name`.
+  - Created durable `security_data.simulation_runs` with lifecycle constraints (`PENDING`, `RUNNING`, `PAUSED`, `STOPPED`, `COMPLETED`, `INTERRUPTED`, `FAILED`), versioning, and provenance.
+  - Created `security_data.simulation_run_stages` with uniqueness constraints and cascade deletion.
+  - Added 8 targeted B-Tree indexes for fast multi-attribute filtering.
+- [x] **Persistent Simulation Runtime & Crash Recovery:**
+  - Implemented `SimulationRunRepository` with dialect-agnostic SQL (`SELECT COUNT(*) -> UPDATE / INSERT`).
+  - Implemented `@PostConstruct initCrashRecovery()` in `SimulationExecutionService` reconciling orphaned runs to `INTERRUPTED` on gateway startup.
+  - Implemented multi-source hybrid querying merging database records with in-memory active contexts.
+- [x] **Intelligence & Observability Backend APIs:**
+  - `GET /api/v1/soc/network-intelligence`: Aggregates observed IPs, request rates, error rates, and local reputation classification (`LOCAL_LOOPBACK`, `INTERNAL_NETWORK`, `OBSERVED_EXTERNAL`).
+  - `GET /api/v1/soc/identity-intelligence`: Aggregates JWT subjects, customer IDs, roles, request rates, and risk categorization (`HIGH_RISK`, `ELEVATED`, `BENIGN`).
+  - `GET /api/v1/soc/tenant-activity`: Aggregates multi-tenant partition metrics from Flyway V10 `tenant_id` attribution.
+  - `GET /api/v1/soc/infrastructure-observability`: Real-time JVM memory/threads, HikariCP connection pool, Redis Streams length, and telemetry pipeline freshness.
+  - `GET /api/v1/security/events/correlation/{correlationId}`: Returns ordered chronological request flow.
+- [x] **Angular SOC Operations Console (`/soc-operations`):**
+  - Standalone 4-tab interactive operational dashboard with auto-polling (15s).
+  - Enhanced API Security Event Explorer with `SIMULATION RUN ID` and `TENANT ID` filters, attribution drawer context, and correlation trace flow view.
+  - Production bundle generated cleanly (`chunk-5FHQBUJN.js | 37.29 kB`).
+
+---
+
+## 18. Phase 7.3.2.1 Deliverables Checklist (Durable Simulation Runtime Acceptance)
+
+- [x] **Pre-Execution Baseline Capture:**
+  - Audited commit `1073737`, 9/9 healthy Docker containers, Flyway V10 (`security_data`), 0 runs, 2,408 events, Redis stream length 4,438.
+- [x] **Real Java Gateway Simulation Execution:**
+  - Triggered `TPL-BENIGN-WORKDAY` via authenticated REST API (`POST /api/v1/simulation/runs`) using Keycloak Bearer token.
+  - Dispatched 12 actual HTTP requests via `DefaultSimulationHttpDispatcher` through gateway perimeter security.
+  - Run completed successfully (`runId: SIM-RUN-2fc8788a`, status: `COMPLETED`, 3 stages, duration 3,472 ms).
+- [x] **PostgreSQL Persistence Audit:**
+  - Verified exactly 1 new run in `security_data.simulation_runs` matching gateway response.
+  - Verified 3 stages in `security_data.simulation_run_stages` with exact request counts (5, 4, 3 = 12 total) and assertion JSON.
+- [x] **Telemetry Attribution Verification:**
+  - Verified all 12 events in `security_data.api_events` contain `simulation_run_id`, `simulation_campaign_id`, `simulation_scenario_id`, `simulation_stage`, `tenant_id`, `service_name`, and unique `correlation_id`.
+  - Traced events via SOC Event Explorer API and Correlation Trace API with 200 OK.
+- [x] **Gateway Restart Survival:**
+  - Restarted gateway container (`docker restart aegis-gateway-1`).
+  - Successfully retrieved completed run and 3 stages via `GET /api/v1/simulation/runs/{runId}` and `listRuns`.
+  - Confirmed 12 attributed events remain unchanged in PostgreSQL.
+- [x] **Crash Recovery Under Mid-Flight Failure:**
+  - Triggered `TPL-LOW-SLOW-STEALTH` (`runId: SIM-RUN-b8345090`) and abruptly killed container (`docker kill aegis-gateway-1`) while actively running.
+  - Verified pre-restart database captured `RUNNING` status with abandoned heartbeat.
+  - Restarted container; `@PostConstruct initCrashRecovery()` automatically reconciled run to `INTERRUPTED` with `stop_reason = 'Gateway restart / ungraceful termination detected'`.
+  - Confirmed partial stages were **not falsely marked as completed** (0 stage rows in DB).
+- [x] **Zero Historical Data Destruction:**
+  - Confirmed 2,447 total events, 1,947 evidence records, 7 incidents, 2 campaigns, 8,273 decisions preserved.
+
 
 
 
