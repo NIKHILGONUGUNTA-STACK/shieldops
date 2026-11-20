@@ -283,10 +283,18 @@ public class SocOperationsService {
         RedisMetrics redisMetrics = collectRedisMetrics();
 
         // 4. Telemetry Pipeline Metrics
-        long totalEvents = apiEventRepository.count();
-        long eventsLastHour = apiEventRepository.countEventsSince(now.minus(1, ChronoUnit.HOURS));
-        Optional<Instant> latestEvent = apiEventRepository.findLatestEventTimestamp();
-        long freshnessSeconds = latestEvent.map(i -> Math.max(0, Duration.between(i, now).toSeconds())).orElse(-1L);
+        long totalEvents = 0;
+        long eventsLastHour = 0;
+        Optional<Instant> latestEvent = Optional.empty();
+        long freshnessSeconds = -1L;
+        try {
+            totalEvents = apiEventRepository.count();
+            eventsLastHour = apiEventRepository.countEventsSince(now.minus(1, ChronoUnit.HOURS));
+            latestEvent = apiEventRepository.findLatestEventTimestamp();
+            freshnessSeconds = latestEvent.map(i -> Math.max(0, Duration.between(i, now).toSeconds())).orElse(-1L);
+        } catch (Exception e) {
+            log.warn("Unable to query telemetry pipeline metrics from database: {}", e.getMessage());
+        }
 
         long failureCount = 0;
         if (meterRegistry.isPresent()) {
@@ -304,7 +312,9 @@ public class SocOperationsService {
             failureCount
         );
 
-        String gatewayStatus = ("CONNECTED".equals(dbMetrics.status())) ? "HEALTHY" : "DEGRADED";
+        boolean dbHealthy = "CONNECTED".equals(dbMetrics.status());
+        boolean redisHealthy = "CONNECTED".equals(redisMetrics.status());
+        String gatewayStatus = (dbHealthy && redisHealthy) ? "HEALTHY" : "DEGRADED";
 
         return new InfrastructureObservabilityResponse(
             now,

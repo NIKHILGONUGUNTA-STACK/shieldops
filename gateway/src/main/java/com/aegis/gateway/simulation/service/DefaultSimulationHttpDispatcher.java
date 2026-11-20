@@ -49,7 +49,7 @@ public class DefaultSimulationHttpDispatcher implements SimulationHttpDispatcher
             }
 
             int port = uri.getPort();
-            if (port != -1 && port != 8000) {
+            if (port != 8000) {
                 log.warn("Safety invariant violation: simulation target must be on port 8000, received port='{}'", port);
                 return new DispatchResult(400, 0, 0, Map.of(), "Target port must be 8000");
             }

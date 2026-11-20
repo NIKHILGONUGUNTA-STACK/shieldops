@@ -257,6 +257,16 @@ public class IncidentRepository {
 
     @Transactional
     public void saveEvidence(DetectionEvidence ev) {
+        if (ev == null || ev.id() == null) return;
+        Integer count = jdbcClient.sql("SELECT COUNT(*) FROM security_data.detection_evidence WHERE id = :id")
+            .param("id", ev.id())
+            .query(Integer.class)
+            .single();
+        if (count != null && count > 0) {
+            log.debug("Evidence {} already persisted (duplicate ignored)", ev.id());
+            return;
+        }
+
         String eventIdsStr = ev.contributingEventIds() != null
             ? ev.contributingEventIds().stream().map(UUID::toString).collect(Collectors.joining(","))
             : "";
@@ -294,6 +304,15 @@ public class IncidentRepository {
 
     @Transactional
     public void saveStatusHistory(IncidentStatusHistory hist) {
+        if (hist == null || hist.id() == null) return;
+        Integer count = jdbcClient.sql("SELECT COUNT(*) FROM security_data.incident_status_history WHERE id = :id")
+            .param("id", hist.id())
+            .query(Integer.class)
+            .single();
+        if (count != null && count > 0) {
+            return;
+        }
+
         String sql = """
             INSERT INTO security_data.incident_status_history (
                 id, incident_id, previous_status, new_status, changed_by,

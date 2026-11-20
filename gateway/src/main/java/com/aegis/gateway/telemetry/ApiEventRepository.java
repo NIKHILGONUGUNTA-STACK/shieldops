@@ -25,7 +25,19 @@ public class ApiEventRepository {
 
     @Transactional
     public void save(ApiEvent e) {
+        if (e == null || e.id() == null) {
+            return;
+        }
         try {
+            Integer count = jdbcClient.sql("SELECT COUNT(*) FROM security_data.api_events WHERE id = :id")
+                .param("id", e.id())
+                .query(Integer.class)
+                .single();
+            if (count != null && count > 0) {
+                log.debug("Event {} already persisted (duplicate key ignored)", e.id());
+                return;
+            }
+
             jdbcClient.sql("""
                 INSERT INTO security_data.api_events (
                     id, correlation_id, timestamp, source_ip, http_method,

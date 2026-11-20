@@ -601,9 +601,9 @@ public class SimulationExecutionService {
             );
         }
 
-        int duration = raw.durationSeconds() != null ? Math.min(raw.durationSeconds(), MAX_DURATION_SECONDS) : 60;
-        double rate = raw.requestRate() != null ? Math.min(raw.requestRate(), MAX_REQUEST_RATE) : 5.0;
-        int concurrency = raw.concurrency() != null ? Math.min(raw.concurrency(), MAX_CONCURRENCY) : 2;
+        int duration = raw.durationSeconds() != null ? Math.max(1, Math.min(raw.durationSeconds(), MAX_DURATION_SECONDS)) : 60;
+        double rate = raw.requestRate() != null ? Math.max(0.1, Math.min(raw.requestRate(), MAX_REQUEST_RATE)) : 5.0;
+        int concurrency = raw.concurrency() != null ? Math.max(1, Math.min(raw.concurrency(), MAX_CONCURRENCY)) : 2;
         String mix = raw.trafficMix() != null ? raw.trafficMix() : "SEQUENTIAL";
         long seed = raw.deterministicSeed() != null ? raw.deterministicSeed() : 42L;
 

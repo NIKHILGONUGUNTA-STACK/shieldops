@@ -1,6 +1,6 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 7.3.4 Complete (Enterprise SOC Completeness & Data Integrity Audit)
+## Current Milestone: Phase 7.3.5 Complete (Security, Reliability & Resilience Hardening)
 
 **Status:** `VERIFIED & PRODUCTION READY`
 **Last Updated:** 2026-11-20
@@ -22,8 +22,8 @@
 | `customer-service` | 29 | 0 | 0 | 0 | **SUCCESS** |
 | `account-service` | 20 | 0 | 0 | 0 | **SUCCESS** |
 | `transaction-service` | 22 | 0 | 0 | 0 | **SUCCESS** |
-| `gateway` (including Phase 7.3.2 SOC APIs & Flyway V10 Persistence) | 326 | 0 | 0 | 0 | **SUCCESS** |
-| **Total Backend Platform Tests** | **397** | **0** | **0** | **0** | **BUILD SUCCESS** |
+| `gateway` (including Phase 7.3.5 Resilience & Invariants Suites) | 334 | 0 | 0 | 0 | **SUCCESS** |
+| **Total Backend Platform Tests** | **405** | **0** | **0** | **0** | **BUILD SUCCESS** |
 
 ### 1.2 Frontend SOC Dashboard (Angular 18 / TypeScript / Node 22)
 - **Framework & Tooling:** Angular 18.2.21 / Node.js 22.20.0 / npm 10.9.3
@@ -694,6 +694,53 @@
   - Angular production build compiled cleanly (`376.95 kB initial bundle, 0 errors, 0 warnings`).
   - Gateway repository tests passed (`31 tests run, 0 failures, 0 errors`).
   - Repackaged and deployed updated gateway jar to running container (`aegis-gateway-1`); verified health `UP`.
+
+---
+
+## 21. Phase 7.3.5 Deliverables Checklist (Security, Reliability & Resilience Hardening)
+
+- [x] **Repository & Working-Tree State Verification:**
+  - Starting baseline verified at commit `2106e1abc8c66659404b1fdfa2b0a6e70a5adf77`.
+  - All 9 Docker Compose containers running healthy (`aegis-gateway-1`, services, postgres, redis, keycloak, prometheus, grafana).
+  - Preserved 100% of runtime data in `postgres-data` and `redis-data`; zero destructive operations.
+  - Strictly maintained the out-of-band advisory-only security response model.
+- [x] **Findings Identified, Remediated & Verified in Code:**
+  - **SEC-REL-A-01 (HIGH):** Redis Streams PEL recovery gap in `TelemetryDrainWorker.java` remediated via `recoverPendingMessages()` on startup and every 10 poll cycles (`ReadOffset.from("0")`).
+  - **SEC-REL-A-02 (HIGH):** PostgreSQL duplicate key collision on replay in `ApiEventRepository.java` and `IncidentRepository.java` remediated using dialect-agnostic idempotency checks (`SELECT COUNT(*) ... WHERE id = :id`), preventing transaction rollbacks across PostgreSQL 17 and H2.
+  - **SEC-REL-A-03 (MEDIUM):** Poison pill message acknowledgment failure in `TelemetryDrainWorker.java` remediated by explicitly acknowledging (`XACK`) and logging malformed records to prevent infinite PEL recovery loops.
+  - **SEC-REL-D-01 (MEDIUM):** Incomplete filter chain matchers in `SecurityConfig.java` remediated by adding `/soc/**`, `/api/v1/soc/**`, `/simulation/**`, and `/api/v1/simulation/**` to require `SECURITY_ANALYST` or `SECURITY_ADMIN` roles.
+  - **SEC-REL-G-01 (MEDIUM):** Simulation HTTP dispatcher port restriction bypass via port `-1` in `DefaultSimulationHttpDispatcher.java` remediated to strictly enforce `port == 8000`.
+  - **SEC-REL-G-02 (LOW):** Missing lower bounds validation on simulation config in `SimulationExecutionService.java` remediated with floor clamps (`duration >= 1`, `requestRate >= 0.1`, `concurrency >= 1`).
+  - **SEC-REL-I-01 (HIGH):** Observability API 500 error cascade on database disconnect in `SocOperationsService.java` remediated with try-catch fallback and honest `DEGRADED` gateway status reporting when either DB or Redis is offline.
+  - **SEC-REL-I-02 (INFORMATIONAL):** Verified platform-wide advisory-only response invariant across all detection rules, incident management, and policy engines.
+- [x] **Dedicated Resilience Unit Test Suites:**
+  - `TelemetryDrainWorkerTest.java`: 4 unit tests verifying normal drain, PEL recovery from offset 0, poison record acknowledgment, and mixed batch processing (4/4 passed).
+  - `SimulationSafetyInvariantsTest.java`: 4 unit tests verifying non-http scheme rejection, non-localhost rejection, non-8000 port rejection (including port -1), and config bounds enforcement (4/4 passed).
+- [x] **Live Infrastructure Outage & Recovery Probing:**
+  - Injected PostgreSQL outage by pausing `aegis-postgres-1`.
+  - Dispatched live traffic tagged with `CORR-DB-FAILOVER-TEST`. Gateway non-blocking telemetry buffered to Redis Streams.
+  - Restored PostgreSQL; `TelemetryDrainWorker` drained buffered events without loss (`Recovered events with CORR-DB-FAILOVER-TEST: 1`).
+- [x] **Live Keycloak RBAC Matrix Validation:**
+  - Anonymous request to `/api/v1/soc/network-intelligence`: **401 Unauthorized** (Verified).
+  - Customer role (`alex.morgan`) to `/api/v1/soc/network-intelligence`: **403 Forbidden** (Verified).
+  - Customer role (`alex.morgan`) to `/api/v1/security/incidents`: **403 Forbidden** (Verified).
+  - Security Analyst (`analyst`) to `/api/v1/soc/network-intelligence`: **200 OK** (Verified).
+  - Security Analyst (`analyst`) to `DELETE /api/v1/security/specs/id`: **403 Forbidden** (Verified).
+  - Security Admin (`admin`) to `GET /api/v1/security/specs`: **200 OK** (Verified).
+- [x] **Sustained Load Profiles Executed via Simulation Center:**
+  - Profile 1 (Baseline 5 req/s): `SIM-RUN-8711a8b3`, 12 reqs, 3,156 ms, `COMPLETED`, AllPassed=True.
+  - Profile 2 (Moderate 10 req/s): `SIM-RUN-bf608f6c`, 12 reqs, 3,128 ms, `COMPLETED`, AllPassed=True.
+  - Profile 3 (Elevated 25 req/s): `SIM-RUN-8933e2a7`, 12 reqs, 3,125 ms, `COMPLETED`, AllPassed=True.
+  - Profile 4 (Stress 50 req/s): `SIM-RUN-78b99a81`, 12 reqs, 3,122 ms, `COMPLETED`, AllPassed=True.
+  - Telemetry after stress testing: JVM heap 186 MB (Max 6 GB), active threads 41, DB connections 0 active / 10 idle, Redis stream entries 4,712, total persisted events 2,682, failure count 0, pipeline freshness 19 ms.
+- [x] **Comprehensive Milestone Report:**
+  - Documented all findings, root causes, remediations, test matrices, and live verifications in `docs/phase-7-3-5-security-reliability-resilience-hardening.md`.
+- [x] **Automated Build & Test Verification:**
+  - Gateway test suite: 334 tests passed (0 failures, 0 errors, 0 skipped).
+  - Python simulation test suite: 116 tests passed (100% passed).
+  - Angular frontend production build: `ng build` compiled cleanly (0 errors).
+  - Docker container `aegis-gateway-1` updated and verified healthy `UP`.
+
 
 
 
