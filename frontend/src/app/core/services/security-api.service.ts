@@ -87,8 +87,32 @@ export class SecurityApiService {
    */
   getOverview(windowHours = 24): Observable<SecurityOverview> {
     const params = new HttpParams().set('windowHours', windowHours.toString());
-    return this.http.get<SecurityOverview>(`${this.baseUrl}/api/v1/security/overview`, { params })
-      .pipe(catchError(this.handleError));
+    return this.http.get<any>(`${this.baseUrl}/api/v1/security/overview`, { params })
+      .pipe(
+        map(res => {
+          const overview: SecurityOverview = {
+            totalEvents24h: res?.totalEvents ?? res?.totalEvents24h ?? 0,
+            totalAnomalies24h: res?.totalAnomalies ?? res?.totalAnomalies24h ?? 0,
+            activeIncidentsCount: res?.openIncidents ?? res?.activeIncidentsCount ?? 0,
+            incidentsBySeverity: res?.incidentsBySeverity || {},
+            incidentsByCategory: res?.incidentsByCategory || {},
+            recentIncidents: (res?.recentIncidents || []).map((inc: any) => ({
+              ...inc,
+              eventCount: inc.eventCount ?? 1
+            })),
+            topRulesTriggered: (res?.topTriggeredRules || res?.topRulesTriggered || []).map((r: any) => ({
+              ruleId: r.ruleId,
+              count: r.triggerCount ?? r.count ?? 0
+            })),
+            eventVolumeTrend: (res?.timeSeriesTrend || res?.eventVolumeTrend || []).map((b: any) => ({
+              bucketTime: b.timestampBucket ?? b.bucketTime ?? '',
+              eventCount: b.totalCount ?? b.eventCount ?? 0
+            }))
+          };
+          return overview;
+        }),
+        catchError(this.handleError)
+      );
   }
 
   /**
@@ -184,8 +208,15 @@ export class SecurityApiService {
    * Retrieves contextual correlation evidence for an incident.
    */
   getIncidentEvidence(id: string): Observable<EvidenceResponse[]> {
-    return this.http.get<EvidenceResponse[]>(`${this.baseUrl}/api/v1/security/incidents/${encodeURIComponent(id)}/evidence`)
-      .pipe(catchError(this.handleError));
+    return this.http.get<any[]>(`${this.baseUrl}/api/v1/security/incidents/${encodeURIComponent(id)}/evidence`)
+      .pipe(
+        map(list => (list || []).map(ev => ({
+          ...ev,
+          distinctResourcesCount: ev.distinctResourcesCount ?? ev.distinctResources ?? 0,
+          distinctResources: ev.distinctResources ?? ev.distinctResourcesCount ?? 0
+        }))),
+        catchError(this.handleError)
+      );
   }
 
   /**
@@ -537,10 +568,18 @@ export class SecurityApiService {
   getSensitiveDataSummary(service?: string): Observable<SensitiveDataInventorySummary> {
     let httpParams = new HttpParams();
     if (service) httpParams = httpParams.set('service', service);
-    return this.http.get<SensitiveDataInventorySummary>(
+    return this.http.get<any>(
       `${this.baseUrl}/api/v1/security/classification/summary`,
       { params: httpParams }
-    ).pipe(catchError(this.handleError));
+    ).pipe(
+      map(res => ({
+        ...res,
+        totalDiscoveredFields: res?.totalFields ?? res?.totalDiscoveredFields ?? 0,
+        sensitivityBreakdown: res?.countsBySensitivity ?? res?.sensitivityBreakdown ?? {},
+        generatedAt: res?.evaluatedAt ?? res?.generatedAt ?? ''
+      })),
+      catchError(this.handleError)
+    );
   }
 
   /**

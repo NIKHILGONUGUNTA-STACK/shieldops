@@ -285,7 +285,7 @@ export class SystemHealthComponent implements OnInit {
     {
       id: 'postgres',
       name: 'PostgreSQL 17 Tier',
-      service: 'Flyway V3 Migration',
+      service: 'Flyway V10 Migration',
       status: 'CHECKING',
       endpoint: '127.0.0.1:5433 (Schema: security_data)',
       details: 'Persisted telemetry records, security incidents, evidence graphs, and status history logs.',

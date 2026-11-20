@@ -147,12 +147,13 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
               class="form-select"
             >
               <option value="">All Telemetry</option>
-              <option value="BOLA_VIOLATION">BOLA Violation</option>
-              <option value="AUTH_FAILURE">Auth Failure</option>
-              <option value="DATA_EXCESS">Data Excess</option>
-              <option value="RATE_BURST">Rate Burst</option>
-              <option value="PROBE">Probe</option>
-              <option value="INJECTION">Injection</option>
+              <option value="UNAUTHENTICATED_ACCESS">Unauthenticated Access (401)</option>
+              <option value="FORBIDDEN_ATTEMPT">Forbidden Attempt / BOLA (403)</option>
+              <option value="SERVER_ERROR">Server Error (5xx)</option>
+              <option value="INJECTION_INDICATOR">Injection Indicator</option>
+              <option value="VALIDATION_ERROR">Validation Error (400)</option>
+              <option value="AUTH_FAILURE">Auth Failure (401 / 403)</option>
+              <option value="NONE">Normal Traffic (NONE)</option>
             </select>
           </div>
 

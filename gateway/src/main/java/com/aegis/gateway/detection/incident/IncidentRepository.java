@@ -110,8 +110,12 @@ public class IncidentRepository {
             params.put("severity", severity.toUpperCase().trim());
         }
         if (threatCategory != null && !threatCategory.isBlank()) {
+            String cat = threatCategory.toUpperCase().trim();
+            if ("AUTH_ANOMALY".equals(cat)) {
+                cat = "CREDENTIAL_ACCESS";
+            }
             whereClause.append(" AND threat_category = :threatCategory");
-            params.put("threatCategory", threatCategory.toUpperCase().trim());
+            params.put("threatCategory", cat);
         }
         if (targetEntityType != null && !targetEntityType.isBlank()) {
             whereClause.append(" AND target_entity_type = :targetEntityType");

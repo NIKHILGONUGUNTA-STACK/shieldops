@@ -80,7 +80,8 @@ export interface EvidenceResponse {
   confidenceScore: number;
   severity: IncidentSeverity;
   triggerCondition: string;
-  distinctResourcesCount: number;
+  distinctResourcesCount?: number;
+  distinctResources?: number;
   contributingEventIds: string[];
   mitreTechnique: string;
   createdAt: string;

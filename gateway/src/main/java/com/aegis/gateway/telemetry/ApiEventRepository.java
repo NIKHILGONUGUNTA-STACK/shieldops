@@ -172,8 +172,15 @@ public class ApiEventRepository {
             params.put("sourceIp", sourceIp.trim());
         }
         if (anomalyFlags != null && !anomalyFlags.isBlank()) {
-            whereClause.append(" AND anomaly_flags LIKE :anomalyFlags");
-            params.put("anomalyFlags", "%" + anomalyFlags.trim() + "%");
+            String trimmed = anomalyFlags.trim();
+            if ("true".equalsIgnoreCase(trimmed) || "ANOMALY".equalsIgnoreCase(trimmed) || "ANOMALIES_ONLY".equalsIgnoreCase(trimmed)) {
+                whereClause.append(" AND anomaly_flags <> 'NONE' AND anomaly_flags IS NOT NULL");
+            } else if ("AUTH_FAILURE".equalsIgnoreCase(trimmed)) {
+                whereClause.append(" AND (anomaly_flags LIKE '%UNAUTHENTICATED%' OR anomaly_flags LIKE '%FORBIDDEN%')");
+            } else {
+                whereClause.append(" AND anomaly_flags LIKE :anomalyFlags");
+                params.put("anomalyFlags", "%" + trimmed + "%");
+            }
         }
         if (resourceType != null && !resourceType.isBlank()) {
             whereClause.append(" AND resource_type = :resourceType");

@@ -237,7 +237,7 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
                   <span class="attacker-ip mono">{{ inc.targetEntityValue }}</span>
                   <span class="cloud-pill mono">{{ inc.threatCategory }}</span>
                 </div>
-                <div class="attacker-hits mono font-semibold">{{ inc.eventCount }}</div>
+                <div class="attacker-hits mono font-semibold">{{ inc.eventCount || 1 }}</div>
               </div>
             </div>
 
@@ -1023,7 +1023,8 @@ export class OverviewComponent implements OnInit {
     const map = new Map<string, number>();
     for (const inc of data.recentIncidents) {
       const target = inc.targetEntityValue || inc.threatCategory;
-      map.set(target, (map.get(target) || 0) + inc.eventCount);
+      const count = inc.eventCount || 1;
+      map.set(target, (map.get(target) || 0) + count);
     }
     return Array.from(map.entries()).map(([name, hits]) => ({ name, hits }));
   }

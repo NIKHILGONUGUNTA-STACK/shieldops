@@ -108,7 +108,7 @@ import { catchError } from 'rxjs/operators';
                 </div>
               </td>
               <td class="condition-cell" [title]="ev.triggerCondition">{{ ev.triggerCondition }}</td>
-              <td class="mono font-semibold">{{ ev.distinctResourcesCount }}</td>
+              <td class="mono font-semibold">{{ ev.distinctResourcesCount ?? ev.distinctResources ?? 0 }}</td>
               <td>
                 <div class="event-chips-list">
                   <a

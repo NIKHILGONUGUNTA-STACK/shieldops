@@ -95,13 +95,15 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
               class="form-select"
             >
               <option value="">All Categories</option>
+              <option value="COMPLEX_INTRUSION">Complex Intrusion</option>
+              <option value="CREDENTIAL_ACCESS">Credential Access</option>
+              <option value="API_SECURITY_VIOLATION">API Security Violation</option>
               <option value="BOLA">BOLA (Broken Object Level Auth)</option>
               <option value="AUTH_ANOMALY">Authentication Anomaly</option>
               <option value="DATA_EXFILTRATION">Excessive Data Access</option>
               <option value="RATE_BURST">Request Rate Burst</option>
               <option value="RECON_PROBE">Reconnaissance Probe</option>
               <option value="INJECTION_ATTEMPT">Injection Indicator</option>
-              <option value="COMPLEX_INTRUSION">Complex Intrusion</option>
               <option value="MULTI_VECTOR_CAMPAIGN">Multi-Vector Campaign</option>
             </select>
           </div>
