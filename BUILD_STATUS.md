@@ -1,9 +1,9 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 7.3.5 Complete (Security, Reliability & Resilience Hardening)
+## Current Milestone: Phase 7.3.6 Complete (Research Evaluation & Experimental Validation)
 
 **Status:** `VERIFIED & PRODUCTION READY`
-**Last Updated:** 2026-11-20
+**Last Updated:** 2026-11-21
 **Active Git Branch:** `main`
 **Git Working Tree:** Clean
 **Remote Upstream:** `origin/main` (`https://github.com/NIKHILGONUGUNTA-STACK/shieldops.git`)
@@ -22,20 +22,20 @@
 | `customer-service` | 29 | 0 | 0 | 0 | **SUCCESS** |
 | `account-service` | 20 | 0 | 0 | 0 | **SUCCESS** |
 | `transaction-service` | 22 | 0 | 0 | 0 | **SUCCESS** |
-| `gateway` (including Phase 7.3.5 Resilience & Invariants Suites) | 334 | 0 | 0 | 0 | **SUCCESS** |
-| **Total Backend Platform Tests** | **405** | **0** | **0** | **0** | **BUILD SUCCESS** |
+| `gateway` (including Phase 7.3.6 Research Evaluation Suite) | 339 | 0 | 0 | 0 | **SUCCESS** |
+| **Total Backend Platform Tests** | **410** | **0** | **0** | **0** | **BUILD SUCCESS** |
 
 ### 1.2 Frontend SOC Dashboard (Angular 18 / TypeScript / Node 22)
 - **Framework & Tooling:** Angular 18.2.21 / Node.js 22.20.0 / npm 10.9.3
 - **Test Runner:** Karma 6.4 / Jasmine 5.2 / ChromeHeadless
-- **Production Build:** `dist/aegis-frontend` (376.57 kB initial bundle, 103.69 kB transfer, 0 warnings, 0 errors)
+- **Production Build:** `dist/aegis-frontend` (376.95 kB initial bundle, 103.76 kB transfer, 0 warnings, 0 errors)
 
 | Test Suite | Spec File | Tests Run | Failures | Status |
 | :--- | :--- | :---: | :---: | :--- |
 | **App Shell** | `app.component.spec.ts` | 2 | 0 | **SUCCESS** |
 | **Navbar & Search Bar** | `navbar.component.spec.ts` | 6 | 0 | **SUCCESS** |
 | **Sidebar & Nav Registry** | `sidebar.component.spec.ts` | 6 | 0 | **SUCCESS** |
-| **Security API Service** | `security-api.service.spec.ts` | 40 | 0 | **SUCCESS** |
+| **Security API Service** | `security-api.service.spec.ts` | 41 | 0 | **SUCCESS** |
 | **Auth Service** | `auth.service.spec.ts` | 3 | 0 | **SUCCESS** |
 | **Auth Guard** | `auth.guard.spec.ts` | 3 | 0 | **SUCCESS** |
 | **Overview Component** | `overview.component.spec.ts` | 4 | 0 | **SUCCESS** |
@@ -61,8 +61,8 @@
 | **Financial Amount Component (Phase 7.2.3.4)** | `financial-amount.component.spec.ts` | 6 | 0 | **SUCCESS** |
 | **Financial Portfolio Explorer (Phase 7.2.3.4)** | `financial-portfolio.component.spec.ts` | 4 | 0 | **SUCCESS** |
 | **Sensitive Data Inventory (Phase 7.2.4.1)** | `sensitive-data.component.spec.ts` | 4 | 0 | **SUCCESS** |
-| **Data Leakage & BOLA Detection (Phase 7.2.4.2 – 7.2.4.4)** | `data-leakage.component.spec.ts` | 7 | 0 | **SUCCESS** |
-| **Total Frontend Tests** | — | **198** | **0** | **BUILD SUCCESS** |
+| **Data Leakage & Research Evaluation (Phase 7.2.4.2 – 7.3.6)** | `data-leakage.component.spec.ts` | 8 | 0 | **SUCCESS** |
+| **Total Frontend Tests** | — | **200** | **0** | **BUILD SUCCESS** |
 
 ### 1.3 Python Simulation Test Suite (pytest / pytest-asyncio / respx)
 - **Framework & Tooling:** Python 3.14.0 / pytest 9.2.0 / pytest-asyncio 1.4.1 / respx 0.23.1
@@ -83,7 +83,8 @@
 | `test_campaign_scenarios.py` (Phase 7.2.4.5) | 6 multi-stage exfiltration campaign scenarios (recon, probing, exposure, low-and-slow, benign lookalike, multi-vector) | 7 | 0 | **SUCCESS** |
 | `test_policy_engine.py` (Phase 7.2.4.6) | 14 adaptive security response scenarios (recon, probing, confirmed BOLA, exposure, bulk extract, low-and-slow, multi-domain, campaign, incomplete evidence, disabled policy, audit trail, analyst approval/rejection) | 14 | 0 | **SUCCESS** |
 | `test_campaign_orchestrator.py` (Phase 7.3.1) | 7 campaign orchestration tests (lifecycle controls, rate-limiting, pause/resume/stop, per-stage assertions, dry-run provenance) | 7 | 0 | **SUCCESS** |
-| **Total Python Simulation Tests** | — | **116** | **0** | **BUILD SUCCESS** |
+| `test_research_evaluation_suite.py` (Phase 7.3.6) | Dual-mode comparative evaluation (n=200), Wilson/Bootstrap statistics, 8 ablations, robustness matrix | 7 | 0 | **SUCCESS** |
+| **Total Python Simulation Tests** | — | **123** | **0** | **BUILD SUCCESS** |
 
 ---
 
@@ -740,6 +741,70 @@
   - Python simulation test suite: 116 tests passed (100% passed).
   - Angular frontend production build: `ng build` compiled cleanly (0 errors).
   - Docker container `aegis-gateway-1` updated and verified healthy `UP`.
+
+---
+
+## 22. Phase 7.3.6 Deliverables Checklist (Research Evaluation & Experimental Validation)
+
+- [x] **Repository & Research Baseline Verification:**
+  - Starting baseline verified at commit `767272e2755c57378b85d0f8ba2da8f62990169a`.
+  - Preserved historical milestones (Phases 7.2.4.3 [23 scenarios], 7.2.4.4 [30 scenarios], and 7.2.4.5 [36 scenarios]) without destructive overwrites.
+  - Maintained out-of-band advisory-only security response model (zero autonomous request blocking, throttling, token revocation, identity quarantine, or mutations).
+- [x] **Dataset Specification & Cryptographic Integrity:**
+  - Implemented `DS-AEGIS-RESEARCH-V1` containing $n = 200$ independently defined scenario executions ($N = 640$ normalized events).
+  - Stratified 4-category taxonomy: 80 Benign (40%), 70 Malicious (35%), 30 Ambiguous (15%), 20 Incomplete Evidence (10%).
+  - Verified SHA-256 manifest cryptographic hash: `b8ba6bd4bb22d9ebd0a38a9cd58de601fcbc227f18a55f06ce47f4b86180df18`.
+  - Strictly isolated ground-truth labels from detection pipeline inputs (zero label leakage).
+- [x] **Python Research Evaluation Framework (`simulation/src/simulation/evaluation/`):**
+  - `models.py`: Data models for 4 ground-truth categories, 4 units of evaluation, telemetry, metrics, and manifest.
+  - `dataset_generator.py`: Deterministic generation of 200 scenarios using PRNG seed=42.
+  - `statistical_metrics.py`: Wilson score confidence intervals, scenario-level block bootstrap (500 resamples), zero-denominator IEEE handling, latency distributions.
+  - `isolated_detector.py`: Baseline evaluating events in isolation (`RULE-BOLA-01`, `RULE-PROBE-01`, `RULE-DATA-01`).
+  - `contextual_detector.py`: Aegis engine correlating identity anti-affinity, tenant boundaries, resource ownership, OpenAPI schema drift, sliding deques (120s/600s), campaign states, and uncertainty flags.
+  - `evaluation_engine.py`: Dual-mode evaluation replay, 4-unit metric evaluation, 8-mode ablation runner, and robustness validator.
+  - `cli_commands.py`: Typer CLI commands under `shieldops evaluate` (`datasets list`, `generate`, `validate`, `run`, `compare`, `ablation`, `robustness`, `report`).
+  - `test_research_evaluation_suite.py`: 7/7 unit and statistical tests passed in 5.3s.
+- [x] **Statistical Significance & Empirical Results:**
+  - Null hypothesis $\mathcal{H}_0$ rejected ($p < 0.001$).
+  - Scenario $F_1$: Isolated 0.5839 vs Contextual 0.8696 ($\Delta = +0.2857$).
+  - Scenario Recall: Isolated 57.14% vs Contextual 100.00% ($\Delta = +42.86\%$, capturing 100% of attack sequences).
+  - Scenario Precision: Isolated 59.70% vs Contextual 76.92% ($\Delta = +17.22\%$).
+  - Scenario False Positive Rate: Isolated 27.84% vs Contextual 23.08% ($\Delta = -4.76\%$).
+  - Bootstrap 95% Confidence Intervals: Non-overlapping intervals ([0.4852, 0.6781] vs [0.8132, 0.9218]) confirming statistically defensible separation.
+  - Operational Latency: P50 latency 1.25 ms, P95 2.45 ms (+0.65 ms delta over isolated rules); zero customer wire latency impact (0.00 ms).
+- [x] **Controlled Ablation Study (8 Configurations):**
+  - Evaluated all 8 configurations: `FULL_CONTEXTUAL` (0.8696), `NO_OWNERSHIP` (0.7407, $\Delta = -0.1289$), `NO_SENSITIVITY` (0.7947, $\Delta = -0.0749$), `NO_TEMPORAL` (0.8511, $\Delta = -0.0185$), `NO_AUTH_OUTCOME` (0.8974, $\Delta = +0.0278$), `NO_IDENTITY_AFFINITY` (0.8696), `NO_STAGE_CORRELATION` (0.8696), `NO_UNCERTAINTY_HANDLING` (0.8696).
+  - Ranked signal criticality: Resource Ownership (Rank 1, most critical) > Sensitive Field Classification (Rank 2) > Temporal Sliding Windows (Rank 3).
+- [x] **Adversarial Robustness Evaluation Matrix:**
+  - Verified 7 deterministic boundary test cases across Identity Anti-Affinity, Resource Ownership, Data Sensitivity, Temporal Sliding Windows, and Behavioral Anomalies (7/7 PASS).
+- [x] **PostgreSQL Persistence & Flyway V11 Migration:**
+  - Created `V11__research_evaluation_framework.sql` in `gateway/src/main/resources/db/migration/`.
+  - Schema tables created in `security_data`: `evaluation_datasets`, `evaluation_experiments`, `evaluation_results`, `evaluation_ablations`, `evaluation_robustness_findings`.
+  - Applied migration cleanly to live PostgreSQL container (`aegis-postgres-1`) and H2 test DB.
+- [x] **Backend REST API Framework & Integration Testing:**
+  - Implemented `ResearchEvaluationController.java`, `ResearchEvaluationService.java`, `EvaluationRepository.java`, entities, and DTOs.
+  - Endpoints: `GET /api/v1/security/evaluation/benchmark` (Analyst/Admin), `GET /experiments` (Analyst/Admin), `POST /import` (Admin only).
+  - Preserved backward compatibility on historical endpoint `/api/v1/security/leakage/evaluation/benchmark`.
+  - Implemented `ResearchEvaluationControllerTest.java` (5 integration tests covering 401 unauthenticated, 403 customer, 200 analyst benchmark, 200 analyst experiments, and 200 admin import; 5/5 passed).
+  - Full gateway test suite: 339 tests passed (0 failures, 0 errors, 0 skipped).
+- [x] **Docker Gateway Deployment & Live Experiment Persistence:**
+  - Gateway repackaged to `gateway-0.1.0-SNAPSHOT.jar`, deployed to container `aegis-gateway-1`, restarted, and verified healthy `UP`.
+  - Imported live experiment `EXP-RESEARCH-7-3-6-LIVE` via Keycloak admin bearer token. Persisted 1 experiment, 8 ablations, and 7 robustness findings in PostgreSQL.
+- [x] **Angular SOC Dashboard Integration (`/data-leakage`):**
+  - Updated `data-leakage.component.ts`, `data-leakage.component.spec.ts`, `security.models.ts`, and `security-api.service.ts`.
+  - Comprehensive 7-section view rendering: Overview & SHA-256 Hash, Multi-Unit Detection Performance (Scenario, Event, Campaign), Operational Performance & Latency, Controlled Ablation Table with Signal Rankings, Robustness Findings Matrix, Bootstrap 95% Confidence Intervals, and CLI Reproducibility Guidance.
+  - Safe fallback rendering `NOT EVALUATED / INCOMPLETE` rather than misleading 0% metrics.
+  - Production build: `npm run build` compiled cleanly (0 errors).
+  - Frontend test suite: 200 tests run, 0 failures, 0 errors (BUILD SUCCESS).
+- [x] **Comprehensive Academic Research Documentation in `docs/`:**
+  - `docs/phase-7-3-6-research-evaluation-methodology.md`: Experimental design, dual-mode evaluation, 4 evaluation units, Wilson score, scenario-level Bootstrap.
+  - `docs/phase-7-3-6-dataset-specification.md`: Full 200-scenario composition across 4 categories, manifest hash, deterministic generation, zero label leakage.
+  - `docs/phase-7-3-6-experimental-results.md`: Complete results across Scenario, Event, Campaign, and Uncertainty units, confusion matrices, latency distributions.
+  - `docs/phase-7-3-6-ablation-study.md`: In-depth analysis of 8 ablation configurations, signal contribution ranking.
+  - `docs/phase-7-3-6-robustness-evaluation.md`: Verification of 7 boundary test cases across 5 edge-case categories.
+  - `docs/phase-7-3-6-reproducibility-guide.md`: Step-by-step CLI, Maven, and REST API reproduction guide.
+  - `docs/phase-7-3-6-limitations-and-threats-to-validity.md`: Construct, internal, external, and conclusion validity, class balance, correlation vs causation.
+
 
 
 

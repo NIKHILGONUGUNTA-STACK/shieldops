@@ -44,6 +44,7 @@ import {
   DataLeakageRuleInfoResponse,
   DataLeakageFilterParams,
   ComparativeBenchmarkResponse,
+  EvaluationBenchmarkResponse,
   ExtractionAnalyticsResponse,
   CampaignResponse,
   CampaignPageResponse,
@@ -649,6 +650,16 @@ export class SecurityApiService {
   getComparativeBenchmark(): Observable<ComparativeBenchmarkResponse> {
     return this.http.get<ComparativeBenchmarkResponse>(
       `${this.baseUrl}/api/v1/security/leakage/evaluation/benchmark`
+    ).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/evaluation/benchmark
+   * Phase 7.3.6: Retrieves the comprehensive 200-scenario research evaluation benchmark.
+   */
+  getResearchEvaluationBenchmark(): Observable<EvaluationBenchmarkResponse> {
+    return this.http.get<EvaluationBenchmarkResponse>(
+      `${this.baseUrl}/api/v1/security/evaluation/benchmark`
     ).pipe(catchError(this.handleError));
   }
 

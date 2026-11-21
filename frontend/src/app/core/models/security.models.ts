@@ -856,6 +856,39 @@ export interface ComparativeBenchmarkResponse {
 }
 
 // ============================================================================
+// Phase 7.3.6 — Research Evaluation & Experimental Validation Models
+// ============================================================================
+
+export interface AblationResponse {
+  dimension: string;
+  precision: number;
+  recall: number;
+  f1Score: number;
+  falsePositiveRate: number;
+  f1Delta: number;
+}
+
+export interface EvaluationBenchmarkResponse {
+  datasetId: string;
+  datasetVersion: string;
+  manifestHash: string;
+  totalScenarios: number;
+  benignCount: number;
+  maliciousCount: number;
+  ambiguousCount: number;
+  incompleteCount: number;
+  isolatedScenarioMetrics: ModeBenchmarkMetrics;
+  contextualScenarioMetrics: ModeBenchmarkMetrics;
+  isolatedEventMetrics?: ModeBenchmarkMetrics;
+  contextualEventMetrics?: ModeBenchmarkMetrics;
+  isolatedCampaignMetrics?: ModeBenchmarkMetrics;
+  contextualCampaignMetrics?: ModeBenchmarkMetrics;
+  ablationResults: AblationResponse[];
+  robustnessFindings: RobustnessFindingResponse[];
+  executedAt: string;
+}
+
+// ============================================================================
 // Phase 7.2.4.5 — Multi-Stage Exfiltration Campaign Models
 // ============================================================================
 

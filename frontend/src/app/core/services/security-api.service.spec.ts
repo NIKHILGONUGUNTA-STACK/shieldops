@@ -873,6 +873,31 @@ describe('SecurityApiService', () => {
       });
     });
 
+    it('should query getResearchEvaluationBenchmark', () => {
+      service.getResearchEvaluationBenchmark().subscribe(res => {
+        expect(res.totalScenarios).toBe(200);
+        expect(res.datasetId).toBe('DS-AEGIS-RESEARCH-V1');
+      });
+
+      const req = httpTesting.expectOne(`${environment.apiBaseUrl}/api/v1/security/evaluation/benchmark`);
+      expect(req.request.method).toBe('GET');
+      req.flush({
+        datasetId: 'DS-AEGIS-RESEARCH-V1',
+        datasetVersion: '1.0.0',
+        manifestHash: 'b8ba6bd4bb22d9eb',
+        totalScenarios: 200,
+        benignCount: 80,
+        maliciousCount: 70,
+        ambiguousCount: 30,
+        incompleteCount: 20,
+        isolatedScenarioMetrics: { mode: 'ISOLATED_RULES', f1Score: 0.5839 },
+        contextualScenarioMetrics: { mode: 'CONTEXTUAL_CORRELATION', f1Score: 0.8696 },
+        ablationResults: [],
+        robustnessFindings: [],
+        executedAt: '2026-11-21T14:35:00Z'
+      });
+    });
+
     it('should query getExtractionAnalytics', () => {
       service.getExtractionAnalytics().subscribe(res => {
         expect(res.totalExtractionIncidents).toBe(5);

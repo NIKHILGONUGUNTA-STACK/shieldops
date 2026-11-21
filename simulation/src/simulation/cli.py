@@ -39,10 +39,12 @@ app = typer.Typer(
 config_app = typer.Typer(help="Inspect and validate simulation configuration.")
 scenarios_app = typer.Typer(help="Inspect registered simulation scenarios.")
 campaign_app = typer.Typer(help="Orchestrate and execute multi-stage simulation campaigns.")
+from simulation.evaluation.cli_commands import evaluate_app
 
 app.add_typer(config_app, name="config")
 app.add_typer(scenarios_app, name="scenarios")
 app.add_typer(campaign_app, name="campaign")
+app.add_typer(evaluate_app, name="evaluate")
 
 console = Console()
 

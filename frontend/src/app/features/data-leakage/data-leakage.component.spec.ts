@@ -90,8 +90,29 @@ describe('DataLeakageComponent', () => {
       'getDataLeakageEvidence',
       'getDataLeakageRules',
       'getComparativeBenchmark',
+      'getResearchEvaluationBenchmark',
       'getExtractionAnalytics'
     ]);
+
+    const mockResearchBenchmark = {
+      datasetId: 'DS-AEGIS-RESEARCH-V1',
+      datasetVersion: 'v1.0.0',
+      manifestHash: 'b8ba6bd4bb22d9ebd0a38a9cd58de601fcbc227f18a55f06ce47f4b86180df18',
+      totalScenarios: 200,
+      benignCount: 80,
+      maliciousCount: 70,
+      ambiguousCount: 30,
+      incompleteCount: 20,
+      isolatedScenarioMetrics: { mode: 'ISOLATED_RULES', truePositives: 40, falsePositives: 27, trueNegatives: 70, falseNegatives: 30, precision: 0.5970, recall: 0.5714, f1Score: 0.5839, falsePositiveRate: 0.2784 },
+      contextualScenarioMetrics: { mode: 'CONTEXTUAL_CORRELATION', truePositives: 70, falsePositives: 21, trueNegatives: 76, falseNegatives: 0, precision: 0.7692, recall: 1.0, f1Score: 0.8696, falsePositiveRate: 0.2308 },
+      ablationResults: [
+        { dimension: 'FULL_CONTEXTUAL', precision: 0.7692, recall: 1.0, f1Score: 0.8696, falsePositiveRate: 0.2308, f1Delta: 0.0 }
+      ],
+      robustnessFindings: [
+        { testCase: 'Sliding Window', category: 'Boundary', expectedBehavior: '', observedBehavior: '', passed: true, details: '' }
+      ],
+      executedAt: '2026-11-21T12:00:00Z'
+    };
 
     const mockExtractionAnalytics = {
       totalExtractionIncidents: 4,
@@ -130,6 +151,7 @@ describe('DataLeakageComponent', () => {
     mockSecurityApi.getDataLeakageEvidence.and.returnValue(of(mockEvidence));
     mockSecurityApi.getDataLeakageRules.and.returnValue(of(mockRules));
     mockSecurityApi.getComparativeBenchmark.and.returnValue(of(mockBenchmark as any));
+    mockSecurityApi.getResearchEvaluationBenchmark.and.returnValue(of(mockResearchBenchmark as any));
     mockSecurityApi.getExtractionAnalytics.and.returnValue(of(mockExtractionAnalytics as any));
 
     await TestBed.configureTestingModule({
@@ -176,6 +198,12 @@ describe('DataLeakageComponent', () => {
     expect(mockSecurityApi.getComparativeBenchmark).toHaveBeenCalled();
     expect(component.benchmarkData()).not.toBeNull();
     expect(component.benchmarkData()?.datasetSize).toBe(23);
+  });
+
+  it('should load research evaluation benchmark data on refresh', () => {
+    expect(mockSecurityApi.getResearchEvaluationBenchmark).toHaveBeenCalled();
+    expect(component.researchBenchmark()).not.toBeNull();
+    expect(component.researchBenchmark()?.totalScenarios).toBe(200);
   });
 
   it('should switch between incidents and benchmark views', () => {

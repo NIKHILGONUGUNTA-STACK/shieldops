@@ -30,6 +30,7 @@ dev = [
 
 [project.scripts]
 aegis-sim = "simulation.cli:app"
+shieldops = "simulation.cli:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]
