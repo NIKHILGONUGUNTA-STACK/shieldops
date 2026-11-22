@@ -1,0 +1,1817 @@
+{
+  "dataset_id": "DS-AEGIS-RESEARCH-V1.1",
+  "version": "1.1.0",
+  "created_at": "2026-11-22T06:05:42.309946+00:00",
+  "manifest_hash": "83e67d66853de0ca17ad4e94617470df5ea50f62409d7fc857577090138d9f78",
+  "telemetry_hash": "3d407102e0184f4e74294bc639145e3b650c19152f9f932c07e9bc85e52a603d",
+  "ground_truth_hash": "f4610eb2eccee0dbfa51241ac231bd1576f56e9a3be5e5a134e268c9c88d9355",
+  "scenario_definitions_hash": "4984c62c33474e736604da597295bdae2ce7af63e79b6e141a8ba28d1f752c1a",
+  "total_scenarios": 200,
+  "benign_count": 80,
+  "malicious_count": 70,
+  "ambiguous_count": 30,
+  "incomplete_count": 20,
+  "scenarios": [],
+  "scenario_definitions": [
+    {
+      "scenario_id": "scen-5a7f5b99",
+      "seed": 654816,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-ecbe6319",
+      "seed": 838797,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 3,
+      "duration_seconds": 6.0
+    },
+    {
+      "scenario_id": "scen-a07a12a3",
+      "seed": 158655,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.8
+    },
+    {
+      "scenario_id": "scen-79ea5ba4",
+      "seed": 905934,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-8ccd2ad0",
+      "seed": 802729,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 2.4
+    },
+    {
+      "scenario_id": "scen-ae89d591",
+      "seed": 711878,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 2,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-8d3ce98e",
+      "seed": 816751,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-3e0a0b34",
+      "seed": 338968,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 2,
+      "duration_seconds": 3.0
+    },
+    {
+      "scenario_id": "scen-5dcd8295",
+      "seed": 900581,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 1.0
+    },
+    {
+      "scenario_id": "scen-4e75d1fe",
+      "seed": 195325,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-cad23972",
+      "seed": 356702,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.8
+    },
+    {
+      "scenario_id": "scen-9b1cb2f7",
+      "seed": 169403,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 5,
+      "duration_seconds": 14.0
+    },
+    {
+      "scenario_id": "scen-b7b5e557",
+      "seed": 407419,
+      "num_requests": 4,
+      "num_identities": 4,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.2
+    },
+    {
+      "scenario_id": "scen-973cee21",
+      "seed": 678856,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 3,
+      "duration_seconds": 6.0
+    },
+    {
+      "scenario_id": "scen-1ba81a0e",
+      "seed": 182627,
+      "num_requests": 6,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 5.0
+    },
+    {
+      "scenario_id": "scen-5e8dd8e7",
+      "seed": 301629,
+      "num_requests": 6,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 5.0
+    },
+    {
+      "scenario_id": "scen-117efc18",
+      "seed": 779514,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.8
+    },
+    {
+      "scenario_id": "scen-efbccda0",
+      "seed": 103402,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-5fdcdaa9",
+      "seed": 814825,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-ef0aa0f2",
+      "seed": 488162,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.8
+    },
+    {
+      "scenario_id": "scen-d7c369e9",
+      "seed": 379786,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-521676a2",
+      "seed": 832052,
+      "num_requests": 6,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 5.0
+    },
+    {
+      "scenario_id": "scen-8cb0a747",
+      "seed": 974628,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 3.6
+    },
+    {
+      "scenario_id": "scen-8a0716cc",
+      "seed": 376183,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-c9169356",
+      "seed": 632342,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-4bd5584a",
+      "seed": 340174,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 5,
+      "duration_seconds": 14.0
+    },
+    {
+      "scenario_id": "scen-7851578b",
+      "seed": 731262,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 1.0
+    },
+    {
+      "scenario_id": "scen-4f47b9a9",
+      "seed": 172933,
+      "num_requests": 4,
+      "num_identities": 4,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.2
+    },
+    {
+      "scenario_id": "scen-7f748bb4",
+      "seed": 766563,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 2.4
+    },
+    {
+      "scenario_id": "scen-39628d79",
+      "seed": 211579,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-0cea2253",
+      "seed": 671412,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 2,
+      "duration_seconds": 3.0
+    },
+    {
+      "scenario_id": "scen-9748c1e9",
+      "seed": 542666,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-5e8e43f2",
+      "seed": 850800,
+      "num_requests": 4,
+      "num_identities": 4,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.2
+    },
+    {
+      "scenario_id": "scen-aee36cf8",
+      "seed": 263032,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 3,
+      "duration_seconds": 1.6
+    },
+    {
+      "scenario_id": "scen-35e750ca",
+      "seed": 126225,
+      "num_requests": 4,
+      "num_identities": 4,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.2
+    },
+    {
+      "scenario_id": "scen-30ff19c6",
+      "seed": 854639,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-4339722e",
+      "seed": 174870,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 5,
+      "duration_seconds": 14.0
+    },
+    {
+      "scenario_id": "scen-33d93124",
+      "seed": 148050,
+      "num_requests": 2,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 2,
+      "duration_seconds": 1.0
+    },
+    {
+      "scenario_id": "scen-cf5c018a",
+      "seed": 308496,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 3,
+      "duration_seconds": 6.0
+    },
+    {
+      "scenario_id": "scen-0cb6040f",
+      "seed": 883300,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-73e4fe7a",
+      "seed": 725380,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-39d42080",
+      "seed": 944962,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 1.0
+    },
+    {
+      "scenario_id": "scen-4b1d0974",
+      "seed": 772097,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-966ce74e",
+      "seed": 287330,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-eb85e30a",
+      "seed": 712982,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.8
+    },
+    {
+      "scenario_id": "scen-f8d7cab1",
+      "seed": 787277,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.8
+    },
+    {
+      "scenario_id": "scen-258ef66e",
+      "seed": 183667,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 2.4
+    },
+    {
+      "scenario_id": "scen-40eaabe2",
+      "seed": 809570,
+      "num_requests": 4,
+      "num_identities": 4,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.2
+    },
+    {
+      "scenario_id": "scen-965299fa",
+      "seed": 482554,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 5,
+      "duration_seconds": 300.0
+    },
+    {
+      "scenario_id": "scen-d7057242",
+      "seed": 724834,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-501f8b0e",
+      "seed": 407757,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-6c0defe5",
+      "seed": 271339,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 5,
+      "duration_seconds": 14.0
+    },
+    {
+      "scenario_id": "scen-cf2aedae",
+      "seed": 988662,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 2,
+      "duration_seconds": 3.0
+    },
+    {
+      "scenario_id": "scen-bca33e02",
+      "seed": 270555,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-9a19cc88",
+      "seed": 813328,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-e35e3102",
+      "seed": 391476,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 5,
+      "duration_seconds": 14.0
+    },
+    {
+      "scenario_id": "scen-a354125a",
+      "seed": 623481,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 5,
+      "duration_seconds": 14.0
+    },
+    {
+      "scenario_id": "scen-486d48fd",
+      "seed": 391704,
+      "num_requests": 4,
+      "num_identities": 4,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.2
+    },
+    {
+      "scenario_id": "scen-cd19cf5c",
+      "seed": 452944,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.5
+    },
+    {
+      "scenario_id": "scen-1cd6ced4",
+      "seed": 479580,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-1a7ba4cc",
+      "seed": 877572,
+      "num_requests": 2,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 2,
+      "duration_seconds": 1.0
+    },
+    {
+      "scenario_id": "scen-0c656e48",
+      "seed": 887352,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-12f1b511",
+      "seed": 380746,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.8
+    },
+    {
+      "scenario_id": "scen-0a06d174",
+      "seed": 895667,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 2,
+      "duration_seconds": 3.0
+    },
+    {
+      "scenario_id": "scen-1e9082a4",
+      "seed": 738720,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 2,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-1e3c5a53",
+      "seed": 329258,
+      "num_requests": 2,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 2,
+      "duration_seconds": 1.0
+    },
+    {
+      "scenario_id": "scen-6c80913b",
+      "seed": 149405,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-bcf8b42a",
+      "seed": 835911,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 5,
+      "duration_seconds": 300.0
+    },
+    {
+      "scenario_id": "scen-c968dcce",
+      "seed": 106814,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 3,
+      "duration_seconds": 1.6
+    },
+    {
+      "scenario_id": "scen-23ff5cc6",
+      "seed": 166613,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-df7ae851",
+      "seed": 852787,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 3.6
+    },
+    {
+      "scenario_id": "scen-281d9570",
+      "seed": 197251,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 3,
+      "duration_seconds": 6.0
+    },
+    {
+      "scenario_id": "scen-30585624",
+      "seed": 555884,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-6224696b",
+      "seed": 207175,
+      "num_requests": 6,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 5.0
+    },
+    {
+      "scenario_id": "scen-68b53cfb",
+      "seed": 996865,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 3.6
+    },
+    {
+      "scenario_id": "scen-c3ed8eae",
+      "seed": 267753,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-37e22dcd",
+      "seed": 584714,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 2,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-2eec5bf6",
+      "seed": 781453,
+      "num_requests": 2,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 2,
+      "duration_seconds": 1.0
+    },
+    {
+      "scenario_id": "scen-051a63b2",
+      "seed": 220116,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-6bc1144d",
+      "seed": 321231,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 2,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-62ffb6f1",
+      "seed": 905635,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 5,
+      "duration_seconds": 300.0
+    },
+    {
+      "scenario_id": "scen-ea1dc5a9",
+      "seed": 112038,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-fde46086",
+      "seed": 329974,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-9a770771",
+      "seed": 876646,
+      "num_requests": 2,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 2,
+      "duration_seconds": 1.0
+    },
+    {
+      "scenario_id": "scen-34736c29",
+      "seed": 688637,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 2.4
+    },
+    {
+      "scenario_id": "scen-7215ef59",
+      "seed": 748564,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 2,
+      "duration_seconds": 3.0
+    },
+    {
+      "scenario_id": "scen-648dab62",
+      "seed": 821590,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-aa242bfb",
+      "seed": 330283,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 5,
+      "duration_seconds": 14.0
+    },
+    {
+      "scenario_id": "scen-94333be7",
+      "seed": 383060,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 3.6
+    },
+    {
+      "scenario_id": "scen-f92b03d6",
+      "seed": 479201,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 1.0
+    },
+    {
+      "scenario_id": "scen-d8f1210a",
+      "seed": 665158,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 3.6
+    },
+    {
+      "scenario_id": "scen-8ef66ef9",
+      "seed": 207473,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 3,
+      "duration_seconds": 6.0
+    },
+    {
+      "scenario_id": "scen-fb02930e",
+      "seed": 864544,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-2ced2421",
+      "seed": 983794,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 3.6
+    },
+    {
+      "scenario_id": "scen-072b5acc",
+      "seed": 948749,
+      "num_requests": 2,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 2,
+      "duration_seconds": 1.0
+    },
+    {
+      "scenario_id": "scen-3b21f1d9",
+      "seed": 127824,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.5
+    },
+    {
+      "scenario_id": "scen-8f46e313",
+      "seed": 913694,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-fe1c1013",
+      "seed": 377746,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-e7c3dc0e",
+      "seed": 518801,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-301ff262",
+      "seed": 759176,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 3,
+      "duration_seconds": 1.6
+    },
+    {
+      "scenario_id": "scen-d77d4a8e",
+      "seed": 765822,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 2.4
+    },
+    {
+      "scenario_id": "scen-f5e23edd",
+      "seed": 634277,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-7507e836",
+      "seed": 331148,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.5
+    },
+    {
+      "scenario_id": "scen-352b2f87",
+      "seed": 191161,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 2,
+      "duration_seconds": 3.0
+    },
+    {
+      "scenario_id": "scen-b199ab56",
+      "seed": 892495,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-60c7b4e2",
+      "seed": 391369,
+      "num_requests": 2,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 2,
+      "duration_seconds": 1.0
+    },
+    {
+      "scenario_id": "scen-ce811738",
+      "seed": 817870,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 2,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-5ec4accd",
+      "seed": 214975,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-0c947a17",
+      "seed": 246316,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.5
+    },
+    {
+      "scenario_id": "scen-fc12938b",
+      "seed": 133659,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 2.4
+    },
+    {
+      "scenario_id": "scen-503a9ca4",
+      "seed": 216970,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-a555b2cb",
+      "seed": 205907,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-fada2a81",
+      "seed": 549245,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 5,
+      "duration_seconds": 14.0
+    },
+    {
+      "scenario_id": "scen-23199064",
+      "seed": 334053,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 1.0
+    },
+    {
+      "scenario_id": "scen-95830717",
+      "seed": 319684,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 2,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-ca67c929",
+      "seed": 771088,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 5,
+      "duration_seconds": 300.0
+    },
+    {
+      "scenario_id": "scen-fb334f7a",
+      "seed": 865179,
+      "num_requests": 2,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 2,
+      "duration_seconds": 1.0
+    },
+    {
+      "scenario_id": "scen-92a8be76",
+      "seed": 456699,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-8e78b040",
+      "seed": 813536,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-4ebadecc",
+      "seed": 325772,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 2,
+      "duration_seconds": 3.0
+    },
+    {
+      "scenario_id": "scen-1a2aa253",
+      "seed": 733052,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.5
+    },
+    {
+      "scenario_id": "scen-c20fd488",
+      "seed": 581141,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 3.6
+    },
+    {
+      "scenario_id": "scen-6c725de0",
+      "seed": 944151,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 3.6
+    },
+    {
+      "scenario_id": "scen-3646c729",
+      "seed": 671858,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 3,
+      "duration_seconds": 1.6
+    },
+    {
+      "scenario_id": "scen-0599ef3d",
+      "seed": 688508,
+      "num_requests": 6,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 5.0
+    },
+    {
+      "scenario_id": "scen-72e5a2cd",
+      "seed": 476417,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 3,
+      "duration_seconds": 1.6
+    },
+    {
+      "scenario_id": "scen-d42b0e6e",
+      "seed": 660086,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 5,
+      "duration_seconds": 300.0
+    },
+    {
+      "scenario_id": "scen-64c5bb10",
+      "seed": 898975,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-4c38c4b3",
+      "seed": 230889,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 1.0
+    },
+    {
+      "scenario_id": "scen-53b44628",
+      "seed": 500156,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-82a1fc78",
+      "seed": 717889,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 3,
+      "duration_seconds": 6.0
+    },
+    {
+      "scenario_id": "scen-ac60463c",
+      "seed": 757924,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-40e570cc",
+      "seed": 680099,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-ea253979",
+      "seed": 705397,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.5
+    },
+    {
+      "scenario_id": "scen-2c71ba32",
+      "seed": 581741,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 3,
+      "duration_seconds": 1.6
+    },
+    {
+      "scenario_id": "scen-5d46010f",
+      "seed": 429963,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 5,
+      "duration_seconds": 300.0
+    },
+    {
+      "scenario_id": "scen-a40726c4",
+      "seed": 881177,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 2,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-53143959",
+      "seed": 498591,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.8
+    },
+    {
+      "scenario_id": "scen-d2cd7872",
+      "seed": 872246,
+      "num_requests": 6,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 5.0
+    },
+    {
+      "scenario_id": "scen-93726995",
+      "seed": 363626,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-42c2feaf",
+      "seed": 855731,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-b6001c19",
+      "seed": 542417,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.5
+    },
+    {
+      "scenario_id": "scen-4c56323a",
+      "seed": 198246,
+      "num_requests": 4,
+      "num_identities": 4,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.2
+    },
+    {
+      "scenario_id": "scen-d9fc6812",
+      "seed": 216739,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 3,
+      "duration_seconds": 6.0
+    },
+    {
+      "scenario_id": "scen-bff6fd6f",
+      "seed": 377370,
+      "num_requests": 6,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 5.0
+    },
+    {
+      "scenario_id": "scen-71719f96",
+      "seed": 145561,
+      "num_requests": 4,
+      "num_identities": 4,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.2
+    },
+    {
+      "scenario_id": "scen-c329758d",
+      "seed": 358607,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 5,
+      "duration_seconds": 14.0
+    },
+    {
+      "scenario_id": "scen-427e0e71",
+      "seed": 356787,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 2,
+      "duration_seconds": 3.0
+    },
+    {
+      "scenario_id": "scen-9643cb57",
+      "seed": 575435,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 2,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-0ca492eb",
+      "seed": 133326,
+      "num_requests": 6,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 5.0
+    },
+    {
+      "scenario_id": "scen-5da10c5b",
+      "seed": 946335,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 3,
+      "duration_seconds": 6.0
+    },
+    {
+      "scenario_id": "scen-f2cd44be",
+      "seed": 496922,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.5
+    },
+    {
+      "scenario_id": "scen-f7d11bb2",
+      "seed": 539898,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 1.0
+    },
+    {
+      "scenario_id": "scen-a96e7f2a",
+      "seed": 440035,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 2.4
+    },
+    {
+      "scenario_id": "scen-ca365ea2",
+      "seed": 322955,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-fc2aa8a1",
+      "seed": 684004,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.8
+    },
+    {
+      "scenario_id": "scen-2422ad91",
+      "seed": 857168,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-bf7a3d50",
+      "seed": 279451,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 3.6
+    },
+    {
+      "scenario_id": "scen-f8919f07",
+      "seed": 403445,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.5
+    },
+    {
+      "scenario_id": "scen-a9205164",
+      "seed": 201414,
+      "num_requests": 2,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 2,
+      "duration_seconds": 1.0
+    },
+    {
+      "scenario_id": "scen-e9d73dbb",
+      "seed": 575763,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-6b26da74",
+      "seed": 460663,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 1.0
+    },
+    {
+      "scenario_id": "scen-936ae3d6",
+      "seed": 497887,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 2.4
+    },
+    {
+      "scenario_id": "scen-aba25a91",
+      "seed": 624902,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-5bf86538",
+      "seed": 265840,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-f89ec139",
+      "seed": 969693,
+      "num_requests": 2,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 2,
+      "duration_seconds": 1.0
+    },
+    {
+      "scenario_id": "scen-9c9d28fa",
+      "seed": 456778,
+      "num_requests": 4,
+      "num_identities": 4,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.2
+    },
+    {
+      "scenario_id": "scen-f1c04997",
+      "seed": 246413,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.8
+    },
+    {
+      "scenario_id": "scen-07814621",
+      "seed": 961722,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 2,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-792a0dd6",
+      "seed": 503457,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-a7973af1",
+      "seed": 590785,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-abf9c9a3",
+      "seed": 571029,
+      "num_requests": 6,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 5.0
+    },
+    {
+      "scenario_id": "scen-26db1dca",
+      "seed": 774079,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 2.4
+    },
+    {
+      "scenario_id": "scen-41f65dc3",
+      "seed": 131244,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 3,
+      "duration_seconds": 6.0
+    },
+    {
+      "scenario_id": "scen-e5b7a29a",
+      "seed": 430776,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 5,
+      "duration_seconds": 300.0
+    },
+    {
+      "scenario_id": "scen-ba7f5667",
+      "seed": 629903,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 2,
+      "duration_seconds": 3.0
+    },
+    {
+      "scenario_id": "scen-36321449",
+      "seed": 343962,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 3,
+      "duration_seconds": 1.6
+    },
+    {
+      "scenario_id": "scen-bba6d9c8",
+      "seed": 375504,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 5,
+      "duration_seconds": 300.0
+    },
+    {
+      "scenario_id": "scen-6d45d4ee",
+      "seed": 663054,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-ff1fdbb4",
+      "seed": 719176,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 1.0
+    },
+    {
+      "scenario_id": "scen-c9abaa22",
+      "seed": 662275,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 2,
+      "duration_seconds": 3.0
+    },
+    {
+      "scenario_id": "scen-8aaa9556",
+      "seed": 910620,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 1.0
+    },
+    {
+      "scenario_id": "scen-258b9bf7",
+      "seed": 472528,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 5,
+      "duration_seconds": 14.0
+    },
+    {
+      "scenario_id": "scen-1a30cecf",
+      "seed": 835392,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 3,
+      "duration_seconds": 1.6
+    },
+    {
+      "scenario_id": "scen-c8117650",
+      "seed": 388389,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 3,
+      "duration_seconds": 1.6
+    },
+    {
+      "scenario_id": "scen-7d7ced4e",
+      "seed": 520651,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-08d4e729",
+      "seed": 344098,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 5,
+      "duration_seconds": 300.0
+    },
+    {
+      "scenario_id": "scen-528994fb",
+      "seed": 245051,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-734d56bc",
+      "seed": 770487,
+      "num_requests": 6,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 5.0
+    },
+    {
+      "scenario_id": "scen-9497a771",
+      "seed": 514850,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 2,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-7d6c434d",
+      "seed": 249811,
+      "num_requests": 5,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 5,
+      "duration_seconds": 300.0
+    },
+    {
+      "scenario_id": "scen-18d54792",
+      "seed": 543143,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 3,
+      "duration_seconds": 6.0
+    },
+    {
+      "scenario_id": "scen-f0f82a0a",
+      "seed": 379946,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 3.6
+    },
+    {
+      "scenario_id": "scen-1cc307ab",
+      "seed": 267414,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.5
+    },
+    {
+      "scenario_id": "scen-a52e0d11",
+      "seed": 498382,
+      "num_requests": 4,
+      "num_identities": 4,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 1.2
+    },
+    {
+      "scenario_id": "scen-307ca31d",
+      "seed": 617488,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-3a833450",
+      "seed": 694731,
+      "num_requests": 4,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 4,
+      "duration_seconds": 2.4
+    },
+    {
+      "scenario_id": "scen-e84ef64c",
+      "seed": 930555,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    },
+    {
+      "scenario_id": "scen-cf703baa",
+      "seed": 793384,
+      "num_requests": 3,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 3,
+      "duration_seconds": 1.6
+    },
+    {
+      "scenario_id": "scen-6f182f1f",
+      "seed": 260265,
+      "num_requests": 1,
+      "num_identities": 1,
+      "num_tenants": 1,
+      "num_resources": 1,
+      "duration_seconds": 0.0
+    }
+  ]
+}

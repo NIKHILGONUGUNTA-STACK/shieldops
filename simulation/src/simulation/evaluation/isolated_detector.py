@@ -33,20 +33,23 @@ class IsolatedRuleDetector:
         url = event.url.lower()
         status = event.status_code
 
-        # Isolated Rule 1: Single 403 on customer or account route triggers RULE-BOLA-01
-        # Flaw: Flags legitimate non-BOLA role denials (e.g. admin endpoint) because it lacks ownership context!
+        # Isolated Rule 1: Single 403 on customer, account, or system route triggers RULE-BOLA-01
+        # Flaw: Flags legitimate non-BOLA role denials (e.g. admin settings) because it lacks ownership context!
         if status == 403:
-            if "/customers" in url or "/accounts" in url or "/security" in url:
+            if "/customers" in url or "/accounts" in url or "/system" in url or "/security" in url:
                 triggered_rules.append("RULE-BOLA-01")
 
         # Isolated Rule 2: Single 404 on actuator, admin, or swagger triggers RULE-PROBE-01
-        # Flaw: Flags innocent user typos on /cutomers/profile or /admin/info without frequency checking!
+        # Flaw: Flags innocent user typos on /cutomers/profile without frequency checking!
         if status == 404:
             if "/actuator" in url or "/swagger" in url or "/admin" in url or "/cutomers" in url:
                 triggered_rules.append("RULE-PROBE-01")
 
-        # Isolated Rule 3: Single 200 on sensitive path with restricted keywords in URL triggers RULE-DATA-01
-        if status == 200 and ("/internal-debug" in url or "/all" in url):
+        # Isolated Rule 3: Single 200 with RESTRICTED sensitivity tier or restricted field keys triggers RULE-DATA-01
+        # Flaw: Evaluates payload keys in a vacuum without knowing caller identity, consent, or authorization scope!
+        restricted_secrets = {"auth_token_hash", "temporary_cleartext_secret", "master_key"}
+        has_secret_field = any(f in restricted_secrets for f in event.observed_fields)
+        if status == 200 and (event.sensitivity == "RESTRICTED" or has_secret_field):
             triggered_rules.append("RULE-DATA-01")
 
         detected = len(triggered_rules) > 0

@@ -57,6 +57,7 @@ class ContextualDetector:
         # Sliding window state trackers
         # Key: correlation_identity -> set of distinct resources
         distinct_resources_accessed: Dict[str, Set[str]] = {}
+        distinct_foreign_resources: Dict[str, Set[str]] = {}
         distinct_probe_targets: Dict[str, Set[str]] = {}
         pagination_pages: Dict[str, Set[int]] = {}
         cumulative_wire_bytes: Dict[str, int] = {}
@@ -102,38 +103,40 @@ class ContextualDetector:
                 is_scenario_uncertain = True
                 uncertain_reasons.append("Incomplete response payload telemetry")
 
-            # 3. Rule Evaluation: Confirmed BOLA Leak
-            # Trigger: Cross-owner customer/account returning 200 without admin role
+            # 3. Ownership determination
             effective_ownership_mismatch = False
             if not self.ablation.disable_ownership:
                 if ev.resource_owner_id and ev.customer_id:
                     effective_ownership_mismatch = (ev.resource_owner_id != ev.customer_id)
             else:
-                # With ownership disabled, cannot distinguish cross-owner from self-owner!
+                # With ownership disabled, cannot distinguish cross-owner from self-owner
                 effective_ownership_mismatch = False
 
-            effective_status = ev.status_code if not self.ablation.disable_auth_outcome else 200
+            # 4. Rule Evaluation: Confirmed BOLA Leak & BOLA Denial Probing
+            # NOTE: When disable_auth_outcome is active, do NOT mutate ev.status_code.
+            # Instead, the detector operates without response status context.
+            if not self.ablation.disable_auth_outcome:
+                if effective_ownership_mismatch and ev.status_code == 200:
+                    ev_rules.append("RULE-BOLA-CONFIRMED-01")
+                    campaign_stages.add("STAGE_4_SENSITIVE_DATA_ACCESS")
 
-            if effective_ownership_mismatch and effective_status == 200:
-                ev_rules.append("RULE-BOLA-CONFIRMED-01")
-                campaign_stages.add("STAGE_4_SENSITIVE_DATA_ACCESS")
+                if effective_ownership_mismatch and ev.status_code == 403:
+                    ev_rules.append("RULE-BOLA-01")
+                    campaign_stages.add("STAGE_2_BOLA_PROBING")
 
-            # 4. Rule Evaluation: BOLA Denial Probing
-            # Trigger: Cross-owner request denied with 403
-            if effective_ownership_mismatch and effective_status == 403:
-                ev_rules.append("RULE-BOLA-01")
-                campaign_stages.add("STAGE_2_BOLA_PROBING")
+                    if partition_key not in distinct_probe_targets:
+                        distinct_probe_targets[partition_key] = set()
+                    distinct_probe_targets[partition_key].add(ev.url)
 
-                if partition_key not in distinct_probe_targets:
-                    distinct_probe_targets[partition_key] = set()
-                distinct_probe_targets[partition_key].add(ev.url)
-
-                if len(distinct_probe_targets[partition_key]) >= 2:
-                    ev_rules.append("RULE-BOLA-02")
+                    if len(distinct_probe_targets[partition_key]) >= 2:
+                        ev_rules.append("RULE-BOLA-02")
+            else:
+                # Auth outcome disabled: cannot confirm 200 leak or 403 denial
+                if effective_ownership_mismatch:
+                    ev_rules.append("RULE-BOLA-01")
 
             # 5. Rule Evaluation: Reconnaissance Probe
-            if effective_status == 404 and ("/actuator" in ev.url or "/swagger" in ev.url):
-                # Contextual check: only trigger probe alert if on actual debug/admin path
+            if ev.status_code == 404 and ("/actuator" in ev.url or "/swagger" in ev.url):
                 ev_rules.append("RULE-PROBE-01")
                 campaign_stages.add("STAGE_1_RECON")
 
@@ -149,11 +152,15 @@ class ContextualDetector:
             if not self.ablation.disable_temporal:
                 if partition_key not in distinct_resources_accessed:
                     distinct_resources_accessed[partition_key] = set()
+                    distinct_foreign_resources[partition_key] = set()
                     pagination_pages[partition_key] = set()
                     cumulative_wire_bytes[partition_key] = 0
                     observed_timestamps[partition_key] = []
 
                 distinct_resources_accessed[partition_key].add(ev.url)
+                if effective_ownership_mismatch or (ev.resource_owner_id and ev.customer_id and ev.resource_owner_id != ev.customer_id):
+                    distinct_foreign_resources[partition_key].add(ev.url)
+
                 cumulative_wire_bytes[partition_key] += ev.response_bytes
                 observed_timestamps[partition_key].append(ev.timestamp_epoch_ms)
 
@@ -164,29 +171,29 @@ class ContextualDetector:
                 timestamps = observed_timestamps[partition_key]
                 window_duration_ms = timestamps[-1] - timestamps[0]
 
-                # Rapid extraction: >= 3 distinct resources in <= 120s
-                # Must be distinct cross-entity resources or bulk extraction targets
+                # Rapid extraction: >= 3 distinct cross-owner resources in <= 120s
                 if (
-                    len(distinct_resources_accessed[partition_key]) >= 3
+                    len(distinct_foreign_resources[partition_key]) >= 3
                     and window_duration_ms <= 120000
-                    and "cust_harvest" in ev.url
                 ):
                     ev_rules.append("RULE-BULK-EXTRACT-01")
                     campaign_stages.add("STAGE_5_BULK_EXTRACTION")
 
-                # Low-and-slow extraction: >= 5 distinct resources in <= 600s
+                # Low-and-slow extraction: >= 5 distinct cross-owner resources in <= 600s
                 if (
-                    len(distinct_resources_accessed[partition_key]) >= 5
+                    len(distinct_foreign_resources[partition_key]) >= 5
                     and window_duration_ms <= 600000
-                    and "cust_stealth" in ev.url
                 ):
                     ev_rules.append("RULE-ADV-EXTRACT-01")
                     campaign_stages.add("STAGE_5_BULK_EXTRACTION")
 
-                # Automated pagination scraping: >= 3 distinct pages
+                # Automated pagination harvesting: >= 3 distinct pages with high wire bytes or large page size
                 if len(pagination_pages[partition_key]) >= 3:
-                    ev_rules.append("RULE-ADV-EXTRACT-01")
-                    campaign_stages.add("STAGE_5_BULK_EXTRACTION")
+                    is_large_batch = (ev.page_size is not None and ev.page_size >= 50)
+                    is_heavy_wire = (cumulative_wire_bytes[partition_key] >= 40000)
+                    if is_large_batch or is_heavy_wire:
+                        ev_rules.append("RULE-ADV-EXTRACT-01")
+                        campaign_stages.add("STAGE_5_BULK_EXTRACTION")
 
             ev_latency = (time.perf_counter() - ev_start) * 1000.0
             for r in ev_rules:

@@ -1,0 +1,1192 @@
+{
+  "dataset_id": "DS-AEGIS-RESEARCH-V1.1",
+  "dataset_version": "1.1.0",
+  "manifest_hash": "83e67d66853de0ca17ad4e94617470df5ea50f62409d7fc857577090138d9f78",
+  "total_scenarios": 200,
+  "benign_count": 80,
+  "malicious_count": 70,
+  "ambiguous_count": 30,
+  "incomplete_count": 20,
+  "population_accounting": {
+    "total_dataset_size": 200,
+    "primary_binary_evaluated": 150,
+    "binary_benign_count": 80,
+    "binary_malicious_count": 70,
+    "ambiguous_evaluated": 30,
+    "incomplete_evaluated": 20,
+    "binary_coverage_ratio": 0.75,
+    "accounting_reconciled": true
+  },
+  "isolated_scenario_metrics": {
+    "confusion_matrix": {
+      "total_samples": 150,
+      "true_positives": 30,
+      "false_positives": 10,
+      "true_negatives": 70,
+      "false_negatives": 40,
+      "uncertain_handled": 0,
+      "uncertain_misclassified": 0
+    },
+    "precision": 0.75,
+    "recall": 0.4286,
+    "f1_score": 0.5455,
+    "accuracy": 0.6667,
+    "false_positive_rate": 0.125,
+    "false_discovery_rate": 0.25,
+    "false_negative_rate": 0.5714,
+    "specificity": 0.875,
+    "uncertainty_rate": 0.0,
+    "sample_size": 150,
+    "ci_precision": {
+      "point_estimate": 0.75,
+      "lower": 0.6087,
+      "upper": 0.875,
+      "confidence_level": 0.95,
+      "method": "bootstrap_2000",
+      "sample_size": 150
+    },
+    "ci_recall": {
+      "point_estimate": 0.4286,
+      "lower": 0.3182,
+      "upper": 0.5443,
+      "confidence_level": 0.95,
+      "method": "bootstrap_2000",
+      "sample_size": 150
+    },
+    "ci_f1": {
+      "point_estimate": 0.5455,
+      "lower": 0.4314,
+      "upper": 0.6504,
+      "confidence_level": 0.95,
+      "method": "bootstrap_2000",
+      "sample_size": 150
+    },
+    "ci_fpr": {
+      "point_estimate": 0.125,
+      "lower": 0.0693,
+      "upper": 0.215,
+      "confidence_level": 0.95,
+      "method": "wilson",
+      "sample_size": 80
+    },
+    "ci_fdr": {
+      "point_estimate": 0.25,
+      "lower": 0.1419,
+      "upper": 0.4019,
+      "confidence_level": 0.95,
+      "method": "wilson",
+      "sample_size": 40
+    },
+    "latency": {
+      "sample_count": 150,
+      "mean_ms": 0.097,
+      "median_ms": 0.086,
+      "p95_ms": 0.16,
+      "p99_ms": 0.699,
+      "min_ms": 0.019,
+      "max_ms": 0.778
+    },
+    "throughput_eps": 7331.7
+  },
+  "contextual_scenario_metrics": {
+    "confusion_matrix": {
+      "total_samples": 150,
+      "true_positives": 70,
+      "false_positives": 0,
+      "true_negatives": 80,
+      "false_negatives": 0,
+      "uncertain_handled": 0,
+      "uncertain_misclassified": 0
+    },
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "accuracy": 1.0,
+    "false_positive_rate": 0.0,
+    "false_discovery_rate": 0.0,
+    "false_negative_rate": 0.0,
+    "specificity": 1.0,
+    "uncertainty_rate": 0.0,
+    "sample_size": 150,
+    "ci_precision": {
+      "point_estimate": 1.0,
+      "lower": 1.0,
+      "upper": 1.0,
+      "confidence_level": 0.95,
+      "method": "bootstrap_2000",
+      "sample_size": 150
+    },
+    "ci_recall": {
+      "point_estimate": 1.0,
+      "lower": 1.0,
+      "upper": 1.0,
+      "confidence_level": 0.95,
+      "method": "bootstrap_2000",
+      "sample_size": 150
+    },
+    "ci_f1": {
+      "point_estimate": 1.0,
+      "lower": 1.0,
+      "upper": 1.0,
+      "confidence_level": 0.95,
+      "method": "bootstrap_2000",
+      "sample_size": 150
+    },
+    "ci_fpr": {
+      "point_estimate": 0.0,
+      "lower": 0.0,
+      "upper": 0.0458,
+      "confidence_level": 0.95,
+      "method": "wilson",
+      "sample_size": 80
+    },
+    "ci_fdr": {
+      "point_estimate": 0.0,
+      "lower": 0.0,
+      "upper": 0.052,
+      "confidence_level": 0.95,
+      "method": "wilson",
+      "sample_size": 70
+    },
+    "latency": {
+      "sample_count": 150,
+      "mean_ms": 0.135,
+      "median_ms": 0.13,
+      "p95_ms": 0.215,
+      "p99_ms": 0.384,
+      "min_ms": 0.026,
+      "max_ms": 0.921
+    },
+    "throughput_eps": 5365.9
+  },
+  "paired_scenario_comparison": {
+    "test_name": "Exact Two-Sided McNemar Test & Paired Scenario Bootstrap",
+    "sample_size": 150,
+    "both_correct_a": 100,
+    "isolated_correct_contextual_incorrect_b": 0,
+    "isolated_incorrect_contextual_correct_c": 50,
+    "both_incorrect_d": 0,
+    "discordant_pairs_total": 50,
+    "contingency_matrix": [
+      [
+        100,
+        0
+      ],
+      [
+        50,
+        0
+      ]
+    ],
+    "p_value_exact": 0.0,
+    "statistically_significant": true,
+    "alpha_level": 0.05,
+    "odds_ratio": 999.0,
+    "delta_accuracy": 0.3333,
+    "bootstrap_resamples": 2000,
+    "delta_precision": 0.25,
+    "ci_delta_precision": {
+      "point_estimate": 0.25,
+      "lower": 0.125,
+      "upper": 0.3913,
+      "confidence_level": 0.95,
+      "method": "paired_bootstrap_2000",
+      "sample_size": 150
+    },
+    "delta_recall": 0.5714,
+    "ci_delta_recall": {
+      "point_estimate": 0.5714,
+      "lower": 0.4557,
+      "upper": 0.6818,
+      "confidence_level": 0.95,
+      "method": "paired_bootstrap_2000",
+      "sample_size": 150
+    },
+    "delta_f1": 0.4545,
+    "ci_delta_f1": {
+      "point_estimate": 0.4545,
+      "lower": 0.3496,
+      "upper": 0.5686,
+      "confidence_level": 0.95,
+      "method": "paired_bootstrap_2000",
+      "sample_size": 150
+    },
+    "delta_fpr": -0.125,
+    "ci_delta_fpr": {
+      "point_estimate": -0.125,
+      "lower": -0.2025,
+      "upper": -0.0595,
+      "confidence_level": 0.95,
+      "method": "paired_bootstrap_2000",
+      "sample_size": 150
+    }
+  },
+  "isolated_uncertainty_metrics": {
+    "total_samples": 50,
+    "ambiguous_count": 30,
+    "incomplete_count": 20,
+    "abstained_uncertain": 0,
+    "flagged_malicious": 11,
+    "passed_benign": 39,
+    "abstention_rate": 0.0,
+    "over_escalation_rate": 0.22,
+    "under_investigation_rate": 0.78,
+    "ci_abstention": {
+      "point_estimate": 0.0,
+      "lower": 0.0,
+      "upper": 0.0713,
+      "confidence_level": 0.95,
+      "method": "wilson",
+      "sample_size": 50
+    },
+    "disposition_breakdown": {
+      "AMBIGUOUS": {
+        "abstained_uncertain": 0,
+        "flagged_malicious": 6,
+        "passed_benign": 24
+      },
+      "INCOMPLETE_EVIDENCE": {
+        "abstained_uncertain": 0,
+        "flagged_malicious": 5,
+        "passed_benign": 15
+      }
+    }
+  },
+  "contextual_uncertainty_metrics": {
+    "total_samples": 50,
+    "ambiguous_count": 30,
+    "incomplete_count": 20,
+    "abstained_uncertain": 28,
+    "flagged_malicious": 11,
+    "passed_benign": 11,
+    "abstention_rate": 0.56,
+    "over_escalation_rate": 0.22,
+    "under_investigation_rate": 0.22,
+    "ci_abstention": {
+      "point_estimate": 0.56,
+      "lower": 0.4231,
+      "upper": 0.6884,
+      "confidence_level": 0.95,
+      "method": "wilson",
+      "sample_size": 50
+    },
+    "disposition_breakdown": {
+      "AMBIGUOUS": {
+        "abstained_uncertain": 18,
+        "flagged_malicious": 6,
+        "passed_benign": 6
+      },
+      "INCOMPLETE_EVIDENCE": {
+        "abstained_uncertain": 10,
+        "flagged_malicious": 5,
+        "passed_benign": 5
+      }
+    }
+  },
+  "isolated_event_metrics": {
+    "confusion_matrix": {
+      "total_samples": 540,
+      "true_positives": 60,
+      "false_positives": 20,
+      "true_negatives": 330,
+      "false_negatives": 130,
+      "uncertain_handled": 0,
+      "uncertain_misclassified": 0
+    },
+    "precision": 0.75,
+    "recall": 0.3158,
+    "f1_score": 0.4444,
+    "accuracy": 0.7222,
+    "false_positive_rate": 0.0571,
+    "false_discovery_rate": 0.25,
+    "false_negative_rate": 0.6842,
+    "specificity": 0.9429,
+    "uncertainty_rate": 0.0,
+    "sample_size": 540,
+    "ci_precision": {
+      "point_estimate": 0.75,
+      "lower": 0.6506,
+      "upper": 0.8415,
+      "confidence_level": 0.95,
+      "method": "bootstrap_2000",
+      "sample_size": 540
+    },
+    "ci_recall": {
+      "point_estimate": 0.3158,
+      "lower": 0.2541,
+      "upper": 0.3833,
+      "confidence_level": 0.95,
+      "method": "bootstrap_2000",
+      "sample_size": 540
+    },
+    "ci_f1": {
+      "point_estimate": 0.4444,
+      "lower": 0.373,
+      "upper": 0.5164,
+      "confidence_level": 0.95,
+      "method": "bootstrap_2000",
+      "sample_size": 540
+    },
+    "ci_fpr": {
+      "point_estimate": 0.0571,
+      "lower": 0.0373,
+      "upper": 0.0866,
+      "confidence_level": 0.95,
+      "method": "wilson",
+      "sample_size": 350
+    },
+    "ci_fdr": {
+      "point_estimate": 0.25,
+      "lower": 0.1681,
+      "upper": 0.3548,
+      "confidence_level": 0.95,
+      "method": "wilson",
+      "sample_size": 80
+    },
+    "latency": {
+      "sample_count": 540,
+      "mean_ms": 0.006,
+      "median_ms": 0.005,
+      "p95_ms": 0.01,
+      "p99_ms": 0.018,
+      "min_ms": 0.003,
+      "max_ms": 0.042
+    },
+    "throughput_eps": 26394.12
+  },
+  "contextual_event_metrics": {
+    "confusion_matrix": {
+      "total_samples": 540,
+      "true_positives": 190,
+      "false_positives": 30,
+      "true_negatives": 320,
+      "false_negatives": 0,
+      "uncertain_handled": 0,
+      "uncertain_misclassified": 0
+    },
+    "precision": 0.8636,
+    "recall": 1.0,
+    "f1_score": 0.9268,
+    "accuracy": 0.9444,
+    "false_positive_rate": 0.0857,
+    "false_discovery_rate": 0.1364,
+    "false_negative_rate": 0.0,
+    "specificity": 0.9143,
+    "uncertainty_rate": 0.0,
+    "sample_size": 540,
+    "ci_precision": {
+      "point_estimate": 0.8636,
+      "lower": 0.8161,
+      "upper": 0.9052,
+      "confidence_level": 0.95,
+      "method": "bootstrap_2000",
+      "sample_size": 540
+    },
+    "ci_recall": {
+      "point_estimate": 1.0,
+      "lower": 1.0,
+      "upper": 1.0,
+      "confidence_level": 0.95,
+      "method": "bootstrap_2000",
+      "sample_size": 540
+    },
+    "ci_f1": {
+      "point_estimate": 0.9268,
+      "lower": 0.8988,
+      "upper": 0.9502,
+      "confidence_level": 0.95,
+      "method": "bootstrap_2000",
+      "sample_size": 540
+    },
+    "ci_fpr": {
+      "point_estimate": 0.0857,
+      "lower": 0.0607,
+      "upper": 0.1197,
+      "confidence_level": 0.95,
+      "method": "wilson",
+      "sample_size": 350
+    },
+    "ci_fdr": {
+      "point_estimate": 0.1364,
+      "lower": 0.0972,
+      "upper": 0.188,
+      "confidence_level": 0.95,
+      "method": "wilson",
+      "sample_size": 220
+    },
+    "latency": {
+      "sample_count": 540,
+      "mean_ms": 0.018,
+      "median_ms": 0.016,
+      "p95_ms": 0.025,
+      "p99_ms": 0.05,
+      "min_ms": 0.008,
+      "max_ms": 0.714
+    },
+    "throughput_eps": 19317.24
+  },
+  "isolated_campaign_metrics": {
+    "confusion_matrix": {
+      "total_samples": 70,
+      "true_positives": 0,
+      "false_positives": 0,
+      "true_negatives": 60,
+      "false_negatives": 10,
+      "uncertain_handled": 0,
+      "uncertain_misclassified": 0
+    },
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1_score": 0.0,
+    "accuracy": 0.8571,
+    "false_positive_rate": 0.0,
+    "false_discovery_rate": 0.0,
+    "false_negative_rate": 1.0,
+    "specificity": 1.0,
+    "uncertainty_rate": 0.0,
+    "sample_size": 70,
+    "ci_precision": {
+      "point_estimate": 0.0,
+      "lower": 0.0,
+      "upper": 0.0,
+      "confidence_level": 0.95,
+      "method": "bootstrap_2000",
+      "sample_size": 70
+    },
+    "ci_recall": {
+      "point_estimate": 0.0,
+      "lower": 0.0,
+      "upper": 0.0,
+      "confidence_level": 0.95,
+      "method": "bootstrap_2000",
+      "sample_size": 70
+    },
+    "ci_f1": {
+      "point_estimate": 0.0,
+      "lower": 0.0,
+      "upper": 0.0,
+      "confidence_level": 0.95,
+      "method": "bootstrap_2000",
+      "sample_size": 70
+    },
+    "ci_fpr": {
+      "point_estimate": 0.0,
+      "lower": 0.0,
+      "upper": 0.0602,
+      "confidence_level": 0.95,
+      "method": "wilson",
+      "sample_size": 60
+    },
+    "ci_fdr": null,
+    "latency": {
+      "sample_count": 150,
+      "mean_ms": 0.097,
+      "median_ms": 0.086,
+      "p95_ms": 0.16,
+      "p99_ms": 0.699,
+      "min_ms": 0.019,
+      "max_ms": 0.778
+    },
+    "throughput_eps": 3421.46
+  },
+  "contextual_campaign_metrics": {
+    "confusion_matrix": {
+      "total_samples": 70,
+      "true_positives": 10,
+      "false_positives": 0,
+      "true_negatives": 60,
+      "false_negatives": 0,
+      "uncertain_handled": 0,
+      "uncertain_misclassified": 0
+    },
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "accuracy": 1.0,
+    "false_positive_rate": 0.0,
+    "false_discovery_rate": 0.0,
+    "false_negative_rate": 0.0,
+    "specificity": 1.0,
+    "uncertainty_rate": 0.0,
+    "sample_size": 70,
+    "ci_precision": {
+      "point_estimate": 1.0,
+      "lower": 1.0,
+      "upper": 1.0,
+      "confidence_level": 0.95,
+      "method": "bootstrap_2000",
+      "sample_size": 70
+    },
+    "ci_recall": {
+      "point_estimate": 1.0,
+      "lower": 1.0,
+      "upper": 1.0,
+      "confidence_level": 0.95,
+      "method": "bootstrap_2000",
+      "sample_size": 70
+    },
+    "ci_f1": {
+      "point_estimate": 1.0,
+      "lower": 1.0,
+      "upper": 1.0,
+      "confidence_level": 0.95,
+      "method": "bootstrap_2000",
+      "sample_size": 70
+    },
+    "ci_fpr": {
+      "point_estimate": 0.0,
+      "lower": 0.0,
+      "upper": 0.0602,
+      "confidence_level": 0.95,
+      "method": "wilson",
+      "sample_size": 60
+    },
+    "ci_fdr": {
+      "point_estimate": 0.0,
+      "lower": 0.0,
+      "upper": 0.2775,
+      "confidence_level": 0.95,
+      "method": "wilson",
+      "sample_size": 10
+    },
+    "latency": {
+      "sample_count": 150,
+      "mean_ms": 0.135,
+      "median_ms": 0.13,
+      "p95_ms": 0.215,
+      "p99_ms": 0.384,
+      "min_ms": 0.026,
+      "max_ms": 0.921
+    },
+    "throughput_eps": 2504.09
+  },
+  "uncertainty_handling_metrics": null,
+  "ablation_results": {
+    "FULL_CONTEXTUAL": {
+      "confusion_matrix": {
+        "total_samples": 150,
+        "true_positives": 70,
+        "false_positives": 0,
+        "true_negatives": 80,
+        "false_negatives": 0,
+        "uncertain_handled": 0,
+        "uncertain_misclassified": 0
+      },
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "accuracy": 1.0,
+      "false_positive_rate": 0.0,
+      "false_discovery_rate": 0.0,
+      "false_negative_rate": 0.0,
+      "specificity": 1.0,
+      "uncertainty_rate": 0.0,
+      "sample_size": 150,
+      "ci_precision": {
+        "point_estimate": 1.0,
+        "lower": 1.0,
+        "upper": 1.0,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_recall": {
+        "point_estimate": 1.0,
+        "lower": 1.0,
+        "upper": 1.0,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_f1": {
+        "point_estimate": 1.0,
+        "lower": 1.0,
+        "upper": 1.0,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_fpr": {
+        "point_estimate": 0.0,
+        "lower": 0.0,
+        "upper": 0.0458,
+        "confidence_level": 0.95,
+        "method": "wilson",
+        "sample_size": 80
+      },
+      "ci_fdr": {
+        "point_estimate": 0.0,
+        "lower": 0.0,
+        "upper": 0.052,
+        "confidence_level": 0.95,
+        "method": "wilson",
+        "sample_size": 70
+      },
+      "latency": {
+        "sample_count": 150,
+        "mean_ms": 0.109,
+        "median_ms": 0.107,
+        "p95_ms": 0.176,
+        "p99_ms": 0.201,
+        "min_ms": 0.021,
+        "max_ms": 0.384
+      },
+      "throughput_eps": 150.0
+    },
+    "NO_IDENTITY": {
+      "confusion_matrix": {
+        "total_samples": 150,
+        "true_positives": 70,
+        "false_positives": 0,
+        "true_negatives": 80,
+        "false_negatives": 0,
+        "uncertain_handled": 0,
+        "uncertain_misclassified": 0
+      },
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "accuracy": 1.0,
+      "false_positive_rate": 0.0,
+      "false_discovery_rate": 0.0,
+      "false_negative_rate": 0.0,
+      "specificity": 1.0,
+      "uncertainty_rate": 0.0,
+      "sample_size": 150,
+      "ci_precision": {
+        "point_estimate": 1.0,
+        "lower": 1.0,
+        "upper": 1.0,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_recall": {
+        "point_estimate": 1.0,
+        "lower": 1.0,
+        "upper": 1.0,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_f1": {
+        "point_estimate": 1.0,
+        "lower": 1.0,
+        "upper": 1.0,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_fpr": {
+        "point_estimate": 0.0,
+        "lower": 0.0,
+        "upper": 0.0458,
+        "confidence_level": 0.95,
+        "method": "wilson",
+        "sample_size": 80
+      },
+      "ci_fdr": {
+        "point_estimate": 0.0,
+        "lower": 0.0,
+        "upper": 0.052,
+        "confidence_level": 0.95,
+        "method": "wilson",
+        "sample_size": 70
+      },
+      "latency": {
+        "sample_count": 150,
+        "mean_ms": 0.114,
+        "median_ms": 0.115,
+        "p95_ms": 0.177,
+        "p99_ms": 0.264,
+        "min_ms": 0.017,
+        "max_ms": 0.527
+      },
+      "throughput_eps": 150.0
+    },
+    "NO_TENANT": {
+      "confusion_matrix": {
+        "total_samples": 150,
+        "true_positives": 70,
+        "false_positives": 0,
+        "true_negatives": 80,
+        "false_negatives": 0,
+        "uncertain_handled": 0,
+        "uncertain_misclassified": 0
+      },
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "accuracy": 1.0,
+      "false_positive_rate": 0.0,
+      "false_discovery_rate": 0.0,
+      "false_negative_rate": 0.0,
+      "specificity": 1.0,
+      "uncertainty_rate": 0.0,
+      "sample_size": 150,
+      "ci_precision": {
+        "point_estimate": 1.0,
+        "lower": 1.0,
+        "upper": 1.0,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_recall": {
+        "point_estimate": 1.0,
+        "lower": 1.0,
+        "upper": 1.0,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_f1": {
+        "point_estimate": 1.0,
+        "lower": 1.0,
+        "upper": 1.0,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_fpr": {
+        "point_estimate": 0.0,
+        "lower": 0.0,
+        "upper": 0.0458,
+        "confidence_level": 0.95,
+        "method": "wilson",
+        "sample_size": 80
+      },
+      "ci_fdr": {
+        "point_estimate": 0.0,
+        "lower": 0.0,
+        "upper": 0.052,
+        "confidence_level": 0.95,
+        "method": "wilson",
+        "sample_size": 70
+      },
+      "latency": {
+        "sample_count": 150,
+        "mean_ms": 0.113,
+        "median_ms": 0.119,
+        "p95_ms": 0.176,
+        "p99_ms": 0.216,
+        "min_ms": 0.028,
+        "max_ms": 0.31
+      },
+      "throughput_eps": 150.0
+    },
+    "NO_OWNERSHIP": {
+      "confusion_matrix": {
+        "total_samples": 150,
+        "true_positives": 60,
+        "false_positives": 0,
+        "true_negatives": 80,
+        "false_negatives": 10,
+        "uncertain_handled": 0,
+        "uncertain_misclassified": 0
+      },
+      "precision": 1.0,
+      "recall": 0.8571,
+      "f1_score": 0.9231,
+      "accuracy": 0.9333,
+      "false_positive_rate": 0.0,
+      "false_discovery_rate": 0.0,
+      "false_negative_rate": 0.1429,
+      "specificity": 1.0,
+      "uncertainty_rate": 0.0,
+      "sample_size": 150,
+      "ci_precision": {
+        "point_estimate": 1.0,
+        "lower": 1.0,
+        "upper": 1.0,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_recall": {
+        "point_estimate": 0.8571,
+        "lower": 0.7714,
+        "upper": 0.9344,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_f1": {
+        "point_estimate": 0.9231,
+        "lower": 0.871,
+        "upper": 0.9661,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_fpr": {
+        "point_estimate": 0.0,
+        "lower": 0.0,
+        "upper": 0.0458,
+        "confidence_level": 0.95,
+        "method": "wilson",
+        "sample_size": 80
+      },
+      "ci_fdr": {
+        "point_estimate": 0.0,
+        "lower": 0.0,
+        "upper": 0.0602,
+        "confidence_level": 0.95,
+        "method": "wilson",
+        "sample_size": 60
+      },
+      "latency": {
+        "sample_count": 150,
+        "mean_ms": 0.108,
+        "median_ms": 0.113,
+        "p95_ms": 0.166,
+        "p99_ms": 0.239,
+        "min_ms": 0.018,
+        "max_ms": 0.33
+      },
+      "throughput_eps": 150.0
+    },
+    "NO_SENSITIVITY": {
+      "confusion_matrix": {
+        "total_samples": 150,
+        "true_positives": 60,
+        "false_positives": 0,
+        "true_negatives": 80,
+        "false_negatives": 10,
+        "uncertain_handled": 0,
+        "uncertain_misclassified": 0
+      },
+      "precision": 1.0,
+      "recall": 0.8571,
+      "f1_score": 0.9231,
+      "accuracy": 0.9333,
+      "false_positive_rate": 0.0,
+      "false_discovery_rate": 0.0,
+      "false_negative_rate": 0.1429,
+      "specificity": 1.0,
+      "uncertainty_rate": 0.0,
+      "sample_size": 150,
+      "ci_precision": {
+        "point_estimate": 1.0,
+        "lower": 1.0,
+        "upper": 1.0,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_recall": {
+        "point_estimate": 0.8571,
+        "lower": 0.7714,
+        "upper": 0.9351,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_f1": {
+        "point_estimate": 0.9231,
+        "lower": 0.871,
+        "upper": 0.9664,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_fpr": {
+        "point_estimate": 0.0,
+        "lower": 0.0,
+        "upper": 0.0458,
+        "confidence_level": 0.95,
+        "method": "wilson",
+        "sample_size": 80
+      },
+      "ci_fdr": {
+        "point_estimate": 0.0,
+        "lower": 0.0,
+        "upper": 0.0602,
+        "confidence_level": 0.95,
+        "method": "wilson",
+        "sample_size": 60
+      },
+      "latency": {
+        "sample_count": 150,
+        "mean_ms": 0.098,
+        "median_ms": 0.096,
+        "p95_ms": 0.161,
+        "p99_ms": 0.249,
+        "min_ms": 0.017,
+        "max_ms": 0.305
+      },
+      "throughput_eps": 150.0
+    },
+    "NO_AUTH_OUTCOME": {
+      "confusion_matrix": {
+        "total_samples": 150,
+        "true_positives": 70,
+        "false_positives": 0,
+        "true_negatives": 80,
+        "false_negatives": 0,
+        "uncertain_handled": 0,
+        "uncertain_misclassified": 0
+      },
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "accuracy": 1.0,
+      "false_positive_rate": 0.0,
+      "false_discovery_rate": 0.0,
+      "false_negative_rate": 0.0,
+      "specificity": 1.0,
+      "uncertainty_rate": 0.0,
+      "sample_size": 150,
+      "ci_precision": {
+        "point_estimate": 1.0,
+        "lower": 1.0,
+        "upper": 1.0,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_recall": {
+        "point_estimate": 1.0,
+        "lower": 1.0,
+        "upper": 1.0,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_f1": {
+        "point_estimate": 1.0,
+        "lower": 1.0,
+        "upper": 1.0,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_fpr": {
+        "point_estimate": 0.0,
+        "lower": 0.0,
+        "upper": 0.0458,
+        "confidence_level": 0.95,
+        "method": "wilson",
+        "sample_size": 80
+      },
+      "ci_fdr": {
+        "point_estimate": 0.0,
+        "lower": 0.0,
+        "upper": 0.052,
+        "confidence_level": 0.95,
+        "method": "wilson",
+        "sample_size": 70
+      },
+      "latency": {
+        "sample_count": 150,
+        "mean_ms": 0.13,
+        "median_ms": 0.123,
+        "p95_ms": 0.197,
+        "p99_ms": 0.483,
+        "min_ms": 0.023,
+        "max_ms": 1.518
+      },
+      "throughput_eps": 150.0
+    },
+    "NO_TEMPORAL": {
+      "confusion_matrix": {
+        "total_samples": 150,
+        "true_positives": 60,
+        "false_positives": 0,
+        "true_negatives": 80,
+        "false_negatives": 10,
+        "uncertain_handled": 0,
+        "uncertain_misclassified": 0
+      },
+      "precision": 1.0,
+      "recall": 0.8571,
+      "f1_score": 0.9231,
+      "accuracy": 0.9333,
+      "false_positive_rate": 0.0,
+      "false_discovery_rate": 0.0,
+      "false_negative_rate": 0.1429,
+      "specificity": 1.0,
+      "uncertainty_rate": 0.0,
+      "sample_size": 150,
+      "ci_precision": {
+        "point_estimate": 1.0,
+        "lower": 1.0,
+        "upper": 1.0,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_recall": {
+        "point_estimate": 0.8571,
+        "lower": 0.7705,
+        "upper": 0.9375,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_f1": {
+        "point_estimate": 0.9231,
+        "lower": 0.8704,
+        "upper": 0.9677,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_fpr": {
+        "point_estimate": 0.0,
+        "lower": 0.0,
+        "upper": 0.0458,
+        "confidence_level": 0.95,
+        "method": "wilson",
+        "sample_size": 80
+      },
+      "ci_fdr": {
+        "point_estimate": 0.0,
+        "lower": 0.0,
+        "upper": 0.0602,
+        "confidence_level": 0.95,
+        "method": "wilson",
+        "sample_size": 60
+      },
+      "latency": {
+        "sample_count": 150,
+        "mean_ms": 0.096,
+        "median_ms": 0.089,
+        "p95_ms": 0.174,
+        "p99_ms": 0.493,
+        "min_ms": 0.019,
+        "max_ms": 0.525
+      },
+      "throughput_eps": 150.0
+    },
+    "NO_CAMPAIGN": {
+      "confusion_matrix": {
+        "total_samples": 150,
+        "true_positives": 70,
+        "false_positives": 0,
+        "true_negatives": 80,
+        "false_negatives": 0,
+        "uncertain_handled": 0,
+        "uncertain_misclassified": 0
+      },
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "accuracy": 1.0,
+      "false_positive_rate": 0.0,
+      "false_discovery_rate": 0.0,
+      "false_negative_rate": 0.0,
+      "specificity": 1.0,
+      "uncertainty_rate": 0.0,
+      "sample_size": 150,
+      "ci_precision": {
+        "point_estimate": 1.0,
+        "lower": 1.0,
+        "upper": 1.0,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_recall": {
+        "point_estimate": 1.0,
+        "lower": 1.0,
+        "upper": 1.0,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_f1": {
+        "point_estimate": 1.0,
+        "lower": 1.0,
+        "upper": 1.0,
+        "confidence_level": 0.95,
+        "method": "bootstrap_2000",
+        "sample_size": 150
+      },
+      "ci_fpr": {
+        "point_estimate": 0.0,
+        "lower": 0.0,
+        "upper": 0.0458,
+        "confidence_level": 0.95,
+        "method": "wilson",
+        "sample_size": 80
+      },
+      "ci_fdr": {
+        "point_estimate": 0.0,
+        "lower": 0.0,
+        "upper": 0.052,
+        "confidence_level": 0.95,
+        "method": "wilson",
+        "sample_size": 70
+      },
+      "latency": {
+        "sample_count": 150,
+        "mean_ms": 0.134,
+        "median_ms": 0.127,
+        "p95_ms": 0.211,
+        "p99_ms": 0.458,
+        "min_ms": 0.024,
+        "max_ms": 0.96
+      },
+      "throughput_eps": 150.0
+    }
+  },
+  "robustness_results": [
+    {
+      "test_case": "Shared-IP NAT Disambiguation",
+      "category": "Identity & Network",
+      "expected_behavior": "Distinct customers on shared NAT (203.0.113.50) partitioned without false alarm",
+      "observed_behavior": "Detected=False, Rules=[]",
+      "passed": true,
+      "dimension": "Anti-Affinity Invariant"
+    },
+    {
+      "test_case": "Cross-Owner Account Detail Probe",
+      "category": "Resource Ownership",
+      "expected_behavior": "Mismatched resource_owner_id correctly triggers RULE-BOLA-01",
+      "observed_behavior": "Detected=True, Rules=['RULE-BOLA-01']",
+      "passed": true,
+      "dimension": "Ownership Claim Validation"
+    },
+    {
+      "test_case": "Restricted Secret Exposure in Response",
+      "category": "Sensitivity Classification",
+      "expected_behavior": "Leaking auth_token_hash triggers RULE-EXCESSIVE-EXPOSURE-01",
+      "observed_behavior": "Detected=True, Rules=['RULE-EXCESSIVE-EXPOSURE-01']",
+      "passed": true,
+      "dimension": "Field-Level Classification"
+    },
+    {
+      "test_case": "Sliding-Window Temporal Eviction (120s)",
+      "category": "Temporal Behavior",
+      "expected_behavior": "Access beyond 120s window avoids rapid burst trigger",
+      "observed_behavior": "Detected=True, Rules=['RULE-BOLA-CONFIRMED-01']",
+      "passed": true,
+      "dimension": "Sliding Deque Eviction"
+    },
+    {
+      "test_case": "Automated Pagination Table Scraping",
+      "category": "API Behavior",
+      "expected_behavior": "Rapid access across >= 3 distinct pages triggers RULE-ADV-EXTRACT-01",
+      "observed_behavior": "Detected=True, Rules=['RULE-ADV-EXTRACT-01']",
+      "passed": true,
+      "dimension": "Pagination Harvesting"
+    },
+    {
+      "test_case": "Missing Resource Ownership Uncertainty",
+      "category": "Uncertainty & Incomplete Evidence",
+      "expected_behavior": "Missing customer ownership on customer route flagged as UNCERTAIN",
+      "observed_behavior": "is_uncertain=True, explanation=Ambiguous/Incomplete evidence requiring analyst review",
+      "passed": true,
+      "dimension": "Uncertainty Invariant"
+    },
+    {
+      "test_case": "Multi-Stage Kill-Chain Progression",
+      "category": "Campaign Correlation",
+      "expected_behavior": "Recon (404) + Probing (403) + Extraction (200) escalated to DATA_EXFILTRATION_CAMPAIGN",
+      "observed_behavior": "campaign_identified=True, Rules=['DATA_EXFILTRATION_CAMPAIGN', 'RULE-BOLA-01', 'RULE-BOLA-CONFIRMED-01', 'RULE-PROBE-01']",
+      "passed": true,
+      "dimension": "Multi-Stage Correlator"
+    }
+  ],
+  "executed_at": "2026-11-22T13:06:52Z"
+}
