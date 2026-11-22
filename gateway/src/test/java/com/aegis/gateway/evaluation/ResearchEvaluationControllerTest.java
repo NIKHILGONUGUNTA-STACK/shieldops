@@ -129,4 +129,49 @@ class ResearchEvaluationControllerTest {
             .andExpect(jsonPath("$.status").value("IMPORTED"))
             .andExpect(jsonPath("$.datasetId").value("DS-AEGIS-RESEARCH-V1"));
     }
+
+    @Test
+    @DisplayName("Admin role can import versioned v1.1 neutral evaluation dataset experiment")
+    void adminCanImportV11Experiment() throws Exception {
+        ExperimentImportRequest req = new ExperimentImportRequest(
+            "DS-AEGIS-RESEARCH-V1.1",
+            "1.1.0",
+            "83e67d66853de0ca17ad4e94617470df5ea50f62409d7fc857577090138d9f78",
+            200,
+            80,
+            70,
+            30,
+            20,
+            "EXP-V11-" + System.currentTimeMillis(),
+            "Neutral Corpus v1.1 Comparative Evaluation",
+            Map.of("coverageRatio", "0.75", "primaryBinaryEvaluated", "150"),
+            List.of(
+                new AblationResponse("FULL_CONTEXTUAL", 1.0, 1.0, 1.0, 0.0, 0.0),
+                new AblationResponse("NO_IDENTITY", 1.0, 1.0, 1.0, 0.0, 0.0),
+                new AblationResponse("NO_TENANT", 1.0, 1.0, 1.0, 0.0, 0.0),
+                new AblationResponse("NO_OWNERSHIP", 1.0, 0.8571, 0.9231, 0.0, -0.0769),
+                new AblationResponse("NO_SENSITIVITY", 1.0, 0.8571, 0.9231, 0.0, -0.0769),
+                new AblationResponse("NO_AUTH_OUTCOME", 1.0, 1.0, 1.0, 0.0, 0.0),
+                new AblationResponse("NO_TEMPORAL", 1.0, 0.8571, 0.9231, 0.0, -0.0769),
+                new AblationResponse("NO_CAMPAIGN", 1.0, 1.0, 1.0, 0.0, 0.0)
+            ),
+            List.of(
+                new RobustnessFindingDto("Shared-IP NAT Disambiguation", "Identity & Network", "Partitioned", "Zero false positive alarm", true, "Anti-Affinity"),
+                new RobustnessFindingDto("Cross-Owner Account Detail Probe", "Resource Ownership", "Mismatched ID", "BOLA alert produced", true, "Ownership"),
+                new RobustnessFindingDto("Restricted Secret Exposure", "Sensitivity Classification", "Leaking secret", "CRITICAL alert produced", true, "Classification"),
+                new RobustnessFindingDto("Sliding-Window Temporal Eviction", "Temporal Behavior", "Beyond 120s window", "Evicted safely", true, "Deque Eviction"),
+                new RobustnessFindingDto("Automated Pagination Scraping", "API Behavior", "Harvesting >= 3 pages", "Flagged with high confidence", true, "Pagination"),
+                new RobustnessFindingDto("Missing Resource Ownership Uncertainty", "Uncertainty", "Missing ownership", "Flagged UNCERTAIN for triage", true, "Uncertainty"),
+                new RobustnessFindingDto("Multi-Stage Kill-Chain Progression", "Campaign Correlation", "Recon+Probe+Extract", "DATA_EXFILTRATION_CAMPAIGN materialized", true, "Campaign")
+            )
+        );
+
+        mockMvc.perform(post("/api/v1/security/evaluation/import")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ADMIN")))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("IMPORTED"))
+            .andExpect(jsonPath("$.datasetId").value("DS-AEGIS-RESEARCH-V1.1"));
+    }
 }

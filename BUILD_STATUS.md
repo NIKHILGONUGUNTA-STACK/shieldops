@@ -1,9 +1,9 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 7.3.6 Complete (Research Evaluation & Experimental Validation)
+## Current Milestone: Phase 7.3.6.1 Complete (Research Validity Correction & Independent Reproducibility Audit)
 
 **Status:** `VERIFIED & PRODUCTION READY`
-**Last Updated:** 2026-11-21
+**Last Updated:** 2026-11-22
 **Active Git Branch:** `main`
 **Git Working Tree:** Clean
 **Remote Upstream:** `origin/main` (`https://github.com/NIKHILGONUGUNTA-STACK/shieldops.git`)
@@ -22,8 +22,8 @@
 | `customer-service` | 29 | 0 | 0 | 0 | **SUCCESS** |
 | `account-service` | 20 | 0 | 0 | 0 | **SUCCESS** |
 | `transaction-service` | 22 | 0 | 0 | 0 | **SUCCESS** |
-| `gateway` (including Phase 7.3.6 Research Evaluation Suite) | 339 | 0 | 0 | 0 | **SUCCESS** |
-| **Total Backend Platform Tests** | **410** | **0** | **0** | **0** | **BUILD SUCCESS** |
+| `gateway` (including Phase 7.3.6.1 Research Evaluation Suite) | 340 | 0 | 0 | 0 | **SUCCESS** |
+| **Total Backend Platform Tests** | **411** | **0** | **0** | **0** | **BUILD SUCCESS** |
 
 ### 1.2 Frontend SOC Dashboard (Angular 18 / TypeScript / Node 22)
 - **Framework & Tooling:** Angular 18.2.21 / Node.js 22.20.0 / npm 10.9.3
@@ -84,7 +84,9 @@
 | `test_policy_engine.py` (Phase 7.2.4.6) | 14 adaptive security response scenarios (recon, probing, confirmed BOLA, exposure, bulk extract, low-and-slow, multi-domain, campaign, incomplete evidence, disabled policy, audit trail, analyst approval/rejection) | 14 | 0 | **SUCCESS** |
 | `test_campaign_orchestrator.py` (Phase 7.3.1) | 7 campaign orchestration tests (lifecycle controls, rate-limiting, pause/resume/stop, per-stage assertions, dry-run provenance) | 7 | 0 | **SUCCESS** |
 | `test_research_evaluation_suite.py` (Phase 7.3.6) | Dual-mode comparative evaluation (n=200), Wilson/Bootstrap statistics, 8 ablations, robustness matrix | 7 | 0 | **SUCCESS** |
-| **Total Python Simulation Tests** | — | **123** | **0** | **BUILD SUCCESS** |
+| `test_dataset_integrity_and_isolation.py` (Phase 7.3.6.1 Gate 1) | Cryptographic binding, opaque scenario IDs, zero-leakage token audit, independent SHA-256 hashes | 14 | 0 | **SUCCESS** |
+| `test_two_population_evaluation_and_metrics.py` (Phase 7.3.6.1 Gate 2) | Two-population reconciliation (n=150 binary + n=50 uncertainty), exact two-sided McNemar test, paired bootstrap, FPR vs FDR | 8 | 0 | **SUCCESS** |
+| **Total Python Simulation Tests** | — | **145** | **0** | **BUILD SUCCESS** |
 
 ---
 
