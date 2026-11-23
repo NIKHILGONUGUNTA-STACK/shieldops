@@ -84,6 +84,9 @@ spring:
               - Path=/transfers
 
 aegis:
+  seed:
+    baseline:
+      enabled: ${AEGIS_SEED_BASELINE_ENABLED:true}
   security:
     internal-secret: ${AEGIS_INTERNAL_SECRET:aegis-internal-trust-secret-key-32chars!}
   telemetry:

@@ -26,6 +26,9 @@ spring:
           jwk-set-uri: http://localhost:8080/realms/aegis-dev/protocol/openid-connect/certs
 
 aegis:
+  seed:
+    baseline:
+      enabled: false
   security:
     internal-secret: test-secret-key-for-unit-tests-32chars!
   telemetry:
