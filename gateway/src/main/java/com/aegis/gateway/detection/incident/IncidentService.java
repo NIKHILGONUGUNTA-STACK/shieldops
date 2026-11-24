@@ -6,6 +6,7 @@ import com.aegis.gateway.detection.correlation.MultiVectorCampaignCorrelator;
 import com.aegis.gateway.detection.model.*;
 import com.aegis.gateway.security.InvalidStatusTransitionException;
 import com.aegis.gateway.security.ResourceNotFoundException;
+import com.aegis.gateway.websocket.WebSocketSecurityEventPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,15 +24,25 @@ public class IncidentService {
 
     private final IncidentRepository repository;
     private final ContextualCorrelationEngine correlationEngine;
+    private final WebSocketSecurityEventPublisher eventPublisher;
 
     @Autowired
-    public IncidentService(IncidentRepository repository, ContextualCorrelationEngine correlationEngine) {
+    public IncidentService(
+        IncidentRepository repository,
+        ContextualCorrelationEngine correlationEngine,
+        @Autowired(required = false) WebSocketSecurityEventPublisher eventPublisher
+    ) {
         this.repository = repository;
         this.correlationEngine = correlationEngine;
+        this.eventPublisher = eventPublisher;
+    }
+
+    public IncidentService(IncidentRepository repository, ContextualCorrelationEngine correlationEngine) {
+        this(repository, correlationEngine, null);
     }
 
     public IncidentService(IncidentRepository repository) {
-        this(repository, new ContextualCorrelationEngine(List.of(new BolaCampaignCorrelator(), new MultiVectorCampaignCorrelator()), repository, null));
+        this(repository, new ContextualCorrelationEngine(List.of(new BolaCampaignCorrelator(), new MultiVectorCampaignCorrelator()), repository, null), null);
     }
 
     @Transactional
@@ -92,6 +103,9 @@ public class IncidentService {
         repository.saveStatusHistory(history);
 
         log.info("Transitioned incident {} status from {} to {} by {}", incidentId, currentStatus, newStatus, changedBy);
+        if (eventPublisher != null) {
+            eventPublisher.publishIncidentUpdate(updated, "STATUS_" + newStatus.name(), reason);
+        }
         return updated;
     }
 

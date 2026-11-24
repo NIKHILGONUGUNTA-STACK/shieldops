@@ -23,23 +23,34 @@ public class SimulationController {
     private final SimulationCatalogService catalogService;
     private final SimulationExecutionService executionService;
     private final Optional<ApiEventRepository> apiEventRepository;
+    private final com.aegis.gateway.websocket.WebSocketSecurityEventPublisher eventPublisher;
 
     public SimulationController(
         SimulationCatalogService catalogService,
         SimulationExecutionService executionService
     ) {
-        this(catalogService, executionService, null);
+        this(catalogService, executionService, null, null);
+    }
+
+    public SimulationController(
+        SimulationCatalogService catalogService,
+        SimulationExecutionService executionService,
+        ApiEventRepository apiEventRepository
+    ) {
+        this(catalogService, executionService, apiEventRepository, null);
     }
 
     @Autowired
     public SimulationController(
         SimulationCatalogService catalogService,
         SimulationExecutionService executionService,
-        @Autowired(required = false) ApiEventRepository apiEventRepository
+        @Autowired(required = false) ApiEventRepository apiEventRepository,
+        @Autowired(required = false) com.aegis.gateway.websocket.WebSocketSecurityEventPublisher eventPublisher
     ) {
         this.catalogService = catalogService;
         this.executionService = executionService;
         this.apiEventRepository = Optional.ofNullable(apiEventRepository);
+        this.eventPublisher = eventPublisher;
     }
 
     @GetMapping("/scenarios")
@@ -166,6 +177,9 @@ public class SimulationController {
         }
 
         apiEventRepository.get().saveAll(burst);
+        if (eventPublisher != null) {
+            eventPublisher.publishTelemetryBurst(burst.size(), "MIXED");
+        }
         return ResponseEntity.ok(Map.of(
             "generated", burst.size(),
             "status", "GENERATED",

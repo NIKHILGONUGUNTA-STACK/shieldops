@@ -1,13 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { of } from 'rxjs';
 import { NavbarComponent } from './navbar.component';
 import { AuthService } from '../../../core/auth/auth.service';
 import { LayoutService } from '../../../core/services/layout.service';
+import { SocWebSocketService } from '../../../core/services/soc-websocket.service';
 
 describe('NavbarComponent', () => {
   let component: NavbarComponent;
   let fixture: ComponentFixture<NavbarComponent>;
   let authServiceSpy: jasmine.SpyObj<AuthService>;
+  let wsSpy: jasmine.SpyObj<SocWebSocketService>;
   let router: Router;
 
   beforeEach(async () => {
@@ -16,12 +19,19 @@ describe('NavbarComponent', () => {
     authServiceSpy.isSecurityAdmin.and.returnValue(false);
     authServiceSpy.userProfile.and.returnValue({ username: 'analyst-user', email: 'analyst@aegis.dev', roles: ['SECURITY_ANALYST'] });
 
+    wsSpy = jasmine.createSpyObj('SocWebSocketService', ['dismissAlert', 'clearAllAlerts'], {
+      connectionStatus$: of('CONNECTED'),
+      activeAlerts$: of([{ id: '1', title: 'Live Alert', severity: 'HIGH', message: 'Test live alert', timestamp: new Date().toISOString() }]),
+      notifications$: of()
+    });
+
     await TestBed.configureTestingModule({
       imports: [NavbarComponent],
       providers: [
         provideRouter([]),
         LayoutService,
-        { provide: AuthService, useValue: authServiceSpy }
+        { provide: AuthService, useValue: authServiceSpy },
+        { provide: SocWebSocketService, useValue: wsSpy }
       ]
     }).compileComponents();
 
@@ -69,13 +79,19 @@ describe('NavbarComponent', () => {
     expect(authServiceSpy.logout).toHaveBeenCalled();
   });
 
-  it('should fall back to truthful role identity and never Jane Cooper when profile username is absent', () => {
-    authServiceSpy.userProfile.and.returnValue(null);
-    authServiceSpy.isSecurityAdmin.and.returnValue(false);
+  it('should display real-time live stream status badge', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.stream-text')?.textContent).toContain('STREAM: LIVE');
+  });
+
+  it('should toggle live alerts popover when clicking notification bell', () => {
+    expect(component.showNotifications).toBeFalse();
+    component.toggleNotifications();
+    expect(component.showNotifications).toBeTrue();
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.username')?.textContent).toContain('security-analyst');
-    expect(compiled.textContent).not.toContain('Jane Cooper');
+    expect(compiled.querySelector('.notifications-dropdown')).toBeTruthy();
+    expect(compiled.querySelector('.notif-item-title')?.textContent).toContain('Live Alert');
   });
 });

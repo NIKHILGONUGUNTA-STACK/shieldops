@@ -50,6 +50,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/health/**", "/actuator/info", "/actuator/prometheus").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/transfers/**", "/api/v1/transfers/**").hasRole("CUSTOMER")
                 .requestMatchers(
                     "/customers/**", "/api/v1/customers/**",

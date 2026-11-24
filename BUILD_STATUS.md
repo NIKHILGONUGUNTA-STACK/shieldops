@@ -1,6 +1,6 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 7.4 Complete (Production SaaS Packaging & Multi-Cloud Infrastructure)
+## Current Milestone: Phase 7.5 Complete (Real-Time WebSocket Streaming & Live Alerts)
 
 **Status:** `VERIFIED & PRODUCTION READY`
 **Last Updated:** 2026-11-24
@@ -22,19 +22,20 @@
 | `customer-service` | 22 | 0 | 0 | 0 | **SUCCESS** |
 | `account-service` | 25 | 0 | 0 | 0 | **SUCCESS** |
 | `transaction-service` | 24 | 0 | 0 | 0 | **SUCCESS** |
-| `gateway` (including Phase 7.3.9 Acceptance Suite) | 369 | 0 | 0 | 0 | **SUCCESS** |
-| **Total Backend Platform Tests** | **440** | **0** | **0** | **0** | **BUILD SUCCESS** |
+| `gateway` (including WebSocket & Acceptance Suites) | 377 | 0 | 0 | 0 | **SUCCESS** |
+| **Total Backend Platform Tests** | **448** | **0** | **0** | **0** | **BUILD SUCCESS** |
 
 ### 1.2 Frontend SOC Dashboard (Angular 18 / TypeScript / Node 22)
 - **Framework & Tooling:** Angular 18.2.21 / Node.js 22.20.0 / npm 10.9.3
 - **Test Runner:** Karma 6.4 / Jasmine 5.2 / ChromeHeadless
-- **Production Build:** `dist/aegis-frontend` (376.95 kB initial bundle, 103.76 kB transfer, 0 warnings, 0 errors)
+- **Production Build:** `dist/aegis-frontend` (381.12 kB initial bundle, 104.90 kB transfer, 0 warnings, 0 errors across 15 chunks)
 
 | Test Suite | Spec File | Tests Run | Failures | Status |
 | :--- | :--- | :---: | :---: | :--- |
 | **App Shell** | `app.component.spec.ts` | 2 | 0 | **SUCCESS** |
-| **Navbar & Search Bar** | `navbar.component.spec.ts` | 6 | 0 | **SUCCESS** |
+| **Navbar & Real-Time Alerts** | `navbar.component.spec.ts` | 6 | 0 | **SUCCESS** |
 | **Sidebar & Nav Registry** | `sidebar.component.spec.ts` | 6 | 0 | **SUCCESS** |
+| **SOC WebSocket Stream Service** | `soc-websocket.service.spec.ts` | 6 | 0 | **SUCCESS** |
 | **Security API Service** | `security-api.service.spec.ts` | 41 | 0 | **SUCCESS** |
 | **Auth Service** | `auth.service.spec.ts` | 3 | 0 | **SUCCESS** |
 | **Auth Guard** | `auth.guard.spec.ts` | 3 | 0 | **SUCCESS** |
@@ -62,7 +63,7 @@
 | **Financial Portfolio Explorer (Phase 7.2.3.4)** | `financial-portfolio.component.spec.ts` | 4 | 0 | **SUCCESS** |
 | **Sensitive Data Inventory (Phase 7.2.4.1)** | `sensitive-data.component.spec.ts` | 4 | 0 | **SUCCESS** |
 | **Data Leakage & Research Evaluation (Phase 7.2.4.2 – 7.3.6)** | `data-leakage.component.spec.ts` | 8 | 0 | **SUCCESS** |
-| **Total Frontend Tests** | — | **200** | **0** | **BUILD SUCCESS** |
+| **Total Frontend Tests** | — | **206** | **0** | **BUILD SUCCESS** |
 
 ### 1.3 Python Simulation Test Suite (pytest / pytest-asyncio / respx)
 - **Framework & Tooling:** Python 3.14.0 / pytest 9.2.0 / pytest-asyncio 1.4.1 / respx 0.23.1
@@ -94,10 +95,10 @@
 
 ### 2.1 Verification Mode Distinction
 - **Offline Mocked Verification:** **100% SUCCESS**
-  - Backend Platform Services: 440 tests passing (`mvn test`).
-  - Frontend Angular SOC Dashboard: 200 tests passing (`npm test -- --watch=false`).
+  - Backend Platform Services: 448 tests passing (`mvn test`).
+  - Frontend Angular SOC Dashboard: 206 tests passing (`npm test -- --watch=false`).
   - Python Simulation Framework: 145 tests passing (`pytest simulation/tests`).
-  - Grand Total Repository Tests: 785 tests passing (100% BUILD SUCCESS).
+  - Grand Total Repository Tests: 799 tests passing (100% BUILD SUCCESS).
 - **Live Local Integration Status:** **RUNTIME ALIGNED & SOC VERIFIED (`PHASE_7_3_1_1_ACCEPTED`)**
   - Live Acceptance Report: `docs/phase-7-3-1-1-live-campaign-acceptance.md`.
   - Orchestration Architecture Spec: `docs/phase-7-3-1-simulation-orchestration.md`.
@@ -959,6 +960,43 @@ Phase 7.4 delivers turnkey, enterprise-grade **Production SaaS Packaging and Mul
 - **Frontend SOC Dashboard:** 200 Jasmine specs passing (100% SUCCESS) + Angular 18 production bundle (0 errors, 0 warnings).
 - **Python Simulation Tests:** 145 pytest cases passing (100% SUCCESS).
 - **Documentation:** Created comprehensive runbook in `docs/phase-7-4-production-saas-packaging.md`.
+
+---
+
+## 19. Phase 7.5 — Real-Time WebSocket Streaming & Live Alerts
+
+### 19.1 Objective & Architecture
+Phase 7.5 establishes an enterprise-grade, low-latency **Real-Time WebSocket Streaming and Live Alerting Engine** across the Aegis Gateway and Angular SOC Dashboard.
+Security incident escalations, campaign state transitions, policy decisions, and traffic telemetry bursts are published immediately over persistent WebSocket channels using the standard STOMP protocol, eliminating polling overhead and delivering instantaneous visibility to security analysts.
+
+### 19.2 Key Capabilities Delivered
+1. **Spring STOMP over WebSocket Broker (`gateway/websocket`):**
+   - Endpoints: SockJS fallback at `/ws/soc-feed` and RFC 6455 native WebSocket at `/ws/soc-feed-raw`.
+   - Broker destinations: `/topic` (pub/sub broadcast) and `/queue` (user/analyst point-to-point), application destination prefix `/app`.
+   - Security: Configured in `SecurityConfig.java` to permit handshake traffic while enforcing downstream analyst session context.
+2. **Real-Time Security Event Publisher (`WebSocketSecurityEventPublisher`):**
+   - Out-of-band asynchronous publishing across dedicated topic channels:
+     * `/topic/notifications`: Real-time analyst toast alerts.
+     * `/topic/incidents`: Incident lifecycle updates (status changes, severity escalations).
+     * `/topic/campaigns`: Multi-stage exfiltration campaign progression.
+     * `/topic/policies`: Real-time advisory policy decisions.
+     * `/topic/telemetry`: High-frequency traffic bursts and volumetric summaries.
+   - Integrated directly into `IncidentService.java` and `SimulationController.java`.
+   - Complete diagnostic REST API: `GET /api/v1/soc/ws/status` and `POST /api/v1/soc/ws/broadcast-test`.
+3. **Nginx Reverse Proxy WebSocket Upgrade (`frontend/nginx.conf`):**
+   - Configured `proxy_http_version 1.1`, `Upgrade $http_upgrade`, `Connection $connection_upgrade` with 3600-second read/send timeouts.
+4. **Angular Reactive WebSocket Client (`SocWebSocketService`):**
+   - Implemented native browser WebSocket with STOMP v1.2 frame parsing, automatic exponential backoff reconnection, heartbeat monitoring, and reactive RxJS observables (`notifications$`, `incidents$`, `campaigns$`, `connectionStatus$`).
+   - Integrated into `NavbarComponent`: real-time connection status pill (`STREAM: LIVE`), live unread notification badge counter, and an interactive real-time notification drawer.
+
+### 19.3 Verification & Quality Gate
+- **Gateway WebSocket Suite:** 8 new integration and unit tests passing (`WebSocketSecurityEventPublisherTest`, `WebSocketStreamControllerTest`, `WebSocketIntegrationTest`).
+- **Total Backend Platform Tests:** **448 / 448 passing (100% BUILD SUCCESS)**.
+- **Frontend Jasmine Suite:** **206 / 206 specs passing (100% SUCCESS)**.
+- **Frontend Production Build:** `ng build` succeeded with 0 warnings, 0 errors.
+- **Grand Total Platform Tests:** **799 / 799 passing (100% SUCCESS)** across Java, Angular, and Python.
+- **Documentation:** Authoritative runbook created in `docs/phase-7-5-realtime-websocket-streaming.md`.
+
 
 
 
