@@ -1337,3 +1337,39 @@ export interface InfrastructureObservabilityResponse {
   redis: RedisMetrics;
   telemetryPipeline: TelemetryPipelineMetrics;
 }
+
+// ============================================================================
+// Phase 7.6 — Multi-Tenant Administration, Webhook Alerts & Compliance Export
+// ============================================================================
+
+export interface ComplianceFrameworkAssessment {
+  frameworkName: string;
+  standardVersion: string;
+  scorePercentage: number;
+  status: string;
+  totalControls: number;
+  compliantControls: number;
+  nonCompliantControls: number;
+  controlAuditMap: Record<string, string>;
+}
+
+export interface SecurityComplianceReportResponse {
+  reportId: string;
+  generatedAt: string;
+  overallScorePercent: number;
+  certificationReadiness: string;
+  totalAssessedEndpoints: number;
+  frameworks: ComplianceFrameworkAssessment[];
+  executiveSummary: string;
+  keyStrengths: string[];
+  recommendedRemediations: string[];
+}
+
+export interface SecurityPostureExportResponse {
+  exportId: string;
+  exportedAt: string;
+  totalEndpoints: number;
+  summary: PostureSummaryResponse;
+  endpoints: EndpointPostureResponse[];
+}
+

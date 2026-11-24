@@ -161,6 +161,48 @@ class SecurityPostureControllerTest {
             .andExpect(jsonPath("$.detail").value(containsString("Invalid dimension filter")));
     }
 
+    @Test
+    @DisplayName("Compliance report returns 200 with OWASP, PCI-DSS, and SOC 2 scoring")
+    void getComplianceReportReturns200() throws Exception {
+        insertEvent("GET", "/customers/{customerId}", "customer-service", 200);
+
+        mockMvc.perform(get("/api/v1/security/posture/compliance-report")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ANALYST"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.overallScorePercent", greaterThan(80.0)))
+            .andExpect(jsonPath("$.certificationReadiness", notNullValue()))
+            .andExpect(jsonPath("$.frameworks", hasSize(3)))
+            .andExpect(jsonPath("$.frameworks[0].frameworkName").value("OWASP API Security Top 10"))
+            .andExpect(jsonPath("$.frameworks[1].frameworkName").value("PCI-DSS"))
+            .andExpect(jsonPath("$.frameworks[2].frameworkName").value("SOC 2 Type II"));
+    }
+
+    @Test
+    @DisplayName("Export CSV returns text/csv attachment with RFC-4180 header")
+    void exportPostureCsvReturns200() throws Exception {
+        insertEvent("GET", "/accounts/{accountId}", "account-service", 200);
+
+        mockMvc.perform(get("/api/v1/security/posture/export?format=csv")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ANALYST"))))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Content-Disposition", containsString("attachment; filename=\"aegis-security-posture.csv\"")))
+            .andExpect(content().contentTypeCompatibleWith("text/csv"))
+            .andExpect(content().string(containsString("\"Endpoint ID\",\"HTTP Method\",\"Normalized Route\"")));
+    }
+
+    @Test
+    @DisplayName("Export JSON returns full posture dataset")
+    void exportPostureJsonReturns200() throws Exception {
+        insertEvent("GET", "/accounts/{accountId}", "account-service", 200);
+
+        mockMvc.perform(get("/api/v1/security/posture/export?format=json")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SECURITY_ANALYST"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.exportId", startsWith("export-")))
+            .andExpect(jsonPath("$.summary", notNullValue()))
+            .andExpect(jsonPath("$.endpoints", notNullValue()));
+    }
+
     private void insertEvent(String method, String routeTemplate, String service, int statusCode) {
         String uri = routeTemplate.replace("{customerId}", "cust-123").replace("{accountId}", "acc-456");
         ApiEvent event = new ApiEvent(

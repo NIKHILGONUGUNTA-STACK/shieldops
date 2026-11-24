@@ -146,6 +146,73 @@ public class SecurityPostureController {
     }
 
     /**
+     * GET /api/v1/security/posture/compliance-report
+     * Executive and regulatory compliance assessment report.
+     */
+    @GetMapping(value = "/compliance-report", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('SECURITY_ANALYST', 'SECURITY_ADMIN')")
+    public ResponseEntity<?> getComplianceReport(
+            @RequestParam(name = "service", required = false) String service,
+            @RequestParam(name = "windowHours", defaultValue = "24") int windowHours) {
+
+        if (windowHours < 1 || windowHours > 720) {
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, "windowHours must be between 1 and 720: " + windowHours
+            );
+            problem.setTitle("Invalid Parameter");
+            problem.setType(URI.create("https://aegis.dev/errors/invalid-parameter"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem);
+        }
+
+        try {
+            SecurityComplianceReportResponse report = postureService.getComplianceReport(service, windowHours);
+            return ResponseEntity.ok(report);
+        } catch (DataAccessException dae) {
+            log.error("Database error generating compliance report: {}", dae.getMessage(), dae);
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.SERVICE_UNAVAILABLE, "Security posture telemetry store is currently unavailable"
+            );
+            problem.setTitle("Telemetry Store Unavailable");
+            problem.setType(URI.create("https://aegis.dev/errors/telemetry-unavailable"));
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(problem);
+        }
+    }
+
+    /**
+     * GET /api/v1/security/posture/export
+     * Full security posture export supporting CSV and JSON formats.
+     */
+    @GetMapping(value = "/export")
+    @PreAuthorize("hasAnyRole('SECURITY_ANALYST', 'SECURITY_ADMIN')")
+    public ResponseEntity<?> exportPosture(
+            @RequestParam(name = "format", defaultValue = "csv") String format,
+            @RequestParam(name = "service", required = false) String service,
+            @RequestParam(name = "windowHours", defaultValue = "24") int windowHours) {
+
+        if (windowHours < 1 || windowHours > 720) {
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, "windowHours must be between 1 and 720: " + windowHours
+            );
+            problem.setTitle("Invalid Parameter");
+            problem.setType(URI.create("https://aegis.dev/errors/invalid-parameter"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem);
+        }
+
+        if ("json".equalsIgnoreCase(format.trim())) {
+            SecurityPostureExportResponse jsonResponse = postureService.exportPostureJson(service, windowHours);
+            return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(jsonResponse);
+        } else {
+            String csvData = postureService.exportPostureCsv(service, windowHours);
+            return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"aegis-security-posture.csv\"")
+                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                .body(csvData);
+        }
+    }
+
+    /**
      * GET /api/v1/security/posture/{id}
      * Detailed posture assessment for an individual endpoint.
      */

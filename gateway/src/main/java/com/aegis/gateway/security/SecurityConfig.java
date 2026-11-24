@@ -59,6 +59,7 @@ public class SecurityConfig {
                     "/transactions/**", "/api/v1/transactions/**"
                 ).hasAnyRole("CUSTOMER", "SECURITY_ANALYST", "SECURITY_ADMIN")
                 .requestMatchers(
+                    "/admin/**", "/api/v1/admin/**",
                     "/security/**", "/api/v1/security/**",
                     "/soc/**", "/api/v1/soc/**",
                     "/simulation/**", "/api/v1/simulation/**"

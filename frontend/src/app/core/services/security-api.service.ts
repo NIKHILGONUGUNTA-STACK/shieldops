@@ -36,6 +36,9 @@ import {
   PostureSummaryResponse,
   PosturePageResponse,
   PostureFilterParams,
+  ComplianceFrameworkAssessment,
+  SecurityComplianceReportResponse,
+  SecurityPostureExportResponse,
   SensitiveDataInventoryPageResponse,
   SensitiveDataInventorySummary,
   EndpointDataClassification,
@@ -536,6 +539,48 @@ export class SecurityApiService {
       `${this.baseUrl}/api/v1/security/posture/summary`,
       { params: httpParams }
     ).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/posture/compliance-report
+   * Retrieves executive compliance evaluation (OWASP API Top 10, PCI-DSS 4.0, SOC 2 Type II).
+   */
+  getComplianceReport(params?: { service?: string; windowHours?: number }): Observable<SecurityComplianceReportResponse> {
+    let httpParams = new HttpParams();
+    if (params?.service) httpParams = httpParams.set('service', params.service);
+    if (params?.windowHours !== undefined) httpParams = httpParams.set('windowHours', params.windowHours.toString());
+    return this.http.get<SecurityComplianceReportResponse>(
+      `${this.baseUrl}/api/v1/security/posture/compliance-report`,
+      { params: httpParams }
+    ).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/posture/export?format=json
+   * Retrieves full security posture assessment dossier as JSON.
+   */
+  exportPostureJson(params?: { service?: string; windowHours?: number }): Observable<SecurityPostureExportResponse> {
+    let httpParams = new HttpParams().set('format', 'json');
+    if (params?.service) httpParams = httpParams.set('service', params.service);
+    if (params?.windowHours !== undefined) httpParams = httpParams.set('windowHours', params.windowHours.toString());
+    return this.http.get<SecurityPostureExportResponse>(
+      `${this.baseUrl}/api/v1/security/posture/export`,
+      { params: httpParams }
+    ).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/posture/export?format=csv
+   * Retrieves full RFC-4180 CSV export for auditors and spreadsheet analysis.
+   */
+  exportPostureCsv(params?: { service?: string; windowHours?: number }): Observable<string> {
+    let httpParams = new HttpParams().set('format', 'csv');
+    if (params?.service) httpParams = httpParams.set('service', params.service);
+    if (params?.windowHours !== undefined) httpParams = httpParams.set('windowHours', params.windowHours.toString());
+    return this.http.get(`${this.baseUrl}/api/v1/security/posture/export`, {
+      params: httpParams,
+      responseType: 'text'
+    }).pipe(catchError(this.handleError));
   }
 
   /**

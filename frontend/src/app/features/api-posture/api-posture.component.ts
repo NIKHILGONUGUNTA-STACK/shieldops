@@ -12,7 +12,10 @@ import {
   OverallPosture,
   PostureEvidenceItem,
   DimensionAssessment,
-  ProblemDetail
+  ProblemDetail,
+  SecurityComplianceReportResponse,
+  SecurityPostureExportResponse,
+  ComplianceFrameworkAssessment
 } from '../../core/models/security.models';
 
 @Component({
@@ -133,7 +136,7 @@ import {
             </select>
           </div>
 
-          <!-- Refresh Action Button -->
+          <!-- Action Buttons -->
           <div class="filter-action-group">
             <button (click)="loadPostureData(currentPage())" [disabled]="loading()" class="btn btn-secondary">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [class.spin]="loading()">
@@ -141,6 +144,15 @@ import {
                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
               </svg>
               Refresh
+            </button>
+            <button (click)="exportCsv()" [disabled]="loading()" class="btn btn-secondary" title="Export CSV for audit review">
+              Export CSV
+            </button>
+            <button (click)="exportJson()" [disabled]="loading()" class="btn btn-secondary" title="Export JSON dataset">
+              Export JSON
+            </button>
+            <button (click)="openComplianceReport()" [disabled]="loading()" class="btn btn-primary" title="Executive regulatory compliance report">
+              Compliance Report
             </button>
           </div>
         </div>
@@ -446,6 +458,49 @@ import {
               <ol class="next-steps-list">
                 <li *ngFor="let step of ep.recommendedSteps">{{ step }}</li>
               </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Regulatory Compliance Report Modal -->
+      <div *ngIf="complianceModalOpen()" class="modal-backdrop" (click)="closeComplianceReport()">
+        <div class="modal-card compliance-modal" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <div>
+              <div class="breadcrumb-tag">EXECUTIVE AUDIT REPORT</div>
+              <h2 class="soc-title">API Security Regulatory Compliance Dossier</h2>
+            </div>
+            <button class="btn btn-secondary" (click)="closeComplianceReport()">Close</button>
+          </div>
+          <div *ngIf="complianceLoading()" class="modal-body mono" style="padding: 24px; color: #8b949e;">
+            Evaluating regulatory controls (OWASP API Top 10, PCI-DSS 4.0, SOC 2 Type II)...
+          </div>
+          <div *ngIf="!complianceLoading() && complianceReport() as rep" class="modal-body" style="padding: 16px;">
+            <div class="compliance-kpi-bar">
+              <div class="kpi-item">
+                <div class="kpi-label">Overall Score</div>
+                <div class="kpi-val green-text mono">{{ rep.overallScorePercent }}%</div>
+              </div>
+              <div class="kpi-item">
+                <div class="kpi-label">Status</div>
+                <div class="kpi-val mono cyan-text">{{ rep.certificationReadiness }}</div>
+              </div>
+              <div class="kpi-item">
+                <div class="kpi-label">Assessed Endpoints</div>
+                <div class="kpi-val mono">{{ rep.totalAssessedEndpoints }}</div>
+              </div>
+            </div>
+            <div class="soc-card framework-card" *ngFor="let fw of rep.frameworks" style="margin-bottom: 16px; padding: 14px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <strong>{{ fw.frameworkName }} ({{ fw.standardVersion }})</strong>
+                <span class="mono green-text">{{ fw.scorePercentage }}% - {{ fw.status }}</span>
+              </div>
+              <ul class="control-list mono" style="list-style: none; padding: 0; margin: 0; font-size: 11px;">
+                <li *ngFor="let entry of fw.controlAuditMap | keyvalue" style="padding: 4px 0; border-bottom: 1px solid #21262d;">
+                  <span style="color: #58a6ff;">{{ entry.key }}:</span> {{ entry.value }}
+                </li>
+              </ul>
             </div>
           </div>
         </div>
@@ -1347,6 +1402,57 @@ import {
       max-width: 400px;
       margin: 0;
     }
+
+    /* Compliance Modal Styles */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1050;
+      padding: 20px;
+    }
+
+    .compliance-modal {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      max-width: 820px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid #30363d;
+    }
+
+    .compliance-kpi-bar {
+      display: flex;
+      gap: 32px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #30363d;
+    }
+
+    .kpi-item .kpi-label {
+      font-size: 11px;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .kpi-item .kpi-val {
+      font-size: 20px;
+    }
   `]
 })
 export class ApiPostureComponent implements OnInit {
@@ -1367,6 +1473,11 @@ export class ApiPostureComponent implements OnInit {
   readonly selectedEndpoint = signal<EndpointPostureResponse | null>(null);
   readonly loading = signal<boolean>(false);
   readonly error = signal<ProblemDetail | null>(null);
+
+  // Compliance & Export Signals
+  readonly complianceReport = signal<SecurityComplianceReportResponse | null>(null);
+  readonly complianceModalOpen = signal<boolean>(false);
+  readonly complianceLoading = signal<boolean>(false);
 
   // Pagination Signals
   readonly currentPage = signal<number>(0);
@@ -1525,6 +1636,57 @@ export class ApiPostureComponent implements OnInit {
       case 'GATEWAY_CONFIG': return 'src-gateway';
       case 'RECONCILIATION_ENGINE': return 'src-recon';
       default: return 'src-gateway';
+    }
+  }
+
+  exportCsv(): void {
+    this.securityApi.exportPostureCsv({
+      service: this.selectedService || undefined,
+      windowHours: this.selectedWindowHours
+    }).subscribe(csv => {
+      this.downloadBlob(csv, 'aegis-security-posture.csv', 'text/csv;charset=utf-8');
+    });
+  }
+
+  exportJson(): void {
+    this.securityApi.exportPostureJson({
+      service: this.selectedService || undefined,
+      windowHours: this.selectedWindowHours
+    }).subscribe(json => {
+      this.downloadBlob(JSON.stringify(json, null, 2), 'aegis-security-posture.json', 'application/json');
+    });
+  }
+
+  openComplianceReport(): void {
+    this.complianceModalOpen.set(true);
+    this.complianceLoading.set(true);
+    this.securityApi.getComplianceReport({
+      service: this.selectedService || undefined,
+      windowHours: this.selectedWindowHours
+    }).subscribe({
+      next: rep => {
+        this.complianceReport.set(rep);
+        this.complianceLoading.set(false);
+      },
+      error: () => this.complianceLoading.set(false)
+    });
+  }
+
+  closeComplianceReport(): void {
+    this.complianceModalOpen.set(false);
+  }
+
+  private downloadBlob(content: string, filename: string, mimeType: string): void {
+    try {
+      const blob = new Blob([content], { type: mimeType });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      // In headless test environments
     }
   }
 }

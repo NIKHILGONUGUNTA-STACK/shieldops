@@ -4,6 +4,8 @@ import com.aegis.gateway.detection.correlation.BolaCampaignCorrelator;
 import com.aegis.gateway.detection.correlation.ContextualCorrelationEngine;
 import com.aegis.gateway.detection.correlation.MultiVectorCampaignCorrelator;
 import com.aegis.gateway.detection.model.*;
+import com.aegis.gateway.integration.webhook.model.WebhookEventType;
+import com.aegis.gateway.integration.webhook.service.WebhookDispatcherService;
 import com.aegis.gateway.security.InvalidStatusTransitionException;
 import com.aegis.gateway.security.ResourceNotFoundException;
 import com.aegis.gateway.websocket.WebSocketSecurityEventPublisher;
@@ -16,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -25,24 +28,35 @@ public class IncidentService {
     private final IncidentRepository repository;
     private final ContextualCorrelationEngine correlationEngine;
     private final WebSocketSecurityEventPublisher eventPublisher;
+    private final WebhookDispatcherService webhookDispatcherService;
 
     @Autowired
     public IncidentService(
         IncidentRepository repository,
         ContextualCorrelationEngine correlationEngine,
-        @Autowired(required = false) WebSocketSecurityEventPublisher eventPublisher
+        @Autowired(required = false) WebSocketSecurityEventPublisher eventPublisher,
+        @Autowired(required = false) WebhookDispatcherService webhookDispatcherService
     ) {
         this.repository = repository;
         this.correlationEngine = correlationEngine;
         this.eventPublisher = eventPublisher;
+        this.webhookDispatcherService = webhookDispatcherService;
+    }
+
+    public IncidentService(
+        IncidentRepository repository,
+        ContextualCorrelationEngine correlationEngine,
+        WebSocketSecurityEventPublisher eventPublisher
+    ) {
+        this(repository, correlationEngine, eventPublisher, null);
     }
 
     public IncidentService(IncidentRepository repository, ContextualCorrelationEngine correlationEngine) {
-        this(repository, correlationEngine, null);
+        this(repository, correlationEngine, null, null);
     }
 
     public IncidentService(IncidentRepository repository) {
-        this(repository, new ContextualCorrelationEngine(List.of(new BolaCampaignCorrelator(), new MultiVectorCampaignCorrelator()), repository, null), null);
+        this(repository, new ContextualCorrelationEngine(List.of(new BolaCampaignCorrelator(), new MultiVectorCampaignCorrelator()), repository, null), null, null);
     }
 
     @Transactional
@@ -105,6 +119,24 @@ public class IncidentService {
         log.info("Transitioned incident {} status from {} to {} by {}", incidentId, currentStatus, newStatus, changedBy);
         if (eventPublisher != null) {
             eventPublisher.publishIncidentUpdate(updated, "STATUS_" + newStatus.name(), reason);
+        }
+        if (webhookDispatcherService != null) {
+            webhookDispatcherService.dispatchIncidentEvent(
+                "tenant-fintech-us",
+                incidentId.toString(),
+                updated.severity(),
+                "Incident " + updated.ruleId() + " Status Transitioned to " + newStatus.name(),
+                reason,
+                WebhookEventType.INCIDENT_STATUS_CHANGED,
+                Map.of(
+                    "incidentId", incidentId.toString(),
+                    "ruleId", updated.ruleId(),
+                    "threatCategory", updated.threatCategory(),
+                    "oldStatus", currentStatus.name(),
+                    "newStatus", newStatus.name(),
+                    "changedBy", changedBy != null ? changedBy : "system"
+                )
+            );
         }
         return updated;
     }

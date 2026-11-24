@@ -138,10 +138,32 @@ describe('ApiPostureComponent', () => {
     mockSecurityApi = jasmine.createSpyObj<SecurityApiService>('SecurityApiService', [
       'getPosturePage',
       'getEndpointPosture',
-      'getPostureSummary'
+      'getPostureSummary',
+      'exportPostureCsv',
+      'exportPostureJson',
+      'getComplianceReport'
     ]);
 
     mockSecurityApi.getPosturePage.and.returnValue(of(mockPosturePage));
+    mockSecurityApi.exportPostureCsv.and.returnValue(of('"Endpoint ID"\r\n"ep_1"'));
+    mockSecurityApi.exportPostureJson.and.returnValue(of({
+      exportId: 'exp-1',
+      exportedAt: '2026-11-24T12:00:00Z',
+      totalEndpoints: 1,
+      summary: mockPosturePage.summary,
+      endpoints: [mockEndpointPosture]
+    }));
+    mockSecurityApi.getComplianceReport.and.returnValue(of({
+      reportId: 'rep-1',
+      generatedAt: '2026-11-24T12:00:00Z',
+      overallScorePercent: 98.2,
+      certificationReadiness: 'AUDIT_READY',
+      totalAssessedEndpoints: 1,
+      frameworks: [],
+      executiveSummary: 'Audit pass',
+      keyStrengths: [],
+      recommendedRemediations: []
+    }));
 
     await TestBed.configureTestingModule({
       imports: [ApiPostureComponent],
@@ -238,6 +260,30 @@ describe('ApiPostureComponent', () => {
     component.loadPostureData(0);
     expect(component.loading()).toBeFalse();
     expect(component.error()).toEqual(errorProblem);
+  });
+
+  it('should trigger CSV and JSON posture exports', () => {
+    component.exportCsv();
+    expect(mockSecurityApi.exportPostureCsv).toHaveBeenCalledWith(jasmine.objectContaining({
+      windowHours: 24
+    }));
+
+    component.exportJson();
+    expect(mockSecurityApi.exportPostureJson).toHaveBeenCalledWith(jasmine.objectContaining({
+      windowHours: 24
+    }));
+  });
+
+  it('should open and close compliance report modal', () => {
+    component.openComplianceReport();
+    expect(component.complianceModalOpen()).toBeTrue();
+    expect(mockSecurityApi.getComplianceReport).toHaveBeenCalledWith(jasmine.objectContaining({
+      windowHours: 24
+    }));
+    expect(component.complianceReport()?.overallScorePercent).toBe(98.2);
+
+    component.closeComplianceReport();
+    expect(component.complianceModalOpen()).toBeFalse();
   });
 });
 

@@ -686,6 +686,58 @@ describe('SecurityApiService', () => {
         averageEvidenceCoveragePercentage: 75.0
       });
     });
+
+    it('should query getComplianceReport with service filter', () => {
+      service.getComplianceReport({ service: 'customer-service', windowHours: 24 }).subscribe(res => {
+        expect(res.overallScorePercent).toBe(98.5);
+        expect(res.certificationReadiness).toBe('AUDIT_READY');
+        expect(res.frameworks.length).toBe(3);
+      });
+
+      const req = httpTesting.expectOne(r => r.url.includes('/api/v1/security/posture/compliance-report'));
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('service')).toBe('customer-service');
+      req.flush({
+        reportId: 'audit-123',
+        generatedAt: '2026-11-24T12:00:00Z',
+        overallScorePercent: 98.5,
+        certificationReadiness: 'AUDIT_READY',
+        totalAssessedEndpoints: 10,
+        frameworks: [
+          { frameworkName: 'OWASP API Security Top 10', scorePercentage: 98.5, status: 'COMPLIANT' },
+          { frameworkName: 'PCI-DSS', scorePercentage: 96.8, status: 'COMPLIANT' },
+          { frameworkName: 'SOC 2 Type II', scorePercentage: 99.2, status: 'AUDIT_READY' }
+        ],
+        executiveSummary: 'All endpoints pass compliance controls',
+        keyStrengths: [],
+        recommendedRemediations: []
+      });
+    });
+
+    it('should query exportPostureJson and exportPostureCsv', () => {
+      service.exportPostureJson({ windowHours: 48 }).subscribe(res => {
+        expect(res.exportId).toBe('exp-123');
+        expect(res.totalEndpoints).toBe(2);
+      });
+
+      const req1 = httpTesting.expectOne(r => r.url.includes('/api/v1/security/posture/export') && r.params.get('format') === 'json');
+      expect(req1.request.method).toBe('GET');
+      req1.flush({
+        exportId: 'exp-123',
+        exportedAt: '2026-11-24T12:00:00Z',
+        totalEndpoints: 2,
+        summary: {},
+        endpoints: []
+      });
+
+      service.exportPostureCsv({ windowHours: 48 }).subscribe(csv => {
+        expect(csv).toContain('Endpoint ID');
+      });
+
+      const req2 = httpTesting.expectOne(r => r.url.includes('/api/v1/security/posture/export') && r.params.get('format') === 'csv');
+      expect(req2.request.method).toBe('GET');
+      req2.flush('"Endpoint ID","HTTP Method"\r\n"ep_1","GET"');
+    });
   });
 
   describe('Sensitive Data Classification APIs', () => {
