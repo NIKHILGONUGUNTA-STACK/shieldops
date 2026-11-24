@@ -1,0 +1,205 @@
+# Default values for Aegis Enterprise Helm Chart
+global:
+  environment: production
+  domain: shieldops.io
+  tlsSecretName: aegis-tls-production
+  imageRegistry: "docker.io"
+  imagePullSecrets: []
+
+# -----------------------------------------------------------------------------
+# ServiceAccount & Pod Security Standards
+# -----------------------------------------------------------------------------
+serviceAccount:
+  create: true
+  annotations: {}
+  name: "aegis-sa"
+
+securityContext:
+  pod:
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
+  container:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop:
+        - ALL
+
+# -----------------------------------------------------------------------------
+# Aegis Security Gateway & Out-of-Band Intelligence Engine
+# -----------------------------------------------------------------------------
+gateway:
+  replicaCount: 3
+  image:
+    repository: aegis/gateway
+    tag: 0.1.0
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8000
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  probes:
+    liveness:
+      path: /actuator/health/liveness
+      initialDelaySeconds: 45
+      periodSeconds: 15
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readiness:
+      path: /actuator/health/readiness
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+
+# -----------------------------------------------------------------------------
+# Aegis SOC Angular Dashboard Frontend
+# -----------------------------------------------------------------------------
+frontend:
+  replicaCount: 3
+  image:
+    repository: aegis/frontend
+    tag: 0.1.0
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8080
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 75
+  probes:
+    liveness:
+      path: /healthz
+      initialDelaySeconds: 10
+      periodSeconds: 15
+    readiness:
+      path: /healthz
+      initialDelaySeconds: 5
+      periodSeconds: 10
+
+# -----------------------------------------------------------------------------
+# Microservices (Customer, Account, Transaction)
+# -----------------------------------------------------------------------------
+microservices:
+  customer:
+    replicaCount: 2
+    image:
+      repository: aegis/customer-service
+      tag: 0.1.0
+    port: 8081
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+  account:
+    replicaCount: 2
+    image:
+      repository: aegis/account-service
+      tag: 0.1.0
+    port: 8082
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+  transaction:
+    replicaCount: 2
+    image:
+      repository: aegis/transaction-service
+      tag: 0.1.0
+    port: 8083
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+
+# -----------------------------------------------------------------------------
+# Data Stores & Identity Providers
+# -----------------------------------------------------------------------------
+postgresql:
+  enabled: true
+  host: "postgres"
+  port: 5432
+  database: "aegis"
+  keycloakDatabase: "keycloak"
+  username: "aegis_admin"
+  password: "CHANGE_ME_SECURE_POSTGRES_PASSWORD"
+  persistence:
+    enabled: true
+    size: 50Gi
+    storageClass: "gp3"
+
+redis:
+  enabled: true
+  host: "redis"
+  port: 6379
+  password: "CHANGE_ME_SECURE_REDIS_PASSWORD"
+  persistence:
+    enabled: true
+    size: 20Gi
+
+keycloak:
+  enabled: true
+  host: "keycloak"
+  port: 8080
+  adminUsername: "admin"
+  adminPassword: "CHANGE_ME_SECURE_KEYCLOAK_PASSWORD"
+
+# -----------------------------------------------------------------------------
+# Zero-Trust Network Policies & Ingress
+# -----------------------------------------------------------------------------
+networkPolicies:
+  enabled: true
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: aegis.shieldops.io
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: gateway
+        - path: /
+          pathType: Prefix
+          service: frontend
+  tls:
+    - secretName: aegis-tls-production
+      hosts:
+        - aegis.shieldops.io

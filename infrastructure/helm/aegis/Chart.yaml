@@ -1,0 +1,15 @@
+apiVersion: v2
+name: aegis
+description: Aegis Enterprise API Security Operations Platform Helm Chart
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - api-security
+  - soc
+  - out-of-band-intelligence
+  - shieldops
+  - aegis
+maintainers:
+  - name: shieldops-core
+    email: security@shieldops.internal

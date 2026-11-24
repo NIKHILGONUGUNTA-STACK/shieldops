@@ -1,0 +1,17 @@
+# Google Cloud Memorystore Redis High Availability Instance
+resource "google_redis_instance" "cache" {
+  name           = "aegis-${var.environment}-redis"
+  tier           = "STANDARD_HA"
+  memory_size_gb = 4
+  region         = var.region
+
+  authorized_network = google_compute_network.aegis.id
+  connect_mode       = "PRIVATE_SERVICE_ACCESS"
+
+  redis_version      = "REDIS_7_0"
+  display_name       = "Aegis Out-of-Band Telemetry Stream Buffer"
+  auth_enabled       = true
+  transit_encryption_mode = "SERVER_AUTHENTICATION"
+
+  depends_on = [google_service_networking_connection.private_vpc_connection]
+}

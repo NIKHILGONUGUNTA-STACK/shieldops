@@ -1,0 +1,410 @@
+name: ${COMPOSE_PROJECT_NAME:-aegis-prod}
+
+services:
+  # =========================================================================
+  # 1. CORE DATA & CACHE TIERS
+  # =========================================================================
+
+  postgres:
+    image: ${POSTGRES_IMAGE:-postgres:17-alpine}
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_AEGIS_DB:-aegis}
+      POSTGRES_KEYCLOAK_DB: ${POSTGRES_KEYCLOAK_DB:-keycloak}
+      POSTGRES_USER: ${POSTGRES_USER:-aegis_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Required postgres password}
+    volumes:
+      - postgres-prod-data:/var/lib/postgresql/data
+      - ../../config/postgres/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    command: >
+      postgres
+      -c shared_buffers=512MB
+      -c max_connections=200
+      -c work_mem=16MB
+      -c maintenance_work_mem=64MB
+      -c effective_cache_size=1536MB
+      -c wal_buffers=16MB
+      -c checkpoint_completion_target=0.9
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2048M
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - aegis-prod-net
+
+  redis:
+    image: ${REDIS_IMAGE:-redis:7.4-alpine}
+    restart: always
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 512mb
+      --maxmemory-policy volatile-lru
+      --requirepass ${REDIS_PASSWORD:?Required redis password}
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-prod-data:/data
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768M
+        reservations:
+          cpus: "0.2"
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "$REDIS_PASSWORD", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - aegis-prod-net
+
+  # =========================================================================
+  # 2. IDENTITY & ACCESS MANAGEMENT (KEYCLOAK)
+  # =========================================================================
+
+  keycloak:
+    image: ${KEYCLOAK_IMAGE:-quay.io/keycloak/keycloak:26.0.5}
+    restart: always
+    command: ["start-dev", "--import-realm", "--health-enabled=true", "--metrics-enabled=true"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Required keycloak admin password}
+      KC_DB: postgres
+      KC_DB_URL_HOST: postgres
+      KC_DB_URL_DATABASE: ${POSTGRES_KEYCLOAK_DB:-keycloak}
+      KC_DB_USERNAME: ${POSTGRES_USER:-aegis_admin}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_RELATIVE_PATH: "/"
+    ports:
+      - "127.0.0.1:${KEYCLOAK_PORT:-8080}:8080"
+      - "127.0.0.1:${KEYCLOAK_MANAGEMENT_PORT:-9000}:9000"
+    volumes:
+      - ../../keycloak/realm:/opt/keycloak/data/import:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1536M
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/9000'"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    networks:
+      - aegis-prod-net
+
+  # =========================================================================
+  # 3. DOMAIN MICROSERVICES
+  # =========================================================================
+
+  customer-service:
+    build:
+      context: ../..
+      dockerfile: services/Dockerfile
+      args:
+        APP_MODULE: customer-service
+    image: aegis/customer-service:0.1.0
+    restart: always
+    environment:
+      SERVER_PORT: 8081
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_AEGIS_DB:-aegis}
+      DB_USERNAME: ${POSTGRES_USER:-aegis_admin}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      AEGIS_INTERNAL_SECRET: ${AEGIS_INTERNAL_SECRET:?Required 32-char trust secret}
+      AEGIS_TRUST_VERIFICATION_ENABLED: "true"
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75 -XX:+UseG1GC -Djava.security.egd=file:/dev/./urandom"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768M
+        reservations:
+          cpus: "0.2"
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8081/actuator/health/readiness | grep -q 'UP'"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - aegis-prod-net
+
+  account-service:
+    build:
+      context: ../..
+      dockerfile: services/Dockerfile
+      args:
+        APP_MODULE: account-service
+    image: aegis/account-service:0.1.0
+    restart: always
+    environment:
+      SERVER_PORT: 8082
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_AEGIS_DB:-aegis}
+      DB_USERNAME: ${POSTGRES_USER:-aegis_admin}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      CUSTOMER_SERVICE_URL: http://customer-service:8081
+      AEGIS_INTERNAL_SECRET: ${AEGIS_INTERNAL_SECRET:?Required 32-char trust secret}
+      AEGIS_TRUST_VERIFICATION_ENABLED: "true"
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75 -XX:+UseG1GC -Djava.security.egd=file:/dev/./urandom"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      customer-service:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768M
+        reservations:
+          cpus: "0.2"
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8082/actuator/health/readiness | grep -q 'UP'"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - aegis-prod-net
+
+  transaction-service:
+    build:
+      context: ../..
+      dockerfile: services/Dockerfile
+      args:
+        APP_MODULE: transaction-service
+    image: aegis/transaction-service:0.1.0
+    restart: always
+    environment:
+      SERVER_PORT: 8083
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_AEGIS_DB:-aegis}
+      DB_USERNAME: ${POSTGRES_USER:-aegis_admin}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      ACCOUNT_SERVICE_URL: http://account-service:8082
+      AEGIS_INTERNAL_SECRET: ${AEGIS_INTERNAL_SECRET:?Required 32-char trust secret}
+      AEGIS_TRUST_VERIFICATION_ENABLED: "true"
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75 -XX:+UseG1GC -Djava.security.egd=file:/dev/./urandom"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      account-service:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768M
+        reservations:
+          cpus: "0.2"
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8083/actuator/health/readiness | grep -q 'UP'"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - aegis-prod-net
+
+  # =========================================================================
+  # 4. AEGIS SECURITY GATEWAY & INTELLIGENCE ENGINE
+  # =========================================================================
+
+  gateway:
+    build:
+      context: ../..
+      dockerfile: gateway/Dockerfile
+    image: aegis/gateway:0.1.0
+    restart: always
+    environment:
+      SERVER_PORT: 8000
+      CUSTOMER_SERVICE_URL: http://customer-service:8081
+      ACCOUNT_SERVICE_URL: http://account-service:8082
+      TRANSACTION_SERVICE_URL: http://transaction-service:8083
+      KEYCLOAK_JWKS_URI: http://keycloak:8080/realms/aegis-dev/protocol/openid-connect/certs
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/aegis-dev
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_AEGIS_DB:-aegis}
+      DB_USERNAME: ${POSTGRES_USER:-aegis_admin}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      AEGIS_INTERNAL_SECRET: ${AEGIS_INTERNAL_SECRET:?Required 32-char trust secret}
+      AEGIS_SEED_BASELINE_ENABLED: "true"
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75 -XX:+UseG1GC -Djava.security.egd=file:/dev/./urandom"
+    ports:
+      - "127.0.0.1:${GATEWAY_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      customer-service:
+        condition: service_healthy
+      account-service:
+        condition: service_healthy
+      transaction-service:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1536M
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8000/actuator/health/readiness | grep -q 'UP'"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+    networks:
+      - aegis-prod-net
+
+  # =========================================================================
+  # 5. ANGULAR SOC DASHBOARD & SECURE REVERSE PROXY
+  # =========================================================================
+
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+    image: aegis/frontend:0.1.0
+    restart: always
+    ports:
+      - "${FRONTEND_PORT:-80}:8080"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8080/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - aegis-prod-net
+
+  # =========================================================================
+  # 6. OBSERVABILITY & METRICS (PROMETHEUS & GRAFANA)
+  # =========================================================================
+
+  prometheus:
+    image: ${PROMETHEUS_IMAGE:-prom/prometheus:v2.54.1}
+    restart: always
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+      - "--storage.tsdb.retention.time=30d"
+    ports:
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-prod-data:/prometheus
+    depends_on:
+      gateway:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+        reservations:
+          cpus: "0.2"
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - aegis-prod-net
+
+  grafana:
+    image: ${GRAFANA_IMAGE:-grafana/grafana:11.2.0}
+    restart: always
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?Required grafana password}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-prod-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 128M
+    networks:
+      - aegis-prod-net
+
+# =========================================================================
+# VOLUMES & NETWORKS
+# =========================================================================
+
+volumes:
+  postgres-prod-data:
+    name: aegis-postgres-prod-data
+  redis-prod-data:
+    name: aegis-redis-prod-data
+  prometheus-prod-data:
+    name: aegis-prometheus-prod-data
+  grafana-prod-data:
+    name: aegis-grafana-prod-data
+
+networks:
+  aegis-prod-net:
+    name: aegis-prod-net
+    driver: bridge

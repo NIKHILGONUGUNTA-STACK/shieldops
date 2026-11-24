@@ -1,0 +1,151 @@
+{{- if .Values.networkPolicies.enabled }}
+# =========================================================================
+# ZERO-TRUST NETWORK POLICIES FOR AEGIS ARCHITECTURE
+# =========================================================================
+
+# 1. Default Deny All Ingress & Egress in Aegis namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "aegis.fullname" . }}-default-deny
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "aegis.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  egress:
+    # Allow essential cluster DNS resolution
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+# 2. Allow Ingress Controller to Frontend & Gateway
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "aegis.fullname" . }}-allow-ingress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "aegis.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/component
+        operator: In
+        values: ["frontend", "gateway"]
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 8000
+  policyTypes:
+    - Ingress
+---
+# 3. Allow Gateway to internal Microservices, PostgreSQL, and Redis
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "aegis.fullname" . }}-gateway-isolation
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "aegis.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: gateway
+  egress:
+    # To Domain Microservices
+    - to:
+        - podSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/component
+                operator: In
+                values: ["customer", "account", "transaction"]
+      ports:
+        - protocol: TCP
+          port: 8081
+        - protocol: TCP
+          port: 8082
+        - protocol: TCP
+          port: 8083
+    # To PostgreSQL
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    # To Redis
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+  policyTypes:
+    - Egress
+---
+# 4. Allow Internal Microservices communication ONLY from Gateway and to PostgreSQL
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "aegis.fullname" . }}-microservices-policy
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "aegis.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/component
+        operator: In
+        values: ["customer", "account", "transaction"]
+  ingress:
+    # Accept ingress ONLY from Gateway or peer microservices
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/component
+                operator: In
+                values: ["gateway", "account", "transaction"]
+  egress:
+    # Egress to PostgreSQL
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    # Account -> Customer
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: customer
+      ports:
+        - protocol: TCP
+          port: 8081
+    # Transaction -> Account
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: account
+      ports:
+        - protocol: TCP
+          port: 8082
+  policyTypes:
+    - Ingress
+    - Egress
+{{- end }}
