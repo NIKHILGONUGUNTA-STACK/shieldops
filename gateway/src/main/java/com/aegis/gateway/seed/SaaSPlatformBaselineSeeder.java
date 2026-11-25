@@ -83,13 +83,19 @@ public class SaaSPlatformBaselineSeeder implements ApplicationRunner {
             seedOpenApiSpecifications();
             seedResearchBenchmark();
 
-            boolean hasBaseline = apiEventRepository.findEvents(0, 1, null, null, null, null, null, null, null, null, "corr-benign-alex-0").totalElements() > 0;
-            if (!hasBaseline) {
-                log.info("Seeding realistic SaaS multi-tenant API telemetry, active incidents, and campaigns...");
-                seedTelemetryIncidentsAndCampaigns();
+            UUID inc1Id = UUID.fromString("b01a0000-0000-4000-8000-000000000001");
+            UUID campaignId = UUID.fromString("c01a0000-0000-4000-8000-000000000001");
+            boolean hasBaselineEvents = apiEventRepository.findEvents(0, 1, null, null, null, null, null, null, null, null, "corr-benign-alex-0").totalElements() > 0;
+            boolean hasBaselineIncidents = incidentRepository.findById(inc1Id).isPresent();
+            boolean hasBaselineCampaigns = campaignRepository.findById(campaignId).isPresent();
+
+            if (!hasBaselineEvents || !hasBaselineIncidents || !hasBaselineCampaigns) {
+                log.info("Seeding realistic SaaS multi-tenant API telemetry, active incidents, and campaigns (events missing: {}, incidents missing: {}, campaigns missing: {})...",
+                    !hasBaselineEvents, !hasBaselineIncidents, !hasBaselineCampaigns);
+                seedTelemetryIncidentsAndCampaigns(hasBaselineEvents, hasBaselineIncidents, hasBaselineCampaigns);
                 log.info("Successfully completed SaaS baseline platform seeding.");
             } else {
-                log.info("Baseline telemetry already present. Skipping duplicate seeding.");
+                log.info("Baseline telemetry, incidents, and campaigns already present. Skipping duplicate seeding.");
             }
         } catch (Exception e) {
             log.error("Error during SaaS baseline seeding: {}", e.getMessage(), e);
@@ -170,6 +176,10 @@ public class SaaSPlatformBaselineSeeder implements ApplicationRunner {
     }
 
     public void seedTelemetryIncidentsAndCampaigns() {
+        seedTelemetryIncidentsAndCampaigns(false, false, false);
+    }
+
+    public void seedTelemetryIncidentsAndCampaigns(boolean hasBaselineEvents, boolean hasBaselineIncidents, boolean hasBaselineCampaigns) {
         Instant now = Instant.now();
         List<ApiEvent> events = new ArrayList<>();
 
@@ -464,72 +474,138 @@ public class SaaSPlatformBaselineSeeder implements ApplicationRunner {
             ));
         }
 
-        // Save all events to database
-        apiEventRepository.saveAll(events);
-        log.info("Persisted {} multi-tenant API events to security_data.api_events", events.size());
+        // Save all events to database if not already present
+        if (!hasBaselineEvents) {
+            apiEventRepository.saveAll(events);
+            log.info("Persisted {} multi-tenant API events to security_data.api_events", events.size());
+        } else {
+            log.info("Baseline API events already present. Skipping event batch insert.");
+        }
 
         // -------------------------------------------------------------
-        // Seed 5 Active/Investigating/Resolved Security Incidents
+        // Seed 6 Active/Investigating/Resolved Security Incidents
         // -------------------------------------------------------------
         UUID inc1Id = UUID.fromString("b01a0000-0000-4000-8000-000000000001");
-        SecurityIncident inc1 = new SecurityIncident(
-            inc1Id,
-            "FP-BOLA-200000000002-USR99",
-            "RULE-BOLA-01",
-            "1.0.0",
-            "BOLA_CONFIRMED_LEAK",
-            "CRITICAL",
-            IncidentStatus.OPEN,
-            "ACCOUNT",
-            acctSam,
-            now.minus(10, ChronoUnit.HOURS),
-            now.minus(2, ChronoUnit.HOURS),
-            15,
-            "Confirmed BOLA unauthorized data leakage: Attacker usr-attacker-99 accessed account resource 20000000-0000-4000-8000-000000000002 belonging to Sam Taylor",
-            now.minus(10, ChronoUnit.HOURS),
-            now.minus(2, ChronoUnit.HOURS)
-        );
-        incidentRepository.saveIncident(inc1);
-        incidentRepository.saveEvidence(new DetectionEvidence(
-            UUID.randomUUID(),
-            inc1Id,
-            "RULE-BOLA-01",
-            "1.0.0",
-            now.minus(2, ChronoUnit.HOURS),
-            0.98,
-            "CRITICAL",
-            "Cross-subject resource owner mismatch with HTTP 200 and sensitive financial schema fields",
-            15,
-            7200,
-            2,
-            "Observed 5 successful HTTP 200 leakages containing native financial balances after initial 403 rejections.",
-            bolaEventIds,
-            now.minus(2, ChronoUnit.HOURS)
-        ));
-        incidentRepository.savePolicyDecision(new PolicyDecision(
-            UUID.randomUUID(),
-            inc1Id,
-            "POL-BOLA-DEFENSE-01",
-            "TERMINATE_SESSION",
-            "ADVISORY",
-            now.minus(2, ChronoUnit.HOURS),
-            now.plus(24, ChronoUnit.HOURS),
-            "Confirmed exfiltration of sensitive account balance and ownership records across tenant boundaries.",
-            now.minus(2, ChronoUnit.HOURS)
-        ));
-        incidentRepository.saveStatusHistory(new IncidentStatusHistory(
-            UUID.randomUUID(),
-            inc1Id,
-            "NONE",
-            "OPEN",
-            "system-correlator",
-            now.minus(10, ChronoUnit.HOURS),
-            "Initial automated correlation from RULE-BOLA-01 alert stream"
-        ));
-
-        // Incident 2: Reconnaissance
+        UUID inc1bId = UUID.fromString("b01a0000-0000-4000-8000-00000000001b");
         UUID inc2Id = UUID.fromString("b01a0000-0000-4000-8000-000000000002");
-        SecurityIncident inc2 = new SecurityIncident(
+        UUID inc3Id = UUID.fromString("b01a0000-0000-4000-8000-000000000003");
+        UUID inc4Id = UUID.fromString("b01a0000-0000-4000-8000-000000000004");
+        UUID inc5Id = UUID.fromString("b01a0000-0000-4000-8000-000000000005");
+
+        if (!hasBaselineIncidents) {
+            SecurityIncident inc1 = new SecurityIncident(
+                inc1Id,
+                "FP-BOLA-200000000002-USR99",
+                "RULE-BOLA-01",
+                "1.0.0",
+                "BOLA",
+                "CRITICAL",
+                IncidentStatus.OPEN,
+                "ACCOUNT",
+                acctSam,
+                now.minus(10, ChronoUnit.HOURS),
+                now.minus(2, ChronoUnit.HOURS),
+                15,
+                "Confirmed BOLA unauthorized data leakage: Attacker usr-attacker-99 accessed account resource 20000000-0000-4000-8000-000000000002 belonging to Sam Taylor",
+                now.minus(10, ChronoUnit.HOURS),
+                now.minus(2, ChronoUnit.HOURS)
+            );
+            incidentRepository.saveIncident(inc1);
+            incidentRepository.saveEvidence(new DetectionEvidence(
+                UUID.randomUUID(),
+                inc1Id,
+                "RULE-BOLA-01",
+                "1.0.0",
+                now.minus(2, ChronoUnit.HOURS),
+                0.98,
+                "CRITICAL",
+                "Cross-subject resource owner mismatch with HTTP 200 and sensitive financial schema fields",
+                15,
+                7200,
+                2,
+                "Observed 5 successful HTTP 200 leakages containing native financial balances after initial 403 rejections.",
+                bolaEventIds,
+                now.minus(2, ChronoUnit.HOURS)
+            ));
+            incidentRepository.savePolicyDecision(new PolicyDecision(
+                UUID.randomUUID(),
+                inc1Id,
+                "POL-BOLA-DEFENSE-01",
+                "TERMINATE_SESSION",
+                "ADVISORY",
+                now.minus(2, ChronoUnit.HOURS),
+                now.plus(24, ChronoUnit.HOURS),
+                "Confirmed exfiltration of sensitive account balance and ownership records across tenant boundaries.",
+                now.minus(2, ChronoUnit.HOURS)
+            ));
+            incidentRepository.saveStatusHistory(new IncidentStatusHistory(
+                UUID.randomUUID(),
+                inc1Id,
+                "NONE",
+                "OPEN",
+                "system-correlator",
+                now.minus(10, ChronoUnit.HOURS),
+                "Initial automated correlation from RULE-BOLA-01 alert stream"
+            ));
+
+            // Incident 1b: Investigating BOLA Access Attempt
+            SecurityIncident inc1b = new SecurityIncident(
+                inc1bId,
+                "FP-BOLA-200000000001-USR98",
+                "RULE-BOLA-01",
+                "1.0.0",
+                "BOLA",
+                "HIGH",
+                IncidentStatus.INVESTIGATING,
+                "ACCOUNT",
+                acctAlex,
+                now.minus(6, ChronoUnit.HOURS),
+                now.minus(1, ChronoUnit.HOURS),
+                8,
+                "Cross-Tenant Object Level Authorization Probe: External caller usr-attacker-98 attempted IDOR access to account resource 20000000-0000-4000-8000-000000000001",
+                now.minus(6, ChronoUnit.HOURS),
+                now.minus(1, ChronoUnit.HOURS)
+            );
+            incidentRepository.saveIncident(inc1b);
+            incidentRepository.saveEvidence(new DetectionEvidence(
+                UUID.randomUUID(),
+                inc1bId,
+                "RULE-BOLA-01",
+                "1.0.0",
+                now.minus(1, ChronoUnit.HOURS),
+                0.91,
+                "HIGH",
+                "Sliding-window threshold exceeded: 3 unauthorized attempts across distinct account resources",
+                8,
+                300,
+                2,
+                "Observed multiple 403 Forbidden responses attempting access to accounts owned by other customer identities.",
+                bolaEventIds.isEmpty() ? List.of(UUID.randomUUID()) : bolaEventIds.subList(0, Math.min(3, bolaEventIds.size())),
+                now.minus(1, ChronoUnit.HOURS)
+            ));
+            incidentRepository.savePolicyDecision(new PolicyDecision(
+                UUID.randomUUID(),
+                inc1bId,
+                "POL-BOLA-DEFENSE-01",
+                "INVESTIGATE_ACTIVITY",
+                "ADVISORY",
+                now.minus(5, ChronoUnit.HOURS),
+                now.plus(12, ChronoUnit.HOURS),
+                "Repeated 403 Forbidden responses against foreign object identifiers recorded for forensic review.",
+                now.minus(5, ChronoUnit.HOURS)
+            ));
+            incidentRepository.saveStatusHistory(new IncidentStatusHistory(
+                UUID.randomUUID(),
+                inc1bId,
+                "OPEN",
+                "INVESTIGATING",
+                "analyst-sarah",
+                now.minus(30, ChronoUnit.MINUTES),
+                "Investigating whether probe was automated scanner or targeted penetration test."
+            ));
+
+            // Incident 2: Reconnaissance
+            SecurityIncident inc2 = new SecurityIncident(
             inc2Id,
             "FP-RECON-1985110042",
             "RULE-RECON-01",
@@ -593,9 +669,8 @@ public class SaaSPlatformBaselineSeeder implements ApplicationRunner {
             "Assigned to Tier-2 SOC Analyst for perimeter IP reputation triage"
         ));
 
-        // Incident 3: Sensitive Secret Exposure
-        UUID inc3Id = UUID.fromString("b01a0000-0000-4000-8000-000000000003");
-        SecurityIncident inc3 = new SecurityIncident(
+            // Incident 3: Sensitive Secret Exposure
+            SecurityIncident inc3 = new SecurityIncident(
             inc3Id,
             "FP-EXPOSURE-CUSTOMER-HASH",
             "RULE-SENSITIVE-DATA-01",
@@ -641,9 +716,8 @@ public class SaaSPlatformBaselineSeeder implements ApplicationRunner {
             now.minus(4, ChronoUnit.HOURS)
         ));
 
-        // Incident 4: Bulk Deep Pagination Scraping
-        UUID inc4Id = UUID.fromString("b01a0000-0000-4000-8000-000000000004");
-        SecurityIncident inc4 = new SecurityIncident(
+            // Incident 4: Bulk Deep Pagination Scraping
+            SecurityIncident inc4 = new SecurityIncident(
             inc4Id,
             "FP-EXTRACTION-BATCH-SCRAPE",
             "RULE-EXTRACTION-01",
@@ -687,9 +761,8 @@ public class SaaSPlatformBaselineSeeder implements ApplicationRunner {
             "Client confirmed non-interactive scraper. Throttling advisory active."
         ));
 
-        // Incident 5: SQL Injection Attempt (Resolved)
-        UUID inc5Id = UUID.fromString("b01a0000-0000-4000-8000-000000000005");
-        SecurityIncident inc5 = new SecurityIncident(
+            // Incident 5: SQL Injection Attempt (Resolved)
+            SecurityIncident inc5 = new SecurityIncident(
             inc5Id,
             "FP-SQLI-CUSTOMER-QUERY",
             "RULE-SQLI-01",
@@ -717,92 +790,166 @@ public class SaaSPlatformBaselineSeeder implements ApplicationRunner {
             "Confirmed sanitized by JPA repository. No data compromise."
         ));
 
-        log.info("Persisted 5 security incidents with forensic evidence, policy decisions, and status histories.");
+            log.info("Persisted 6 security incidents with forensic evidence, policy decisions, and status histories.");
+        } else {
+            log.info("Security incidents already present. Skipping incident seeding.");
+        }
 
         // -------------------------------------------------------------
-        // Seed Multi-Stage Exfiltration Campaign
+        // Seed Multi-Stage Exfiltration Campaigns
         // -------------------------------------------------------------
         UUID campaignId = UUID.fromString("c01a0000-0000-4000-8000-000000000001");
-        ExfiltrationCampaign campaign = new ExfiltrationCampaign(
-            campaignId,
-            "EXFIL-CAMPAIGN-001",
-            "attacker-ip-198.51.100.42",
-            tenantUS,
-            "198.51.100.42",
-            CampaignStage.BULK_EXTRACTION,
-            List.of(CampaignStage.RECONNAISSANCE, CampaignStage.AUTHORIZATION_PROBING, CampaignStage.BULK_EXTRACTION),
-            CampaignStatus.OPEN,
-            "CRITICAL",
-            94.5,
-            "CRITICAL",
-            "Temporal kill-chain correlation: Adversary progressed from perimeter discovery (/actuator/env) to BOLA authorization probing and bulk data extraction of customer financial accounts.",
-            CampaignEvidenceCompleteness.COMPLETE,
-            "None. All kill chain stages confirmed via wire telemetry.",
-            5,
-            3,
-            2,
-            now.minus(18, ChronoUnit.HOURS),
-            now.minus(2, ChronoUnit.HOURS),
-            35,
-            List.of(reconEventIds.get(0), bolaEventIds.get(0), bolaEventIds.get(bolaEventIds.size() - 1)),
-            List.of(inc1Id, inc2Id),
-            List.of("RULE-RECON-01", "RULE-BOLA-01", "RULE-EXTRACTION-01"),
-            now.minus(18, ChronoUnit.HOURS),
-            now.minus(2, ChronoUnit.HOURS)
-        );
-        campaignRepository.saveCampaign(campaign);
+        UUID campaign2Id = UUID.fromString("c01a0000-0000-4000-8000-000000000002");
 
-        // Timeline events for the campaign
-        campaignRepository.saveTimelineEvent(new CampaignTimelineEvent(
-            UUID.randomUUID(),
-            campaignId,
-            CampaignStage.RECONNAISSANCE,
-            reconEventIds.get(0),
-            "RULE-RECON-01",
-            now.minus(18, ChronoUnit.HOURS),
-            "GET",
-            "/actuator/env",
-            404,
-            "Perimeter enumeration against non-inventoried administrative endpoint",
-            now.minus(18, ChronoUnit.HOURS)
-        ));
-        campaignRepository.saveTimelineEvent(new CampaignTimelineEvent(
-            UUID.randomUUID(),
-            campaignId,
-            CampaignStage.AUTHORIZATION_PROBING,
-            bolaEventIds.get(0),
-            "RULE-BOLA-01",
-            now.minus(10, ChronoUnit.HOURS),
-            "GET",
-            "/accounts/" + acctSam,
-            403,
-            "Cross-tenant IDOR access probe against victim account",
-            now.minus(10, ChronoUnit.HOURS)
-        ));
-        campaignRepository.saveTimelineEvent(new CampaignTimelineEvent(
-            UUID.randomUUID(),
-            campaignId,
-            CampaignStage.BULK_EXTRACTION,
-            bolaEventIds.get(bolaEventIds.size() - 1),
-            "RULE-BOLA-01",
-            now.minus(2, ChronoUnit.HOURS),
-            "GET",
-            "/accounts/" + acctSam,
-            200,
-            "Successful unauthorized financial exfiltration containing account balance and PII",
-            now.minus(2, ChronoUnit.HOURS)
-        ));
+        if (!hasBaselineCampaigns) {
+            ExfiltrationCampaign campaign = new ExfiltrationCampaign(
+                campaignId,
+                "EXFIL-CAMPAIGN-001",
+                "attacker-ip-198.51.100.42",
+                tenantUS,
+                "198.51.100.42",
+                CampaignStage.BULK_EXTRACTION,
+                List.of(CampaignStage.RECONNAISSANCE, CampaignStage.AUTHORIZATION_PROBING, CampaignStage.BULK_EXTRACTION),
+                CampaignStatus.OPEN,
+                "CRITICAL",
+                94.5,
+                "CRITICAL",
+                "Temporal kill-chain correlation: Adversary progressed from perimeter discovery (/actuator/env) to BOLA authorization probing and bulk data extraction of customer financial accounts.",
+                CampaignEvidenceCompleteness.COMPLETE,
+                "None. All kill chain stages confirmed via wire telemetry.",
+                5,
+                3,
+                2,
+                now.minus(18, ChronoUnit.HOURS),
+                now.minus(2, ChronoUnit.HOURS),
+                35,
+                List.of(reconEventIds.get(0), bolaEventIds.get(0), bolaEventIds.get(bolaEventIds.size() - 1)),
+                List.of(inc1Id, inc2Id),
+                List.of("RULE-RECON-01", "RULE-BOLA-01", "RULE-EXTRACTION-01"),
+                now.minus(18, ChronoUnit.HOURS),
+                now.minus(2, ChronoUnit.HOURS)
+            );
+            campaignRepository.saveCampaign(campaign);
 
-        campaignRepository.saveStatusHistory(new CampaignStatusHistory(
-            UUID.randomUUID(),
-            campaignId,
-            CampaignStatus.OPEN,
-            CampaignStatus.INVESTIGATING,
-            "security-engine",
-            now.minus(10, ChronoUnit.HOURS),
-            "Automated multi-vector campaign promotion upon observing stage escalation"
-        ));
+            // Timeline events for the campaign
+            campaignRepository.saveTimelineEvent(new CampaignTimelineEvent(
+                UUID.randomUUID(),
+                campaignId,
+                CampaignStage.RECONNAISSANCE,
+                reconEventIds.get(0),
+                "RULE-RECON-01",
+                now.minus(18, ChronoUnit.HOURS),
+                "GET",
+                "/actuator/env",
+                404,
+                "Perimeter enumeration against non-inventoried administrative endpoint",
+                now.minus(18, ChronoUnit.HOURS)
+            ));
+            campaignRepository.saveTimelineEvent(new CampaignTimelineEvent(
+                UUID.randomUUID(),
+                campaignId,
+                CampaignStage.AUTHORIZATION_PROBING,
+                bolaEventIds.get(0),
+                "RULE-BOLA-01",
+                now.minus(10, ChronoUnit.HOURS),
+                "GET",
+                "/accounts/" + acctSam,
+                403,
+                "Cross-tenant IDOR access probe against victim account",
+                now.minus(10, ChronoUnit.HOURS)
+            ));
+            campaignRepository.saveTimelineEvent(new CampaignTimelineEvent(
+                UUID.randomUUID(),
+                campaignId,
+                CampaignStage.BULK_EXTRACTION,
+                bolaEventIds.get(bolaEventIds.size() - 1),
+                "RULE-BOLA-01",
+                now.minus(2, ChronoUnit.HOURS),
+                "GET",
+                "/accounts/" + acctSam,
+                200,
+                "Successful unauthorized financial exfiltration containing account balance and PII",
+                now.minus(2, ChronoUnit.HOURS)
+            ));
 
-        log.info("Persisted multi-stage exfiltration campaign EXFIL-CAMPAIGN-001 with timeline events.");
+            campaignRepository.saveStatusHistory(new CampaignStatusHistory(
+                UUID.randomUUID(),
+                campaignId,
+                CampaignStatus.OPEN,
+                CampaignStatus.INVESTIGATING,
+                "security-engine",
+                now.minus(10, ChronoUnit.HOURS),
+                "Automated multi-vector campaign promotion upon observing stage escalation"
+            ));
+
+            // Seed Campaign 2: Investigating BOLA / Credential Enumeration
+            ExfiltrationCampaign campaign2 = new ExfiltrationCampaign(
+                campaign2Id,
+                "EXFIL-CAMPAIGN-002",
+                "attacker-ip-203.0.113.88",
+                tenantEU,
+                "203.0.113.88",
+                CampaignStage.AUTHORIZATION_PROBING,
+                List.of(CampaignStage.RECONNAISSANCE, CampaignStage.AUTHORIZATION_PROBING),
+                CampaignStatus.INVESTIGATING,
+                "HIGH",
+                82.0,
+                "HIGH",
+                "Multi-resource IDOR & BOLA credential enumeration campaign across European retail tenant accounts.",
+                CampaignEvidenceCompleteness.COMPLETE,
+                "Full correlation across 12 API probe requests.",
+                3,
+                2,
+                1,
+                now.minus(8, ChronoUnit.HOURS),
+                now.minus(4, ChronoUnit.HOURS),
+                18,
+                reconEventIds.isEmpty() ? List.of(UUID.randomUUID()) : List.of(reconEventIds.get(0)),
+                List.of(inc1Id),
+                List.of("RULE-RECON-01", "RULE-BOLA-01"),
+                now.minus(8, ChronoUnit.HOURS),
+                now.minus(4, ChronoUnit.HOURS)
+            );
+            campaignRepository.saveCampaign(campaign2);
+            campaignRepository.saveTimelineEvent(new CampaignTimelineEvent(
+                UUID.randomUUID(),
+                campaign2Id,
+                CampaignStage.RECONNAISSANCE,
+                UUID.randomUUID(),
+                "RULE-RECON-01",
+                now.minus(8, ChronoUnit.HOURS),
+                "GET",
+                "/api/v1/customers",
+                401,
+                "Anonymous enumeration of customer listing endpoint",
+                now.minus(8, ChronoUnit.HOURS)
+            ));
+            campaignRepository.saveTimelineEvent(new CampaignTimelineEvent(
+                UUID.randomUUID(),
+                campaign2Id,
+                CampaignStage.AUTHORIZATION_PROBING,
+                UUID.randomUUID(),
+                "RULE-BOLA-01",
+                now.minus(2, ChronoUnit.HOURS),
+                "GET",
+                "/accounts/20000000-0000-4000-8000-000000000001",
+                403,
+                "Cross-tenant IDOR probing against retail account",
+                now.minus(2, ChronoUnit.HOURS)
+            ));
+            campaignRepository.saveStatusHistory(new CampaignStatusHistory(
+                UUID.randomUUID(),
+                campaign2Id,
+                CampaignStatus.OPEN,
+                CampaignStatus.INVESTIGATING,
+                "analyst-sarah",
+                now.minus(4, ChronoUnit.HOURS),
+                "Analyst escalated to investigating after observing cross-tenant resource probe sequence"
+            ));
+
+            log.info("Persisted multi-stage exfiltration campaigns EXFIL-CAMPAIGN-001 and EXFIL-CAMPAIGN-002 with timeline events.");
+        } else {
+            log.info("Exfiltration campaigns already present. Skipping campaign seeding.");
+        }
     }
 }

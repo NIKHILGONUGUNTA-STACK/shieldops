@@ -114,8 +114,9 @@ public class IncidentRepository {
             if ("AUTH_ANOMALY".equals(cat)) {
                 cat = "CREDENTIAL_ACCESS";
             }
-            whereClause.append(" AND threat_category = :threatCategory");
+            whereClause.append(" AND (threat_category = :threatCategory OR threat_category LIKE :threatCategoryPrefix)");
             params.put("threatCategory", cat);
+            params.put("threatCategoryPrefix", cat + "%");
         }
         if (targetEntityType != null && !targetEntityType.isBlank()) {
             whereClause.append(" AND target_entity_type = :targetEntityType");

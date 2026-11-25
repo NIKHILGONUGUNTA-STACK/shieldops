@@ -219,7 +219,7 @@ export const NAV_SECTIONS: NavSection[] = [
         path: '/settings',
         icon: 'settings',
         availability: 'implemented',
-        description: 'Active platform runtime parameters, Keycloak PKCE client configs, and advisory mode invariant'
+        description: 'Multi-tenant SaaS administration, outbound webhook alerting integrations, Keycloak PKCE client configs, and advisory mode invariant'
       }
     ]
   }
