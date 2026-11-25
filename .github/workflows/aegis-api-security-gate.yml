@@ -1,0 +1,71 @@
+name: Aegis Shift-Left API Security Gate
+
+on:
+  pull_request:
+    paths:
+      - 'gateway/src/main/resources/specs/**'
+      - 'simulation/specs/**'
+      - 'specs/**'
+      - 'tools/aegis-ci-gate/**'
+      - '.github/actions/aegis-ci-gate/**'
+      - '.github/workflows/aegis-api-security-gate.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'gateway/src/main/resources/specs/**'
+  workflow_dispatch:
+    inputs:
+      spec_file:
+        description: 'Path to OpenAPI spec file to evaluate'
+        required: true
+        default: 'gateway/src/main/resources/specs/customer-service.yaml'
+      base_spec:
+        description: 'Path to base OpenAPI spec for regression diffing (optional)'
+        required: false
+        default: ''
+      posture_threshold:
+        description: 'Minimum security posture threshold (0-100)'
+        required: false
+        default: '75.0'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  api-security-gate:
+    name: Shift-Left OpenAPI Contract & Policy Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Aegis API Security CI Gate on Customer Service API
+        uses: ./.github/actions/aegis-ci-gate
+        with:
+          spec-file: 'gateway/src/main/resources/specs/customer-service.yaml'
+          threshold: '75.0'
+          fail-on-breaking: 'true'
+          output-format: 'markdown'
+          output-file: 'customer-service-gate-report.md'
+
+      - name: Run Aegis API Security CI Gate on Account Service API
+        uses: ./.github/actions/aegis-ci-gate
+        with:
+          spec-file: 'gateway/src/main/resources/specs/account-service.yaml'
+          threshold: '75.0'
+          fail-on-breaking: 'true'
+          output-format: 'markdown'
+          output-file: 'account-service-gate-report.md'
+
+      - name: Run Aegis API Security CI Gate on Transaction Service API
+        uses: ./.github/actions/aegis-ci-gate
+        with:
+          spec-file: 'gateway/src/main/resources/specs/transaction-service.yaml'
+          threshold: '75.0'
+          fail-on-breaking: 'true'
+          output-format: 'markdown'
+          output-file: 'transaction-service-gate-report.md'

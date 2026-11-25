@@ -1,0 +1,89 @@
+name: 'Aegis ShieldOps API Security CI Gate'
+description: 'Shift-left OpenAPI security scanner, contract regression checker, and wire telemetry reconciler'
+author: 'Aegis Security Engineering Team'
+
+inputs:
+  spec-file:
+    description: 'Path to OpenAPI 3.0/3.1 YAML or JSON specification to scan'
+    required: true
+  base-spec:
+    description: 'Path to base OpenAPI specification for regression and breaking change diffing'
+    required: false
+    default: ''
+  gateway-url:
+    description: 'ShieldOps Gateway base URL for wire telemetry discrepancy reconciliation'
+    required: false
+    default: ''
+  token:
+    description: 'ShieldOps API token or Bearer JWT for Gateway reconciliation'
+    required: false
+    default: ''
+  threshold:
+    description: 'Minimum required security posture score percentage (0-100)'
+    required: false
+    default: '75.0'
+  fail-on-breaking:
+    description: 'Whether to exit with code 1 if breaking changes or critical security flaws are detected'
+    required: false
+    default: 'true'
+  output-format:
+    description: 'Report output format: markdown, terminal, or json'
+    required: false
+    default: 'markdown'
+  output-file:
+    description: 'Destination file path for generated security report'
+    required: false
+    default: 'aegis-gate-report.md'
+
+outputs:
+  report-file:
+    description: 'Path to generated gate report file'
+    value: ${{ inputs.output-file }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python for CI Gate
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        cache-dependency-path: 'simulation/pyproject.toml'
+
+    - name: Install CI Gate Dependencies
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyyaml typer rich httpx pydantic
+
+    - name: Execute ShieldOps Shift-Left Security Scan
+      shell: bash
+      run: |
+        ARGS="scan '${{ inputs.spec-file }}' --threshold ${{ inputs.threshold }} --format ${{ inputs.output-format }} --output-file '${{ inputs.output-file }}'"
+        
+        if [ -n "${{ inputs.base-spec }}" ]; then
+          ARGS="$ARGS --base-spec '${{ inputs.base-spec }}'"
+        fi
+        
+        if [ -n "${{ inputs.gateway-url }}" ]; then
+          ARGS="$ARGS --gateway-url '${{ inputs.gateway-url }}'"
+        fi
+        
+        if [ -n "${{ inputs.token }}" ]; then
+          ARGS="$ARGS --token '${{ inputs.token }}'"
+        fi
+        
+        if [ "${{ inputs.fail-on-breaking }}" = "false" ]; then
+          ARGS="$ARGS --no-fail-on-breaking"
+        fi
+        
+        echo "Running: python tools/aegis-ci-gate/aegis_ci_gate.py $ARGS"
+        python tools/aegis-ci-gate/aegis_ci_gate.py $ARGS
+        GATE_EXIT=$?
+        
+        # Append report to GitHub Step Summary if available and format is markdown
+        if [ -f "${{ inputs.output-file }}" ] && [ -n "$GITHUB_STEP_SUMMARY" ]; then
+          cat "${{ inputs.output-file }}" >> "$GITHUB_STEP_SUMMARY"
+        fi
+        
+        exit $GATE_EXIT

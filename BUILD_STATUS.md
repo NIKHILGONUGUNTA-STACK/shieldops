@@ -1,6 +1,6 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 7.7 Complete (Interactive SaaS Administration Console, Webhook Manager & Campaign/BOLA Data Integration)
+## Current Milestone: Phase 7.8 Complete ("Shift-Left" API Security CI/CD Gate CLI & GitHub Action)
 
 **Status:** `VERIFIED & PRODUCTION READY`
 **Last Updated:** 2026-11-25
@@ -89,7 +89,8 @@
 | `test_research_evaluation_suite.py` (Phase 7.3.6) | Dual-mode comparative evaluation (n=200), Wilson/Bootstrap statistics, 8 ablations, robustness matrix | 7 | 0 | **SUCCESS** |
 | `test_dataset_integrity_and_isolation.py` (Phase 7.3.6.1 Gate 1) | Cryptographic binding, opaque scenario IDs, zero-leakage token audit, independent SHA-256 hashes | 14 | 0 | **SUCCESS** |
 | `test_two_population_evaluation_and_metrics.py` (Phase 7.3.6.1 Gate 2) | Two-population reconciliation (n=150 binary + n=50 uncertainty), exact two-sided McNemar test, paired bootstrap, FPR vs FDR | 8 | 0 | **SUCCESS** |
-| **Total Python Simulation Tests** | — | **145** | **0** | **BUILD SUCCESS** |
+| `test_ci_gate.py` (Phase 7.8) | Shift-Left OpenAPI compliance, mutating auth checks, sensitive data leakage, BOLA checks, contract regression diffing, CLI exit codes | 19 | 0 | **SUCCESS** |
+| **Total Python Simulation Tests** | — | **164** | **0** | **BUILD SUCCESS** |
 
 ---
 
@@ -98,9 +99,9 @@
 ### 2.1 Verification Mode Distinction
 - **Offline Mocked Verification:** **100% SUCCESS**
   - Backend Platform Services: 471 tests passing (`mvn test`).
-  - Frontend Angular SOC Dashboard: 220 tests passing (`npm test -- --watch=false`).
-  - Python Simulation Framework: 145 tests passing (`pytest simulation/tests`).
-  - Grand Total Repository Tests: 836 tests passing (100% BUILD SUCCESS).
+  - Frontend Angular SOC Dashboard: 226 tests passing (`npm test -- --watch=false`).
+  - Python Simulation Framework: 164 tests passing (`pytest simulation/tests`).
+  - Grand Total Repository Tests: **861 tests passing** (100% BUILD SUCCESS).
 - **Live Local Integration Status:** **RUNTIME ALIGNED & SOC VERIFIED (`PHASE_7_3_1_1_ACCEPTED`)**
   - Live Acceptance Report: `docs/phase-7-3-1-1-live-campaign-acceptance.md`.
   - Orchestration Architecture Spec: `docs/phase-7-3-1-simulation-orchestration.md`.
