@@ -100,6 +100,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/policy-decisions/policy-decisions.component').then(m => m.PolicyDecisionsComponent),
     canActivate: [authGuard]
   },
+  {
+    path: 'ml-anomalies',
+    loadComponent: () => import('./features/ml-anomalies/ml-anomalies.component').then(m => m.MlAnomaliesComponent),
+    canActivate: [authGuard]
+  },
   // GOVERNANCE & OPERATIONS
   {
     path: 'audit-history',

@@ -45,6 +45,7 @@ public class TelemetryFilter extends OncePerRequestFilter {
     private final ApiEventRepository repository;
     private final String streamKey;
     private io.micrometer.core.instrument.MeterRegistry meterRegistry;
+    private StreamingAnomalyScorer streamingAnomalyScorer;
 
     public TelemetryFilter(
             StringRedisTemplate redisTemplate,
@@ -53,6 +54,11 @@ public class TelemetryFilter extends OncePerRequestFilter {
         this.redisTemplate = redisTemplate;
         this.repository = repository;
         this.streamKey = streamKey;
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setStreamingAnomalyScorer(StreamingAnomalyScorer streamingAnomalyScorer) {
+        this.streamingAnomalyScorer = streamingAnomalyScorer;
     }
 
     @org.springframework.beans.factory.annotation.Autowired(required = false)
@@ -230,6 +236,15 @@ public class TelemetryFilter extends OncePerRequestFilter {
             String errorCode = null;
             byte[] respBytes = response.getContentAsByteArray();
             long responseSizeBytes = respBytes != null ? respBytes.length : 0L;
+
+            if (streamingAnomalyScorer != null) {
+                StreamingAnomalyScorer.OutlierResult outlierCheck = streamingAnomalyScorer.evaluateAndRecord(
+                    request.getMethod(), uri, responseSizeBytes, latencyMs
+                );
+                if (outlierCheck.isOutlier() && "NONE".equals(anomalyFlags)) {
+                    anomalyFlags = outlierCheck.outlierType();
+                }
+            }
 
             if (hasInjectionPattern) {
                 errorCode = "INJECTION_DETECTED";

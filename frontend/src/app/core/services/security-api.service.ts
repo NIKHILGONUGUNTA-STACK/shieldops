@@ -1010,6 +1010,38 @@ export class SecurityApiService {
       .pipe(catchError(this.handleError));
   }
 
+  /**
+   * GET /api/v1/security/workflow/rules
+   */
+  getWorkflowRules(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/api/v1/security/workflow/rules`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/workflow/sessions/:sessionId
+   */
+  getWorkflowSessionSteps(sessionId: string): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/api/v1/security/workflow/sessions/${encodeURIComponent(sessionId)}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * POST /api/v1/security/workflow/verify
+   */
+  verifyWorkflowTransition(req: { sessionId: string; method: string; path: string; roles?: string[] }): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/api/v1/security/workflow/verify`, req)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * GET /api/v1/security/workflow/outliers/stats
+   */
+  getOutlierStats(): Observable<Record<string, Record<string, any>>> {
+    return this.http.get<Record<string, Record<string, any>>>(`${this.baseUrl}/api/v1/security/workflow/outliers/stats`)
+      .pipe(catchError(this.handleError));
+  }
+
   private handleError(error: HttpErrorResponse): Observable<never> {
     let problem: ProblemDetail;
 

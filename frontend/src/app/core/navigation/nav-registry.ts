@@ -173,6 +173,15 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: 'scale',
         availability: 'implemented',
         description: 'Advisory non-blocking security decisions (LOG_ALERT) and rationale log'
+      },
+      {
+        id: 'ml-anomalies',
+        label: 'ML Anomaly Center',
+        path: '/ml-anomalies',
+        icon: 'activity',
+        availability: 'implemented',
+        badge: 'ML',
+        description: 'Behavioral Markov API sequence trajectories, streaming volumetric outlier clusters, and workflow funnels'
       }
     ]
   },
