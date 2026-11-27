@@ -1,6 +1,7 @@
 .git
 .github
 **/target
+!gateway/target/*.jar
 **/node_modules
 **/.venv
 config/dev.env
