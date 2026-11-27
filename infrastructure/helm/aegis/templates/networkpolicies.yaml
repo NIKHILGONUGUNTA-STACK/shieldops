@@ -87,14 +87,18 @@ spec:
       ports:
         - protocol: TCP
           port: 5432
-    # To Redis
+    # To Redis / Redis HA
     - to:
         - podSelector:
-            matchLabels:
-              app.kubernetes.io/component: redis
+            matchExpressions:
+              - key: app.kubernetes.io/component
+                operator: In
+                values: ["redis", "redis-ha", "redis-ha-master", "redis-ha-sentinel"]
       ports:
         - protocol: TCP
           port: 6379
+        - protocol: TCP
+          port: 26379
   policyTypes:
     - Egress
 ---

@@ -52,6 +52,9 @@ gateway:
     maxReplicas: 10
     targetCPUUtilizationPercentage: 70
     targetMemoryUtilizationPercentage: 80
+  pdb:
+    enabled: true
+    minAvailable: 2
   probes:
     liveness:
       path: /actuator/health/liveness
@@ -90,6 +93,9 @@ frontend:
     minReplicas: 3
     maxReplicas: 8
     targetCPUUtilizationPercentage: 75
+  pdb:
+    enabled: true
+    minAvailable: 2
   probes:
     liveness:
       path: /healthz
@@ -104,6 +110,9 @@ frontend:
 # Microservices (Customer, Account, Transaction)
 # -----------------------------------------------------------------------------
 microservices:
+  pdb:
+    enabled: true
+    minAvailable: 1
   customer:
     replicaCount: 2
     image:
@@ -168,6 +177,14 @@ redis:
   persistence:
     enabled: true
     size: 20Gi
+  ha:
+    enabled: false
+    replicas: 3
+    sentinelPort: 26379
+    quorum: 2
+    downAfterMilliseconds: 5000
+    failoverTimeout: 10000
+    maxmemory: "2gb"
 
 keycloak:
   enabled: true
@@ -203,3 +220,24 @@ ingress:
     - secretName: aegis-tls-production
       hosts:
         - aegis.shieldops.io
+
+# -----------------------------------------------------------------------------
+# Enterprise Secrets & KMS / HashiCorp Vault CSI Driver Integration
+# -----------------------------------------------------------------------------
+secretsStoreCSI:
+  enabled: false
+  provider: "vault" # "vault" or "aws"
+  vault:
+    role: "aegis-workload"
+    address: "https://vault.internal:8200"
+
+# -----------------------------------------------------------------------------
+# Envoy Service Mesh External Authorization Filter (ext_authz)
+# -----------------------------------------------------------------------------
+envoyFilter:
+  enabled: false
+  timeout: "0.25s"
+  failureModeAllow: false
+  workloadSelector:
+    app: "protected-workload"
+

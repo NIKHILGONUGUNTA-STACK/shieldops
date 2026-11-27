@@ -34,6 +34,7 @@ spec:
   selector:
     {{- include "aegis.selectorLabels" "frontend" | nindent 4 }}
 {{- range $name, $svc := .Values.microservices }}
+{{- if (hasKey $svc "port") }}
 ---
 apiVersion: v1
 kind: Service
@@ -52,4 +53,5 @@ spec:
       name: http
   selector:
     {{- include "aegis.selectorLabels" $name | nindent 4 }}
+{{- end }}
 {{- end }}

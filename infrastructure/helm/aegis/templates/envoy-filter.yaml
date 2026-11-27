@@ -1,0 +1,48 @@
+{{- if and .Values.envoyFilter .Values.envoyFilter.enabled }}
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: {{ include "aegis.fullname" . }}-ext-authz
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "aegis.labels" . | nindent 4 }}
+spec:
+  workloadSelector:
+    labels:
+      {{- toYaml .Values.envoyFilter.workloadSelector | nindent 6 }}
+  configPatches:
+    - applyTo: HTTP_FILTER
+      match:
+        context: SIDECAR_INBOUND
+        listener:
+          filterChain:
+            filter:
+              name: "envoy.filters.network.http_connection_manager"
+              subFilter:
+                name: "envoy.filters.http.router"
+      patch:
+        operation: INSERT_BEFORE
+        value:
+          name: "envoy.filters.http.ext_authz"
+          typed_config:
+            "@type": "type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz"
+            http_service:
+              server_uri:
+                uri: "http://{{ include "aegis.fullname" . }}-gateway:{{ .Values.gateway.service.port }}/api/v1/security/mesh/check"
+                cluster: "outbound|8000||{{ include "aegis.fullname" . }}-gateway.{{ .Release.Namespace }}.svc.cluster.local"
+                timeout: {{ .Values.envoyFilter.timeout | default "0.25s" }}
+              authorization_request:
+                allowed_headers:
+                  patterns:
+                    - exact: "authorization"
+                    - exact: "x-correlation-id"
+                    - exact: "x-tenant-id"
+                    - exact: "cookie"
+              authorization_response:
+                allowed_upstream_headers:
+                  patterns:
+                    - exact: "x-aegis-authenticated-user"
+                    - exact: "x-aegis-tenant-id"
+                    - exact: "x-aegis-risk-score"
+            failure_mode_allow: {{ .Values.envoyFilter.failureModeAllow | default false }}
+{{- end }}

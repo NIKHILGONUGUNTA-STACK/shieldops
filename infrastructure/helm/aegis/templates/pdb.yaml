@@ -1,0 +1,64 @@
+{{- if .Values.gateway.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "aegis.fullname" . }}-gateway-pdb
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "aegis.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gateway
+spec:
+  {{- if .Values.gateway.pdb.minAvailable }}
+  minAvailable: {{ .Values.gateway.pdb.minAvailable }}
+  {{- else if .Values.gateway.pdb.maxUnavailable }}
+  maxUnavailable: {{ .Values.gateway.pdb.maxUnavailable }}
+  {{- else }}
+  minAvailable: 2
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "aegis.selectorLabels" "gateway" | nindent 6 }}
+{{- end }}
+---
+{{- if .Values.frontend.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "aegis.fullname" . }}-frontend-pdb
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "aegis.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+spec:
+  {{- if .Values.frontend.pdb.minAvailable }}
+  minAvailable: {{ .Values.frontend.pdb.minAvailable }}
+  {{- else if .Values.frontend.pdb.maxUnavailable }}
+  maxUnavailable: {{ .Values.frontend.pdb.maxUnavailable }}
+  {{- else }}
+  minAvailable: 2
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "aegis.selectorLabels" "frontend" | nindent 6 }}
+{{- end }}
+---
+{{- if .Values.microservices.pdb.enabled }}
+{{- range $name, $service := .Values.microservices }}
+{{- if (hasKey $service "port") }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "aegis.fullname" $ }}-{{ $name }}-pdb
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "aegis.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $name }}-service
+spec:
+  minAvailable: {{ $.Values.microservices.pdb.minAvailable | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "aegis.selectorLabels" (printf "%s-service" $name) | nindent 6 }}
+{{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,158 @@
+{{- if and .Values.redis.enabled .Values.redis.ha.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "aegis.fullname" . }}-redis-ha-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "aegis.labels" . | nindent 4 }}
+    app.kubernetes.io/component: redis-ha
+data:
+  sentinel.conf: |
+    port {{ .Values.redis.ha.sentinelPort | default 26379 }}
+    dir "/tmp"
+    sentinel monitor mymaster {{ include "aegis.fullname" . }}-redis-ha-master 6379 {{ .Values.redis.ha.quorum | default 2 }}
+    sentinel down-after-milliseconds mymaster {{ .Values.redis.ha.downAfterMilliseconds | default 5000 }}
+    sentinel failover-timeout mymaster {{ .Values.redis.ha.failoverTimeout | default 10000 }}
+    sentinel parallel-syncs mymaster 1
+    {{- if .Values.redis.password }}
+    sentinel auth-pass mymaster {{ .Values.redis.password }}
+    {{- end }}
+  redis.conf: |
+    bind 0.0.0.0
+    port 6379
+    protected-mode yes
+    tcp-backlog 511
+    timeout 0
+    tcp-keepalive 300
+    save 900 1
+    save 300 10
+    save 60 10000
+    appendonly yes
+    appendfsync everysec
+    maxmemory {{ .Values.redis.ha.maxmemory | default "2gb" }}
+    maxmemory-policy volatile-lru
+    {{- if .Values.redis.password }}
+    requirepass {{ .Values.redis.password }}
+    masterauth {{ .Values.redis.password }}
+    {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "aegis.fullname" . }}-redis-ha-master
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "aegis.labels" . | nindent 4 }}
+    app.kubernetes.io/component: redis-ha-master
+spec:
+  type: ClusterIP
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+  selector:
+    {{- include "aegis.selectorLabels" "redis-ha" | nindent 4 }}
+    redis-role: master
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "aegis.fullname" . }}-redis-ha-sentinel
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "aegis.labels" . | nindent 4 }}
+    app.kubernetes.io/component: redis-ha-sentinel
+spec:
+  type: ClusterIP
+  ports:
+    - name: sentinel
+      port: {{ .Values.redis.ha.sentinelPort | default 26379 }}
+      targetPort: {{ .Values.redis.ha.sentinelPort | default 26379 }}
+  selector:
+    {{- include "aegis.selectorLabels" "redis-ha" | nindent 4 }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "aegis.fullname" . }}-redis-ha
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "aegis.labels" . | nindent 4 }}
+    app.kubernetes.io/component: redis-ha
+spec:
+  serviceName: {{ include "aegis.fullname" . }}-redis-ha-sentinel
+  replicas: {{ .Values.redis.ha.replicas | default 3 }}
+  selector:
+    matchLabels:
+      {{- include "aegis.selectorLabels" "redis-ha" | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "aegis.selectorLabels" "redis-ha" | nindent 8 }}
+        redis-role: master
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: redis
+          image: "{{ .Values.global.imageRegistry }}/redis:7.4-alpine"
+          imagePullPolicy: IfNotPresent
+          command: ["redis-server", "/etc/redis/redis.conf"]
+          ports:
+            - name: redis
+              containerPort: 6379
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+          volumeMounts:
+            - name: redis-config
+              mountPath: /etc/redis
+            - name: redis-data
+              mountPath: /data
+        - name: sentinel
+          image: "{{ .Values.global.imageRegistry }}/redis:7.4-alpine"
+          imagePullPolicy: IfNotPresent
+          command: ["redis-sentinel", "/etc/sentinel/sentinel.conf"]
+          ports:
+            - name: sentinel
+              containerPort: {{ .Values.redis.ha.sentinelPort | default 26379 }}
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          volumeMounts:
+            - name: sentinel-config
+              mountPath: /etc/sentinel
+      volumes:
+        - name: redis-config
+          configMap:
+            name: {{ include "aegis.fullname" . }}-redis-ha-config
+            items:
+              - key: redis.conf
+                path: redis.conf
+        - name: sentinel-config
+          configMap:
+            name: {{ include "aegis.fullname" . }}-redis-ha-config
+            items:
+              - key: sentinel.conf
+                path: sentinel.conf
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.redis.persistence.size | default "20Gi" }}
+{{- end }}
