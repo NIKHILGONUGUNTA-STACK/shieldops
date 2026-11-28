@@ -200,6 +200,15 @@ export const NAV_SECTIONS: NavSection[] = [
         availability: 'implemented',
         badge: 'AI',
         description: 'Autonomous Red Team mutation probing, candidate policy synthesis, shadow-mode evaluation, and zero-FP edge promotion'
+      },
+      {
+        id: 'federation',
+        label: 'Federated Consensus',
+        path: '/federation',
+        icon: 'globe',
+        availability: 'implemented',
+        badge: 'HA',
+        description: 'Multi-region cross-cluster policy consensus, vector clocks, cryptographic Merkle state verification, and drift reconciliation'
       }
     ]
   },

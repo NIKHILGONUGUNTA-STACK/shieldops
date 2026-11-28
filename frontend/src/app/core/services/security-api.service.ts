@@ -86,7 +86,12 @@ import {
   AdaptiveChallengeSession,
   ChallengeMetrics,
   AdversaryCampaign,
-  CandidatePolicy
+  CandidatePolicy,
+  FederationNode,
+  FederatedPolicyPayload,
+  ConsensusVerificationResult,
+  FederatedPolicyType,
+  FederatedPolicyAction
 } from '../models/security.models';
 
 @Injectable({
@@ -1168,6 +1173,35 @@ export class SecurityApiService {
 
   promoteCandidatePolicy(candidateId: string): Observable<CandidatePolicy> {
     return this.http.post<CandidatePolicy>(`${this.baseUrl}/api/v1/security/adversary/synthesizer/promote/${encodeURIComponent(candidateId)}`, {})
+      .pipe(catchError(this.handleError));
+  }
+
+  // --------------------------------------------------------------------------
+  // Phase 8.3 — Multi-Region Federated Consensus APIs
+  // --------------------------------------------------------------------------
+
+  getFederationNodes(): Observable<FederationNode[]> {
+    return this.http.get<FederationNode[]>(`${this.baseUrl}/api/v1/security/federation/nodes`)
+      .pipe(catchError(this.handleError));
+  }
+
+  getFederationConsensus(): Observable<ConsensusVerificationResult> {
+    return this.http.get<ConsensusVerificationResult>(`${this.baseUrl}/api/v1/security/federation/consensus`)
+      .pipe(catchError(this.handleError));
+  }
+
+  reconcileFederationCluster(): Observable<ConsensusVerificationResult> {
+    return this.http.post<ConsensusVerificationResult>(`${this.baseUrl}/api/v1/security/federation/reconcile`, {})
+      .pipe(catchError(this.handleError));
+  }
+
+  getFederatedPolicies(): Observable<FederatedPolicyPayload[]> {
+    return this.http.get<FederatedPolicyPayload[]>(`${this.baseUrl}/api/v1/security/federation/policies`)
+      .pipe(catchError(this.handleError));
+  }
+
+  broadcastFederatedPolicy(req: { type: FederatedPolicyType; action: FederatedPolicyAction; payloadJson: string }): Observable<FederatedPolicyPayload> {
+    return this.http.post<FederatedPolicyPayload>(`${this.baseUrl}/api/v1/security/federation/broadcast`, req)
       .pipe(catchError(this.handleError));
   }
 

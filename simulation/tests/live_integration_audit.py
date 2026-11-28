@@ -1,6 +1,7 @@
 import asyncio
 import uuid
 import httpx
+import json
 
 async def run_live_integration_audit():
     print("=" * 75)
@@ -255,6 +256,38 @@ async def run_live_integration_audit():
         print(f"     Edge Verification on Healed Target (/api/v1/beneficiaries): Status {verify_healed_r.status_code}, Allowed={verify_healed_r.json().get('allowed')}")
         assert verify_healed_r.json().get("allowed") is False, "Healed rule should block skipped beneficiary step"
         print(f"     Healed Rule ID: {verify_healed_r.json().get('ruleId')} (HOT-LOADED SUCCESSFULLY)")
+
+        # 13. Phase 8.3 Multi-Region Federated Policy Consensus & Synchronization
+        fed_nodes_r = await client.get("http://localhost:8000/api/v1/security/federation/nodes", headers=headers)
+        print(f"[13] GET /api/v1/security/federation/nodes: Status {fed_nodes_r.status_code}, ActiveNodes={len(fed_nodes_r.json())}")
+        assert fed_nodes_r.status_code == 200
+        assert len(fed_nodes_r.json()) >= 3
+
+        fed_consensus_r = await client.get("http://localhost:8000/api/v1/security/federation/consensus", headers=headers)
+        consensus_data = fed_consensus_r.json()
+        print(f"     GET /api/v1/security/federation/consensus: Status {fed_consensus_r.status_code}, Synchronized={consensus_data.get('synchronizedStatus')}, Merkle={consensus_data.get('globalMerkleRoot')[:16]}...")
+        assert fed_consensus_r.status_code == 200
+        assert consensus_data.get("globalMerkleRoot") is not None
+
+        # Broadcast federated policy across regions
+        broadcast_r = await client.post(
+            "http://localhost:8000/api/v1/security/federation/broadcast",
+            headers=headers,
+            json={
+                "type": "WAF_IP_BAN",
+                "action": "UPSERT",
+                "payloadJson": json.dumps({"ip": "203.0.113.77", "reason": "Federated Multi-Region Credential Attack", "incidentId": "INC-FED-LIVE"})
+            }
+        )
+        print(f"     POST /api/v1/security/federation/broadcast: Status {broadcast_r.status_code}, PolicyID={broadcast_r.json().get('policyId')}")
+        assert broadcast_r.status_code == 201
+        assert broadcast_r.json().get("policyId").startswith("FED-POL-")
+
+        # Verify cluster reconciliation and consensus
+        reconcile_r = await client.post("http://localhost:8000/api/v1/security/federation/reconcile", headers=headers)
+        print(f"     POST /api/v1/security/federation/reconcile: Status {reconcile_r.status_code}, Synchronized={reconcile_r.json().get('synchronizedStatus')}")
+        assert reconcile_r.status_code == 200
+        assert reconcile_r.json().get("synchronizedStatus") is True
 
     print("=" * 75)
     print("LIVE INTEGRATION & ENFORCEMENT AUDIT: 100% SUCCESS")

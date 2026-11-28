@@ -115,6 +115,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/adversary/self-healing-center.component').then(m => m.SelfHealingCenterComponent),
     canActivate: [authGuard]
   },
+  {
+    path: 'federation',
+    loadComponent: () => import('./features/federation/federation-center.component').then(m => m.FederationCenterComponent),
+    canActivate: [authGuard]
+  },
   // GOVERNANCE & OPERATIONS
   {
     path: 'audit-history',

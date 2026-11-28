@@ -1512,3 +1512,49 @@ export interface CandidatePolicy {
   promotedAt?: string;
   synthesizedFromCampaignId: string;
 }
+
+// ============================================================================
+// Phase 8.3 — Multi-Region Federated Policy Consensus Models
+// ============================================================================
+
+export type FederationNodeStatus = 'HEALTHY' | 'SYNCING' | 'DEGRADED' | 'PARTITIONED';
+
+export interface FederationNode {
+  nodeId: string;
+  region: string;
+  status: FederationNodeStatus;
+  endpointUrl: string;
+  lastHeartbeat: string;
+  latencyMs: number;
+  epoch: number;
+  stateMerkleRoot: string;
+  vectorClock: { [nodeId: string]: number };
+}
+
+export type FederatedPolicyType = 'WAF_IP_BAN' | 'TOKEN_REVOCATION' | 'WORKFLOW_RULE' | 'ADAPTIVE_CHALLENGE';
+export type FederatedPolicyAction = 'UPSERT' | 'REVOKE';
+
+export interface FederatedPolicyPayload {
+  policyId: string;
+  policyType: FederatedPolicyType;
+  action: FederatedPolicyAction;
+  originNodeId: string;
+  originEpoch: number;
+  vectorClock: { [nodeId: string]: number };
+  payloadJson: string;
+  cryptographicSignature: string;
+  timestamp: string;
+}
+
+export interface ConsensusVerificationResult {
+  synchronizedStatus: boolean;
+  totalNodes: number;
+  healthyNodeCount: number;
+  divergentNodeCount: number;
+  globalMerkleRoot: string;
+  nodeStates: { [nodeId: string]: string };
+  totalPolicies: number;
+  conflictCount: number;
+  lastConsensusTime: string;
+}
+
