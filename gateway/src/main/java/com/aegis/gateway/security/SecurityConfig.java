@@ -59,6 +59,11 @@ public class SecurityConfig {
                     "/transactions/**", "/api/v1/transactions/**"
                 ).hasAnyRole("CUSTOMER", "SECURITY_ANALYST", "SECURITY_ADMIN")
                 .requestMatchers(
+                    "/api/v1/security/soar/tickets/callback",
+                    "/api/v1/security/soar/challenge/verify",
+                    "/api/v1/security/soar/challenge/status/**"
+                ).permitAll()
+                .requestMatchers(
                     "/admin/**", "/api/v1/admin/**",
                     "/security/**", "/api/v1/security/**",
                     "/soc/**", "/api/v1/soc/**",

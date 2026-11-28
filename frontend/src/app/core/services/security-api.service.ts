@@ -75,7 +75,16 @@ import {
   IdentityIntelligenceResponse,
   TenantActivityRecord,
   TenantActivityResponse,
-  InfrastructureObservabilityResponse
+  InfrastructureObservabilityResponse,
+  WafBanRule,
+  WafBanRequest,
+  TokenRevocationRecord,
+  TokenRevokeRequest,
+  SubjectRevokeRequest,
+  SoarTicket,
+  CreateTicketRequest,
+  AdaptiveChallengeSession,
+  ChallengeMetrics
 } from '../models/security.models';
 
 @Injectable({
@@ -1039,6 +1048,85 @@ export class SecurityApiService {
    */
   getOutlierStats(): Observable<Record<string, Record<string, any>>> {
     return this.http.get<Record<string, Record<string, any>>>(`${this.baseUrl}/api/v1/security/workflow/outliers/stats`)
+      .pipe(catchError(this.handleError));
+  }
+
+  // ==========================================================================
+  // Phase 8.1 — Autonomous SOAR & Closed-Loop Threat Mitigation
+  // ==========================================================================
+
+  getWafRules(): Observable<WafBanRule[]> {
+    return this.http.get<WafBanRule[]>(`${this.baseUrl}/api/v1/security/soar/waf/rules`)
+      .pipe(catchError(this.handleError));
+  }
+
+  addWafBan(req: WafBanRequest): Observable<WafBanRule> {
+    return this.http.post<WafBanRule>(`${this.baseUrl}/api/v1/security/soar/waf/ban`, req)
+      .pipe(catchError(this.handleError));
+  }
+
+  deleteWafBan(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/v1/security/soar/waf/ban/${encodeURIComponent(id)}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  getCloudflareWafExport(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/api/v1/security/soar/waf/export/cloudflare`)
+      .pipe(catchError(this.handleError));
+  }
+
+  getAwsWafExport(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/api/v1/security/soar/waf/export/aws`)
+      .pipe(catchError(this.handleError));
+  }
+
+  getIptablesExport(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/api/v1/security/soar/waf/export/iptables`)
+      .pipe(catchError(this.handleError));
+  }
+
+  getRevokedTokens(): Observable<TokenRevocationRecord[]> {
+    return this.http.get<TokenRevocationRecord[]>(`${this.baseUrl}/api/v1/security/soar/tokens/revoked`)
+      .pipe(catchError(this.handleError));
+  }
+
+  revokeToken(req: TokenRevokeRequest): Observable<TokenRevocationRecord> {
+    return this.http.post<TokenRevocationRecord>(`${this.baseUrl}/api/v1/security/soar/tokens/revoke`, req)
+      .pipe(catchError(this.handleError));
+  }
+
+  revokeSubject(req: SubjectRevokeRequest): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/api/v1/security/soar/tokens/revoke-subject`, req)
+      .pipe(catchError(this.handleError));
+  }
+
+  getSoarTickets(): Observable<SoarTicket[]> {
+    return this.http.get<SoarTicket[]>(`${this.baseUrl}/api/v1/security/soar/tickets`)
+      .pipe(catchError(this.handleError));
+  }
+
+  createSoarTicket(req: CreateTicketRequest): Observable<SoarTicket> {
+    return this.http.post<SoarTicket>(`${this.baseUrl}/api/v1/security/soar/tickets`, req)
+      .pipe(catchError(this.handleError));
+  }
+
+  issueChallenge(req: { sessionId: string; reason?: string; threatRisk?: number }): Observable<AdaptiveChallengeSession> {
+    return this.http.post<AdaptiveChallengeSession>(`${this.baseUrl}/api/v1/security/soar/challenge/issue`, req)
+      .pipe(catchError(this.handleError));
+  }
+
+  verifyChallenge(req: { sessionId: string; responseToken: string }): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/api/v1/security/soar/challenge/verify`, req)
+      .pipe(catchError(this.handleError));
+  }
+
+  getChallengeStatus(sessionId: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/api/v1/security/soar/challenge/status/${encodeURIComponent(sessionId)}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  getChallengeMetrics(): Observable<ChallengeMetrics> {
+    return this.http.get<ChallengeMetrics>(`${this.baseUrl}/api/v1/security/soar/challenge/metrics`)
       .pipe(catchError(this.handleError));
   }
 

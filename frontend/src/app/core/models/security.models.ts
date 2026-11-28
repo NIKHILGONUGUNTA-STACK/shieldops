@@ -1373,3 +1373,87 @@ export interface SecurityPostureExportResponse {
   endpoints: EndpointPostureResponse[];
 }
 
+
+// ============================================================================
+// Phase 8.1 — Autonomous SOAR & Closed-Loop Threat Mitigation Models
+// ============================================================================
+
+export interface WafBanRule {
+  id: string;
+  ipOrCidr: string;
+  reason: string;
+  incidentId: string;
+  bannedAt: string;
+  expiresAt: string;
+  source: string;
+  active: boolean;
+}
+
+export interface WafBanRequest {
+  ipOrCidr: string;
+  reason: string;
+  incidentId?: string;
+  ttlHours?: number;
+  source?: string;
+}
+
+export interface TokenRevocationRecord {
+  jti: string;
+  subject: string;
+  reason: string;
+  revokedAt: string;
+  expiresAt: string;
+}
+
+export interface TokenRevokeRequest {
+  jti: string;
+  subject: string;
+  reason: string;
+  ttlHours?: number;
+}
+
+export interface SubjectRevokeRequest {
+  subject: string;
+  reason: string;
+  retentionHours?: number;
+}
+
+export interface SoarTicket {
+  id: string;
+  incidentId: string;
+  externalSystem: string;
+  externalTicketId: string;
+  title: string;
+  severity: string;
+  status: string;
+  assignee: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTicketRequest {
+  incidentId: string;
+  externalSystem: string;
+  title: string;
+  severity: string;
+  assignee?: string;
+}
+
+export interface AdaptiveChallengeSession {
+  sessionId: string;
+  challengeNonce: string;
+  reason: string;
+  threatRisk: number;
+  issuedAt: string;
+  expiresAt: string;
+  verified: boolean;
+  clearanceExpiresAt?: string;
+}
+
+export interface ChallengeMetrics {
+  activeChallenges: number;
+  activeClearances: number;
+  totalIssued: number;
+  totalVerified: number;
+  totalFailed: number;
+}

@@ -105,6 +105,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/ml-anomalies/ml-anomalies.component').then(m => m.MlAnomaliesComponent),
     canActivate: [authGuard]
   },
+  {
+    path: 'soar-automation',
+    loadComponent: () => import('./features/soar/soar-automation.component').then(m => m.SoarAutomationComponent),
+    canActivate: [authGuard]
+  },
   // GOVERNANCE & OPERATIONS
   {
     path: 'audit-history',

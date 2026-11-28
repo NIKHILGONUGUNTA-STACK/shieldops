@@ -182,6 +182,15 @@ export const NAV_SECTIONS: NavSection[] = [
         availability: 'implemented',
         badge: 'ML',
         description: 'Behavioral Markov API sequence trajectories, streaming volumetric outlier clusters, and workflow funnels'
+      },
+      {
+        id: 'soar-automation',
+        label: 'SOAR Automation',
+        path: '/soar-automation',
+        icon: 'shield-alert',
+        availability: 'implemented',
+        badge: 'SOAR',
+        description: 'Autonomous closed-loop threat mitigation, dynamic WAF edge ban rules, cryptographic JWT revocation ledger, and adaptive MFA challenge gate'
       }
     ]
   },

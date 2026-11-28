@@ -1,9 +1,9 @@
 # Aegis Build Status
 
-## Current Milestone: Phase 8.0 Complete (Cloud-Native Production Infrastructure & Kubernetes Orchestration)
+## Current Milestone: Phase 8.1 Complete (Autonomous SOAR & Closed-Loop Active Threat Mitigation)
 
 **Status:** `VERIFIED & PRODUCTION READY`
-**Last Updated:** 2026-11-27
+**Last Updated:** 2026-11-28
 **Active Git Branch:** `main`
 **Git Working Tree:** Clean
 **Remote Upstream:** `origin/main` (`https://github.com/NIKHILGONUGUNTA-STACK/shieldops.git`)
@@ -22,13 +22,13 @@
 | `customer-service` | 24 | 0 | 0 | 0 | **SUCCESS** |
 | `account-service` | 26 | 0 | 0 | 0 | **SUCCESS** |
 | `transaction-service` | 21 | 0 | 0 | 0 | **SUCCESS** |
-| `gateway` (including Multi-Tenant, Webhook, Posture & Behavioral Workflow Suites) | 417 | 0 | 0 | 0 | **SUCCESS** |
-| **Total Backend Platform Tests** | **488** | **0** | **0** | **0** | **BUILD SUCCESS** |
+| `gateway` (including Multi-Tenant, Webhook, Posture, Workflow & SOAR Suites) | 445 | 0 | 0 | 0 | **SUCCESS** |
+| **Total Backend Platform Tests** | **516** | **0** | **0** | **0** | **BUILD SUCCESS** |
 
 ### 1.2 Frontend SOC Dashboard (Angular 18 / TypeScript / Node 22)
 - **Framework & Tooling:** Angular 18.2.21 / Node.js 22.20.0 / npm 10.9.3
 - **Test Runner:** Karma 6.4 / Jasmine 5.2 / ChromeHeadless
-- **Production Build:** `dist/aegis-frontend` (392.45 kB initial bundle, 106.85 kB transfer, 0 warnings, 0 errors across 16+ chunks)
+- **Production Build:** `dist/aegis-frontend` (392.93 kB initial bundle, 107.07 kB transfer, 0 warnings, 0 errors across 17+ chunks)
 
 | Test Suite | Spec File | Tests Run | Failures | Status |
 | :--- | :--- | :---: | :---: | :--- |
@@ -66,7 +66,8 @@
 | **Sensitive Data Inventory (Phase 7.2.4.1)** | `sensitive-data.component.spec.ts` | 4 | 0 | **SUCCESS** |
 | **Data Leakage & Research Evaluation (Phase 7.2.4.2 – 7.3.6)** | `data-leakage.component.spec.ts` | 8 | 0 | **SUCCESS** |
 | **ML Anomaly Center (Phase 7.9)** | `ml-anomalies.component.spec.ts` | 6 | 0 | **SUCCESS** |
-| **Total Frontend Tests** | — | **232** | **0** | **BUILD SUCCESS** |
+| **SOAR Automation Center (Phase 8.1)** | `soar-automation.component.spec.ts` | 8 | 0 | **SUCCESS** |
+| **Total Frontend Tests** | — | **240** | **0** | **BUILD SUCCESS** |
 
 ### 1.3 Python Simulation Test Suite (pytest / pytest-asyncio / respx)
 - **Framework & Tooling:** Python 3.14.0 / pytest 9.2.0 / pytest-asyncio 1.4.1 / respx 0.23.1
@@ -94,7 +95,8 @@
 | `test_markov_sequencer.py` (Phase 7.9) | Unsupervised Markov sequence discovery, path normalization, Laplace smoothing, sequence anomaly scoring, critical funnel extraction | 7 | 0 | **SUCCESS** |
 | `test_welford_outlier.py` (Phase 7.9) | Welford single-pass streaming mean/variance, +3.5-sigma outlier detector, zero-latency telemetry tracking | 6 | 0 | **SUCCESS** |
 | `test_kubernetes_manifests.py` (Phase 8.0) | Automated Kubernetes & Helm HA manifest verification (PDB, HPA, NetworkPolicies, Redis Sentinel HA, Vault CSI, Envoy ext_authz) | 18 | 0 | **SUCCESS** |
-| **Total Python Simulation Tests** | — | **195** | **0** | **BUILD SUCCESS** |
+| `test_soar_automation.py` (Phase 8.1) | Dynamic WAF export schemas (Cloudflare/AWS/iptables), distributed token revocation semantics, and adaptive challenge state machines | 5 | 0 | **SUCCESS** |
+| **Total Python Simulation Tests** | — | **200** | **0** | **BUILD SUCCESS** |
 
 ---
 
@@ -102,10 +104,10 @@
 
 ### 2.1 Verification Mode Distinction
 - **Offline Mocked Verification:** **100% SUCCESS**
-  - Backend Platform Services: 488 tests passing (`mvn test`).
-  - Frontend Angular SOC Dashboard: 232 tests passing (`npm test -- --watch=false`).
-  - Python Simulation Framework: 195 tests passing (`pytest simulation/tests`).
-  - Grand Total Repository Tests: **915 tests passing** (100% BUILD SUCCESS).
+  - Backend Platform Services: 516 tests passing (`mvn test`).
+  - Frontend Angular SOC Dashboard: 240 tests passing (`npm test -- --watch=false`).
+  - Python Simulation Framework: 200 tests passing (`pytest simulation/tests`).
+  - Grand Total Repository Tests: **956 tests passing** (100% BUILD SUCCESS).
 - **Live Local Integration Status:** **RUNTIME ALIGNED & SOC VERIFIED (`PHASE_7_3_1_1_ACCEPTED`)**
   - Live Acceptance Report: `docs/phase-7-3-1-1-live-campaign-acceptance.md`.
   - Orchestration Architecture Spec: `docs/phase-7-3-1-simulation-orchestration.md`.

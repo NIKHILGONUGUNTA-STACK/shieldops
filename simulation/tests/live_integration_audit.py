@@ -14,13 +14,13 @@ async def run_live_integration_audit():
             data={
                 "grant_type": "password",
                 "client_id": "aegis-local",
-                "username": "analyst",
+                "username": "admin",
                 "password": "Password123!",
             },
         )
         assert r.status_code == 200, f"Auth failed: {r.text}"
         token = r.json()["access_token"]
-        print("[1] Keycloak OIDC Authentication: SUCCESS (Bearer JWT acquired)")
+        print("[1] Keycloak OIDC Authentication: SUCCESS (Admin Bearer JWT acquired)")
 
         headers = {"Authorization": f"Bearer {token}", "X-Tenant-Id": "tenant-fintech-us"}
 
@@ -87,6 +87,119 @@ async def run_live_integration_audit():
             print(f"    - Endpoint {ep}:")
             print(f"        Payload: samples={payload_info.get('count', 0)}, mean={payload_info.get('mean', 0.0):.1f}B")
             print(f"        Latency: samples={latency_info.get('count', 0)}, mean={latency_info.get('mean', 0.0):.2f}ms")
+
+        # 8. Phase 8.1 Autonomous SOAR: Dynamic WAF Ban & Export
+        waf_ban_r = await client.post(
+            "http://localhost:8000/api/v1/security/soar/waf/ban",
+            headers=headers,
+            json={
+                "ipOrCidr": "198.51.100.77",
+                "reason": "Live audit autonomous threat mitigation test",
+                "incidentId": "INC-AUDIT-WAF-01",
+                "ttlHours": 1,
+                "source": "SOAR"
+            }
+        )
+        print(f"[8] POST /api/v1/security/soar/waf/ban: Status {waf_ban_r.status_code}")
+        assert waf_ban_r.status_code == 201, "Dynamic WAF ban creation failed"
+        waf_rule = waf_ban_r.json()
+        waf_rule_id = waf_rule["id"]
+
+        cf_export_r = await client.get("http://localhost:8000/api/v1/security/soar/waf/export/cloudflare", headers=headers)
+        print(f"    Cloudflare WAF Export: Status {cf_export_r.status_code}, Items={len(cf_export_r.json().get('items', []))}")
+        assert cf_export_r.status_code == 200
+
+        aws_export_r = await client.get("http://localhost:8000/api/v1/security/soar/waf/export/aws", headers=headers)
+        print(f"    AWS WAF Export: Status {aws_export_r.status_code}, Addrs={len(aws_export_r.json().get('Addresses', []))}")
+        assert aws_export_r.status_code == 200
+
+        # Cleanup test ban
+        del_ban_r = await client.delete(f"http://localhost:8000/api/v1/security/soar/waf/ban/{waf_rule_id}", headers=headers)
+        print(f"    DELETE /api/v1/security/soar/waf/ban/{waf_rule_id}: Status {del_ban_r.status_code}")
+        assert del_ban_r.status_code == 204
+
+        # 9. Phase 8.1 Autonomous SOAR: Distributed Token Revocation Ledger
+        jti_test = f"jti-audit-{uuid.uuid4().hex[:8]}"
+        revoke_r = await client.post(
+            "http://localhost:8000/api/v1/security/soar/tokens/revoke",
+            headers=headers,
+            json={
+                "jti": jti_test,
+                "subject": "audit.test.user",
+                "reason": "Live integration cryptographic revocation test",
+                "ttlHours": 2
+            }
+        )
+        print(f"[9] POST /api/v1/security/soar/tokens/revoke: Status {revoke_r.status_code}")
+        assert revoke_r.status_code == 201, "Token revocation failed"
+
+        revoked_list_r = await client.get("http://localhost:8000/api/v1/security/soar/tokens/revoked", headers=headers)
+        print(f"    GET /api/v1/security/soar/tokens/revoked: Status {revoked_list_r.status_code}, Total={len(revoked_list_r.json())}")
+        assert revoked_list_r.status_code == 200
+        assert any(t["jti"] == jti_test for t in revoked_list_r.json())
+
+        # 10. Phase 8.1 Autonomous SOAR: Ticketing & Webhook Sync
+        ticket_r = await client.post(
+            "http://localhost:8000/api/v1/security/soar/tickets",
+            headers=headers,
+            json={
+                "incidentId": "INC-AUDIT-SOAR-99",
+                "externalSystem": "JIRA",
+                "title": "Live SOAR dispatch integration audit ticket",
+                "severity": "CRITICAL",
+                "assignee": "secops.lead"
+            }
+        )
+        print(f"[10] POST /api/v1/security/soar/tickets: Status {ticket_r.status_code}")
+        assert ticket_r.status_code == 201
+        ticket_data = ticket_r.json()
+        external_key = ticket_data["externalTicketId"]
+        print(f"     Dispatched external ticket: {external_key} ({ticket_data['externalSystem']})")
+
+        callback_r = await client.post(
+            "http://localhost:8000/api/v1/security/soar/tickets/callback",
+            json={
+                "externalTicketId": external_key,
+                "status": "IN_PROGRESS",
+                "comment": "Automated callback verified in live audit"
+            }
+        )
+        print(f"     POST /api/v1/security/soar/tickets/callback: Status {callback_r.status_code}")
+        assert callback_r.status_code == 200
+        assert callback_r.json()["status"] == "IN_PROGRESS"
+
+        # 11. Phase 8.1 Autonomous SOAR: Adaptive Step-Up Challenge Gate
+        chal_sess_id = f"session-chal-{uuid.uuid4().hex[:8]}"
+        issue_chal_r = await client.post(
+            "http://localhost:8000/api/v1/security/soar/challenge/issue",
+            headers=headers,
+            json={
+                "sessionId": chal_sess_id,
+                "reason": "Anomalous multi-resource exfiltration trajectory",
+                "threatRisk": 0.84
+            }
+        )
+        print(f"[11] POST /api/v1/security/soar/challenge/issue: Status {issue_chal_r.status_code}")
+        assert issue_chal_r.status_code == 201
+        chal_data = issue_chal_r.json()
+        nonce = chal_data["challengeNonce"]
+        print(f"     Challenge Nonce Issued: {nonce} (Risk: {chal_data['threatRisk']})")
+
+        verify_chal_r = await client.post(
+            "http://localhost:8000/api/v1/security/soar/challenge/verify",
+            json={
+                "sessionId": chal_sess_id,
+                "responseToken": nonce
+            }
+        )
+        print(f"     POST /api/v1/security/soar/challenge/verify: Status {verify_chal_r.status_code}")
+        assert verify_chal_r.status_code == 200
+        assert verify_chal_r.json()["verified"] is True
+        print(f"     Challenge Cleared Status: {verify_chal_r.json()['status']}")
+
+        metrics_r = await client.get("http://localhost:8000/api/v1/security/soar/challenge/metrics", headers=headers)
+        print(f"     GET /api/v1/security/soar/challenge/metrics: Status {metrics_r.status_code}, ActiveClearances={metrics_r.json().get('activeClearances')}")
+        assert metrics_r.status_code == 200
 
     print("=" * 75)
     print("LIVE INTEGRATION & ENFORCEMENT AUDIT: 100% SUCCESS")
