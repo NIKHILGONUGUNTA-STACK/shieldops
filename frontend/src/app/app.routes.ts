@@ -110,6 +110,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/soar/soar-automation.component').then(m => m.SoarAutomationComponent),
     canActivate: [authGuard]
   },
+  {
+    path: 'self-healing',
+    loadComponent: () => import('./features/adversary/self-healing-center.component').then(m => m.SelfHealingCenterComponent),
+    canActivate: [authGuard]
+  },
   // GOVERNANCE & OPERATIONS
   {
     path: 'audit-history',

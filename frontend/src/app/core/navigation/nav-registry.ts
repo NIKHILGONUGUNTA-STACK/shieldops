@@ -191,6 +191,15 @@ export const NAV_SECTIONS: NavSection[] = [
         availability: 'implemented',
         badge: 'SOAR',
         description: 'Autonomous closed-loop threat mitigation, dynamic WAF edge ban rules, cryptographic JWT revocation ledger, and adaptive MFA challenge gate'
+      },
+      {
+        id: 'self-healing',
+        label: 'Self-Healing AI Center',
+        path: '/self-healing',
+        icon: 'zap',
+        availability: 'implemented',
+        badge: 'AI',
+        description: 'Autonomous Red Team mutation probing, candidate policy synthesis, shadow-mode evaluation, and zero-FP edge promotion'
       }
     ]
   },

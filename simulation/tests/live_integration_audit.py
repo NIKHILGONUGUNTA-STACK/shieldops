@@ -201,6 +201,61 @@ async def run_live_integration_audit():
         print(f"     GET /api/v1/security/soar/challenge/metrics: Status {metrics_r.status_code}, ActiveClearances={metrics_r.json().get('activeClearances')}")
         assert metrics_r.status_code == 200
 
+        # 12. Phase 8.2 AI Adversary & Self-Healing Policy Synthesizer
+        camp_r = await client.post(
+            "http://localhost:8000/api/v1/security/adversary/campaigns/run",
+            headers=headers,
+            json={
+                "name": "Live Audit Beneficiary Probing Campaign",
+                "targetEndpoint": "POST /api/v1/beneficiaries",
+                "strategy": "STEP_SKIPPING",
+                "probeCount": 10
+            }
+        )
+        print(f"[12] POST /api/v1/security/adversary/campaigns/run: Status {camp_r.status_code}")
+        assert camp_r.status_code == 201
+        camp_data = camp_r.json()
+        print(f"     Adversary Probes: Total={camp_data['totalProbes']}, Evaded={camp_data['evadedProbes']} ({camp_data['evasionRate']*100:.1f}%)")
+
+        synth_r = await client.post(
+            "http://localhost:8000/api/v1/security/adversary/synthesizer/synthesize",
+            headers=headers,
+            json={"campaignId": camp_data["id"]}
+        )
+        print(f"     POST /api/v1/security/adversary/synthesizer/synthesize: Status {synth_r.status_code}")
+        assert synth_r.status_code == 201
+        synth_data = synth_r.json()
+        cand_id = synth_data["id"]
+        print(f"     Candidate Policy Generated: [{cand_id}] Rule='{synth_data['ruleId']}'")
+
+        eval_r = await client.post(
+            f"http://localhost:8000/api/v1/security/adversary/synthesizer/evaluate/{cand_id}",
+            headers=headers,
+            json={"shadowBatchSize": 25}
+        )
+        print(f"     POST .../synthesizer/evaluate/{cand_id}: Status {eval_r.status_code}, FPR={eval_r.json().get('shadowFpr')}")
+        assert eval_r.status_code == 200
+        assert eval_r.json().get("shadowFpr") == 0.0
+
+        promote_r = await client.post(
+            f"http://localhost:8000/api/v1/security/adversary/synthesizer/promote/{cand_id}",
+            headers=headers
+        )
+        print(f"     POST .../synthesizer/promote/{cand_id}: Status {promote_r.status_code}, Status={promote_r.json().get('status')}")
+        assert promote_r.status_code == 200
+        assert promote_r.json().get("status") == "PROMOTED"
+
+        # Verify edge hot-load enforcement immediately blocks unauthenticated beneficiary creation
+        fresh_beneficiary_sess = f"sess-beneficiary-{uuid.uuid4().hex[:8]}"
+        verify_healed_r = await client.post(
+            "http://localhost:8000/api/v1/security/workflow/verify",
+            headers=headers,
+            json={"sessionId": fresh_beneficiary_sess, "method": "POST", "path": "/api/v1/beneficiaries"}
+        )
+        print(f"     Edge Verification on Healed Target (/api/v1/beneficiaries): Status {verify_healed_r.status_code}, Allowed={verify_healed_r.json().get('allowed')}")
+        assert verify_healed_r.json().get("allowed") is False, "Healed rule should block skipped beneficiary step"
+        print(f"     Healed Rule ID: {verify_healed_r.json().get('ruleId')} (HOT-LOADED SUCCESSFULLY)")
+
     print("=" * 75)
     print("LIVE INTEGRATION & ENFORCEMENT AUDIT: 100% SUCCESS")
     print("=" * 75)

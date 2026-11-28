@@ -84,7 +84,9 @@ import {
   SoarTicket,
   CreateTicketRequest,
   AdaptiveChallengeSession,
-  ChallengeMetrics
+  ChallengeMetrics,
+  AdversaryCampaign,
+  CandidatePolicy
 } from '../models/security.models';
 
 @Injectable({
@@ -1127,6 +1129,45 @@ export class SecurityApiService {
 
   getChallengeMetrics(): Observable<ChallengeMetrics> {
     return this.http.get<ChallengeMetrics>(`${this.baseUrl}/api/v1/security/soar/challenge/metrics`)
+      .pipe(catchError(this.handleError));
+  }
+
+  // ==========================================================================
+  // Phase 8.2 — Automated AI Adversary & Self-Healing Policy Synthesizer
+  // ==========================================================================
+
+  getAdversaryCampaigns(): Observable<AdversaryCampaign[]> {
+    return this.http.get<AdversaryCampaign[]>(`${this.baseUrl}/api/v1/security/adversary/campaigns`)
+      .pipe(catchError(this.handleError));
+  }
+
+  getAdversaryCampaign(id: string): Observable<AdversaryCampaign> {
+    return this.http.get<AdversaryCampaign>(`${this.baseUrl}/api/v1/security/adversary/campaigns/${encodeURIComponent(id)}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  runAdversaryCampaign(req: { name?: string; targetEndpoint: string; strategy?: string; probeCount?: number }): Observable<AdversaryCampaign> {
+    return this.http.post<AdversaryCampaign>(`${this.baseUrl}/api/v1/security/adversary/campaigns/run`, req)
+      .pipe(catchError(this.handleError));
+  }
+
+  getCandidatePolicies(): Observable<CandidatePolicy[]> {
+    return this.http.get<CandidatePolicy[]>(`${this.baseUrl}/api/v1/security/adversary/synthesizer/candidates`)
+      .pipe(catchError(this.handleError));
+  }
+
+  synthesizePolicy(campaignId: string): Observable<CandidatePolicy> {
+    return this.http.post<CandidatePolicy>(`${this.baseUrl}/api/v1/security/adversary/synthesizer/synthesize`, { campaignId })
+      .pipe(catchError(this.handleError));
+  }
+
+  evaluateShadowFpr(candidateId: string, shadowBatchSize = 25): Observable<CandidatePolicy> {
+    return this.http.post<CandidatePolicy>(`${this.baseUrl}/api/v1/security/adversary/synthesizer/evaluate/${encodeURIComponent(candidateId)}`, { shadowBatchSize })
+      .pipe(catchError(this.handleError));
+  }
+
+  promoteCandidatePolicy(candidateId: string): Observable<CandidatePolicy> {
+    return this.http.post<CandidatePolicy>(`${this.baseUrl}/api/v1/security/adversary/synthesizer/promote/${encodeURIComponent(candidateId)}`, {})
       .pipe(catchError(this.handleError));
   }
 

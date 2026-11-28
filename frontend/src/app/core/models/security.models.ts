@@ -1457,3 +1457,58 @@ export interface ChallengeMetrics {
   totalVerified: number;
   totalFailed: number;
 }
+
+// ============================================================================
+// Phase 8.2 — Automated AI Adversary & Self-Healing Policy Synthesizer Models
+// ============================================================================
+
+export type AdversaryMutationStrategy =
+  | 'STEP_SKIPPING'
+  | 'TOKEN_SUBSTITUTION'
+  | 'PARAMETER_TAMPERING'
+  | 'OUT_OF_ORDER_TRAVERSAL'
+  | 'RATE_JITTER';
+
+export interface AdversaryProbeResult {
+  probeId: string;
+  method: string;
+  path: string;
+  sessionId: string;
+  strategy: AdversaryMutationStrategy;
+  blocked: boolean;
+  responseStatus: number;
+  blockReason?: string;
+  evasionDetail?: string;
+}
+
+export interface AdversaryCampaign {
+  id: string;
+  name: string;
+  targetEndpoint: string;
+  strategy: AdversaryMutationStrategy;
+  totalProbes: number;
+  blockedProbes: number;
+  evadedProbes: number;
+  evasionRate: number;
+  status: string;
+  startedAt: string;
+  completedAt?: string;
+  evasionTraces: AdversaryProbeResult[];
+}
+
+export interface CandidatePolicy {
+  id: string;
+  ruleId: string;
+  targetMethod: string;
+  targetPathPattern: string;
+  requiredPredecessors: string[];
+  description: string;
+  confidenceScore: number;
+  shadowEvaluationsCount: number;
+  shadowFalsePositives: number;
+  shadowFpr: number;
+  status: 'CANDIDATE' | 'EVALUATING' | 'SAFE_FOR_PROMOTION' | 'PROMOTED' | 'REJECTED';
+  createdAt: string;
+  promotedAt?: string;
+  synthesizedFromCampaignId: string;
+}

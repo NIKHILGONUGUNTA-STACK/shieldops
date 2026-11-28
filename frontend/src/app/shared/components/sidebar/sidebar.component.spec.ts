@@ -34,10 +34,10 @@ describe('SidebarComponent', () => {
     expect(sectionTitles).toContain('GOVERNANCE & OPERATIONS');
   });
 
-  it('should render 24 navigation links', () => {
+  it('should render 25 navigation links', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const navLinks = compiled.querySelectorAll('.nav-item');
-    expect(navLinks.length).toBe(24);
+    expect(navLinks.length).toBe(25);
   });
 
   it('should not display PLANNED badges when all core modules are implemented', () => {
